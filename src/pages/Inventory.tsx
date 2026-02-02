@@ -1,0 +1,272 @@
+import { useState, useMemo } from 'react';
+import { mockInventory, portalConfigs } from '@/services/mockData';
+import { Portal } from '@/types';
+import { PortalFilter } from '@/components/dashboard/PortalFilter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Search, Download, AlertTriangle, Package, Filter } from 'lucide-react';
+
+export default function Inventory() {
+  const [selectedPortal, setSelectedPortal] = useState<Portal | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
+  const [stockFilter, setStockFilter] = useState<string>('all');
+
+  const warehouses = useMemo(() => {
+    const unique = new Set(mockInventory.map(i => i.warehouse));
+    return Array.from(unique);
+  }, []);
+
+  const filteredInventory = useMemo(() => {
+    return mockInventory.filter(item => {
+      const matchesPortal = selectedPortal === 'all' || item.portal === selectedPortal;
+      const matchesSearch = item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           item.skuId.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesWarehouse = warehouseFilter === 'all' || item.warehouse === warehouseFilter;
+      const matchesStock = stockFilter === 'all' || 
+                          (stockFilter === 'low' && item.availableStock <= item.lowStockThreshold) ||
+                          (stockFilter === 'healthy' && item.availableStock > item.lowStockThreshold);
+      
+      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock;
+    });
+  }, [selectedPortal, searchQuery, warehouseFilter, stockFilter]);
+
+  const stats = useMemo(() => {
+    const items = selectedPortal === 'all' ? mockInventory : mockInventory.filter(i => i.portal === selectedPortal);
+    return {
+      totalSKUs: items.length,
+      totalStock: items.reduce((sum, i) => sum + i.availableStock, 0),
+      lowStock: items.filter(i => i.availableStock <= i.lowStockThreshold).length,
+      aging: items.filter(i => i.agingDays > 60).length,
+    };
+  }, [selectedPortal]);
+
+  const getStockStatus = (available: number, threshold: number) => {
+    if (available === 0) return { label: 'Out of Stock', variant: 'destructive' as const };
+    if (available <= threshold) return { label: 'Low Stock', variant: 'warning' as const };
+    return { label: 'Healthy', variant: 'success' as const };
+  };
+
+  const getAgingBadge = (days: number) => {
+    if (days > 90) return { label: `${days}d`, variant: 'destructive' as const };
+    if (days > 60) return { label: `${days}d`, variant: 'warning' as const };
+    return { label: `${days}d`, variant: 'secondary' as const };
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Inventory Management</h1>
+          <p className="text-muted-foreground">Track stock levels across all portals and warehouses</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Package className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalSKUs}</p>
+                <p className="text-sm text-muted-foreground">Total SKUs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-success/10">
+                <Package className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalStock.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Total Units</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning/10">
+                <AlertTriangle className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.lowStock}</p>
+                <p className="text-sm text-muted-foreground">Low Stock</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.aging}</p>
+                <p className="text-sm text-muted-foreground">Aging (&gt;60d)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <PortalFilter selectedPortal={selectedPortal} onPortalChange={setSelectedPortal} />
+            
+            <div className="flex flex-1 flex-wrap gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by SKU or product name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              
+              <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Warehouses</SelectItem>
+                  {warehouses.map(wh => (
+                    <SelectItem key={wh} value={wh}>{wh}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={stockFilter} onValueChange={setStockFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Stock Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="low">Low Stock</SelectItem>
+                  <SelectItem value="healthy">Healthy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Inventory Table */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">SKU ID</TableHead>
+                  <TableHead className="font-semibold">Product Name</TableHead>
+                  <TableHead className="font-semibold">Portal</TableHead>
+                  <TableHead className="font-semibold text-center">Available</TableHead>
+                  <TableHead className="font-semibold text-center">Reserved</TableHead>
+                  <TableHead className="font-semibold">Warehouse</TableHead>
+                  <TableHead className="font-semibold text-center">Aging</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInventory.map((item) => {
+                  const status = getStockStatus(item.availableStock, item.lowStockThreshold);
+                  const aging = getAgingBadge(item.agingDays);
+                  const portal = portalConfigs.find(p => p.id === item.portal);
+                  
+                  return (
+                    <TableRow key={item.skuId} className="hover:bg-muted/30">
+                      <TableCell className="font-mono text-sm">{item.skuId}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{item.productName}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="gap-1">
+                          {portal?.icon} {portal?.name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={`font-semibold ${
+                          item.availableStock <= item.lowStockThreshold ? 'text-warning' : 'text-foreground'
+                        }`}>
+                          {item.availableStock}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center text-muted-foreground">
+                        {item.reservedStock}
+                      </TableCell>
+                      <TableCell>{item.warehouse}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant="secondary"
+                          className={`${
+                            item.agingDays > 90 ? 'bg-destructive/10 text-destructive' :
+                            item.agingDays > 60 ? 'bg-warning/10 text-warning' : ''
+                          }`}
+                        >
+                          {item.agingDays}d
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="secondary"
+                          className={`${
+                            status.variant === 'destructive' ? 'bg-destructive/10 text-destructive' :
+                            status.variant === 'warning' ? 'bg-warning/10 text-warning' :
+                            'bg-success/10 text-success'
+                          }`}
+                        >
+                          {status.label}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          
+          {filteredInventory.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+              <p className="text-muted-foreground">No inventory items found</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
