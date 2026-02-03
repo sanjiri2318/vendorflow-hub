@@ -31,6 +31,12 @@ import {
   ChevronDown,
   Warehouse,
   Settings,
+  Activity,
+  FileSpreadsheet,
+  Link2,
+  Scale,
+  Upload,
+  Scan,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -61,11 +67,19 @@ const navigationGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Management',
+    label: 'Catalog',
     items: [
       { title: 'Products', url: '/products', icon: Package, roles: ['admin', 'vendor'] },
+      { title: 'Product Health', url: '/product-health', icon: Activity, roles: ['admin', 'vendor', 'operations'] },
+      { title: 'SKU Mapping', url: '/sku-mapping', icon: Link2, roles: ['admin', 'vendor'] },
+    ],
+  },
+  {
+    label: 'Inventory & Orders',
+    items: [
       { title: 'Inventory', url: '/inventory', icon: BoxIcon, roles: ['admin', 'vendor', 'operations'] },
       { title: 'Orders', url: '/orders', icon: ShoppingCart, roles: ['admin', 'vendor', 'operations'] },
+      { title: 'Consolidated Orders', url: '/consolidated-orders', icon: FileSpreadsheet, roles: ['admin', 'operations'] },
       { title: 'Returns & Claims', url: '/returns', icon: RotateCcw, roles: ['admin', 'operations'] },
     ],
   },
@@ -73,6 +87,7 @@ const navigationGroups: NavGroup[] = [
     label: 'Finance',
     items: [
       { title: 'Settlements', url: '/settlements', icon: CreditCard, roles: ['admin', 'vendor'] },
+      { title: 'Reconciliation', url: '/reconciliation', icon: Scale, roles: ['admin', 'operations'] },
     ],
   },
   {
@@ -85,6 +100,7 @@ const navigationGroups: NavGroup[] = [
   {
     label: 'Operations',
     items: [
+      { title: 'Data Import', url: '/data-import', icon: Upload, roles: ['admin', 'operations'] },
       { title: 'Alerts', url: '/alerts', icon: Bell, roles: ['admin', 'vendor', 'operations'] },
       { title: 'Tasks', url: '/tasks', icon: ListTodo, roles: ['admin', 'operations'] },
       { title: 'Analytics', url: '/analytics', icon: BarChart3, roles: ['admin', 'vendor'] },
@@ -93,7 +109,7 @@ const navigationGroups: NavGroup[] = [
   {
     label: 'Channels',
     items: [
-      { title: 'E-Commerce Site', url: '/ecommerce', icon: Globe, roles: ['admin', 'vendor'] },
+      { title: 'Own Website', url: '/ecommerce', icon: Globe, roles: ['admin', 'vendor'] },
       { title: 'AI Chatbot', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },
     ],
   },

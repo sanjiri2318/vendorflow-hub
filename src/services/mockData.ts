@@ -729,4 +729,200 @@ export const portalConfigs = [
   { id: 'meesho' as Portal, name: 'Meesho', color: 'hsl(340, 82%, 52%)', icon: '📦' },
   { id: 'firstcry' as Portal, name: 'FirstCry', color: 'hsl(199, 89%, 48%)', icon: '👶' },
   { id: 'blinkit' as Portal, name: 'Blinkit', color: 'hsl(45, 100%, 51%)', icon: '⚡' },
+  { id: 'own_website' as Portal, name: 'Own Website', color: 'hsl(262, 83%, 58%)', icon: '🌐' },
+];
+
+// Mock Product Health Data
+import { ProductHealth, MasterSKUMapping, OrderReconciliation, ConsolidatedOrderRow } from '@/types';
+
+export const mockProductHealth: ProductHealth[] = [
+  {
+    productId: 'PROD-001',
+    productName: 'Premium Wireless Earbuds Pro',
+    portalStatus: {
+      amazon: 'live',
+      flipkart: 'live',
+      meesho: 'not_active',
+      firstcry: 'not_active',
+      blinkit: 'out_of_stock',
+      own_website: 'live',
+    },
+  },
+  {
+    productId: 'PROD-002',
+    productName: 'Smart Fitness Watch X2',
+    portalStatus: {
+      amazon: 'live',
+      flipkart: 'live',
+      meesho: 'live',
+      firstcry: 'not_active',
+      blinkit: 'not_active',
+      own_website: 'live',
+    },
+  },
+  {
+    productId: 'PROD-003',
+    productName: 'Organic Cotton T-Shirt',
+    portalStatus: {
+      amazon: 'live',
+      flipkart: 'live',
+      meesho: 'live',
+      firstcry: 'not_active',
+      blinkit: 'not_active',
+      own_website: 'live',
+    },
+  },
+  {
+    productId: 'PROD-004',
+    productName: 'Stainless Steel Water Bottle',
+    portalStatus: {
+      amazon: 'live',
+      flipkart: 'not_active',
+      meesho: 'not_active',
+      firstcry: 'not_active',
+      blinkit: 'out_of_stock',
+      own_website: 'live',
+    },
+  },
+  {
+    productId: 'PROD-005',
+    productName: 'Baby Care Gift Set',
+    portalStatus: {
+      amazon: 'not_active',
+      flipkart: 'not_active',
+      meesho: 'not_active',
+      firstcry: 'live',
+      blinkit: 'not_active',
+      own_website: 'live',
+    },
+  },
+  {
+    productId: 'PROD-006',
+    productName: 'Portable Bluetooth Speaker',
+    portalStatus: {
+      amazon: 'out_of_stock',
+      flipkart: 'live',
+      meesho: 'live',
+      firstcry: 'not_active',
+      blinkit: 'not_active',
+      own_website: 'not_active',
+    },
+  },
+  {
+    productId: 'PROD-007',
+    productName: 'Yoga Mat Premium',
+    portalStatus: {
+      amazon: 'not_active',
+      flipkart: 'not_active',
+      meesho: 'live',
+      firstcry: 'not_active',
+      blinkit: 'not_active',
+      own_website: 'not_active',
+    },
+  },
+  {
+    productId: 'PROD-008',
+    productName: 'LED Desk Lamp',
+    portalStatus: {
+      amazon: 'live',
+      flipkart: 'live',
+      meesho: 'not_active',
+      firstcry: 'not_active',
+      blinkit: 'live',
+      own_website: 'live',
+    },
+  },
+];
+
+// Mock SKU Mappings
+export const mockSKUMappings: MasterSKUMapping[] = [
+  {
+    masterSkuId: 'MSK-001',
+    productName: 'Premium Wireless Earbuds Pro',
+    amazonSku: 'SKU-AMZ-001',
+    flipkartSku: 'SKU-FLK-001',
+    meeshoSku: undefined,
+    firstcrySku: undefined,
+    blinkitSku: undefined,
+    ownWebsiteSku: 'SKU-OWN-001',
+    status: 'mapped',
+  },
+  {
+    masterSkuId: 'MSK-002',
+    productName: 'Smart Fitness Watch X2',
+    amazonSku: 'SKU-AMZ-002',
+    flipkartSku: undefined,
+    meeshoSku: 'SKU-MSH-002',
+    firstcrySku: undefined,
+    blinkitSku: undefined,
+    ownWebsiteSku: 'SKU-OWN-002',
+    status: 'mapped',
+  },
+  {
+    masterSkuId: 'MSK-003',
+    productName: 'Organic Cotton T-Shirt',
+    amazonSku: 'SKU-AMZ-003',
+    flipkartSku: 'SKU-FLK-003',
+    meeshoSku: undefined,
+    firstcrySku: undefined,
+    blinkitSku: undefined,
+    ownWebsiteSku: 'SKU-OWN-003',
+    status: 'mapped',
+  },
+  {
+    masterSkuId: 'MSK-004',
+    productName: 'Stainless Steel Water Bottle',
+    amazonSku: undefined,
+    flipkartSku: undefined,
+    meeshoSku: undefined,
+    firstcrySku: undefined,
+    blinkitSku: 'SKU-BLK-004',
+    ownWebsiteSku: undefined,
+    status: 'unmapped',
+  },
+  {
+    masterSkuId: 'MSK-005',
+    productName: 'Baby Care Gift Set',
+    amazonSku: undefined,
+    flipkartSku: undefined,
+    meeshoSku: undefined,
+    firstcrySku: 'SKU-FCY-005',
+    blinkitSku: undefined,
+    ownWebsiteSku: 'SKU-OWN-005',
+    status: 'mapped',
+  },
+  {
+    masterSkuId: 'MSK-006',
+    productName: 'Portable Bluetooth Speaker',
+    amazonSku: 'SKU-AMZ-006',
+    flipkartSku: undefined,
+    meeshoSku: undefined,
+    firstcrySku: undefined,
+    blinkitSku: undefined,
+    ownWebsiteSku: undefined,
+    status: 'unmapped',
+  },
+];
+
+// Mock Order Reconciliation Data
+export const mockOrderReconciliation: OrderReconciliation[] = [
+  { date: daysAgo(0), expectedOrders: 156, processedOrders: 156, difference: 0, status: 'matched' },
+  { date: daysAgo(1), expectedOrders: 142, processedOrders: 140, difference: 2, status: 'mismatch' },
+  { date: daysAgo(2), expectedOrders: 168, processedOrders: 168, difference: 0, status: 'matched' },
+  { date: daysAgo(3), expectedOrders: 134, processedOrders: 134, difference: 0, status: 'matched' },
+  { date: daysAgo(4), expectedOrders: 189, processedOrders: 185, difference: 4, status: 'mismatch' },
+  { date: daysAgo(5), expectedOrders: 201, processedOrders: 201, difference: 0, status: 'matched' },
+  { date: daysAgo(6), expectedOrders: 178, processedOrders: 175, difference: 3, status: 'mismatch' },
+];
+
+// Mock Consolidated Orders
+export const mockConsolidatedOrders: ConsolidatedOrderRow[] = [
+  { skuId: 'MSK-001', skuName: 'Premium Wireless Earbuds Pro', amazon: 45, flipkart: 32, meesho: 0, firstcry: 0, blinkit: 0, own_website: 12, total: 89 },
+  { skuId: 'MSK-002', skuName: 'Smart Fitness Watch X2', amazon: 28, flipkart: 0, meesho: 18, firstcry: 0, blinkit: 0, own_website: 8, total: 54 },
+  { skuId: 'MSK-003', skuName: 'Organic Cotton T-Shirt', amazon: 156, flipkart: 124, meesho: 0, firstcry: 0, blinkit: 0, own_website: 45, total: 325 },
+  { skuId: 'MSK-004', skuName: 'Stainless Steel Water Bottle', amazon: 0, flipkart: 0, meesho: 0, firstcry: 0, blinkit: 67, own_website: 0, total: 67 },
+  { skuId: 'MSK-005', skuName: 'Baby Care Gift Set', amazon: 0, flipkart: 0, meesho: 0, firstcry: 42, blinkit: 0, own_website: 15, total: 57 },
+  { skuId: 'MSK-006', skuName: 'Portable Bluetooth Speaker', amazon: 23, flipkart: 0, meesho: 0, firstcry: 0, blinkit: 0, own_website: 0, total: 23 },
+  { skuId: 'MSK-007', skuName: 'Yoga Mat Premium', amazon: 0, flipkart: 0, meesho: 89, firstcry: 0, blinkit: 0, own_website: 0, total: 89 },
+  { skuId: 'MSK-008', skuName: 'LED Desk Lamp', amazon: 34, flipkart: 28, meesho: 0, firstcry: 0, blinkit: 12, own_website: 18, total: 92 },
 ];
