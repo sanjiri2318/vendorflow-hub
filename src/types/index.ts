@@ -10,7 +10,55 @@ export interface User {
 }
 
 // Portal Types
-export type Portal = 'amazon' | 'flipkart' | 'meesho' | 'firstcry' | 'blinkit';
+export type Portal = 'amazon' | 'flipkart' | 'meesho' | 'firstcry' | 'blinkit' | 'own_website';
+
+// Product Health Status
+export type ProductHealthStatus = 'live' | 'not_active' | 'out_of_stock';
+
+export interface ProductHealth {
+  productId: string;
+  productName: string;
+  portalStatus: Record<Portal, ProductHealthStatus>;
+}
+
+// SKU Mapping Types
+export type SKUMappingStatus = 'mapped' | 'unmapped';
+
+export interface MasterSKUMapping {
+  masterSkuId: string;
+  productName: string;
+  amazonSku?: string;
+  flipkartSku?: string;
+  meeshoSku?: string;
+  firstcrySku?: string;
+  blinkitSku?: string;
+  ownWebsiteSku?: string;
+  status: SKUMappingStatus;
+}
+
+// Order Reconciliation Types
+export type ReconciliationStatus = 'matched' | 'mismatch';
+
+export interface OrderReconciliation {
+  date: string;
+  expectedOrders: number;
+  processedOrders: number;
+  difference: number;
+  status: ReconciliationStatus;
+}
+
+// Consolidated Order Types
+export interface ConsolidatedOrderRow {
+  skuId: string;
+  skuName: string;
+  amazon: number;
+  flipkart: number;
+  meesho: number;
+  firstcry: number;
+  blinkit: number;
+  own_website: number;
+  total: number;
+}
 
 export interface PortalConfig {
   id: Portal;
