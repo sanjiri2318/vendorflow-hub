@@ -18,6 +18,9 @@ import ConsolidatedOrders from "./pages/ConsolidatedOrders";
 import SKUMapping from "./pages/SKUMapping";
 import Reconciliation from "./pages/Reconciliation";
 import DataImport from "./pages/DataImport";
+import SocialInsights from "./pages/SocialInsights";
+import Subscription from "./pages/Subscription";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,9 @@ const App = () => (
             <Route path="/sku-mapping" element={<AppLayout><SKUMapping /></AppLayout>} />
             <Route path="/reconciliation" element={<AppLayout><Reconciliation /></AppLayout>} />
             <Route path="/data-import" element={<AppLayout><DataImport /></AppLayout>} />
+            <Route path="/social-insights" element={<AppLayout><SocialInsights /></AppLayout>} />
+            <Route path="/subscription" element={<AppLayout><Subscription /></AppLayout>} />
+            <Route path="/support" element={<AppLayout><Support /></AppLayout>} />
             <Route path="/alerts" element={<AppLayout><Alerts /></AppLayout>} />
             <Route path="/vendors" element={<AppLayout><Dashboard /></AppLayout>} />
             <Route path="/warehouses" element={<AppLayout><Dashboard /></AppLayout>} />

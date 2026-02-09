@@ -36,7 +36,9 @@ import {
   Link2,
   Scale,
   Upload,
-  Scan,
+  Share2,
+  Crown,
+  LifeBuoy,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -107,9 +109,17 @@ const navigationGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Channels',
+    label: 'Marketing',
     items: [
+      { title: 'Social Insights', url: '/social-insights', icon: Share2, roles: ['admin', 'vendor'] },
       { title: 'Own Website', url: '/ecommerce', icon: Globe, roles: ['admin', 'vendor'] },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
+      { title: 'Subscription', url: '/subscription', icon: Crown, roles: ['admin'] },
       { title: 'AI Chatbot', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },
     ],
   },
@@ -142,8 +152,8 @@ export function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="font-semibold text-sidebar-foreground">VendorPro</span>
-              <span className="text-xs text-sidebar-foreground/60">VMS Platform</span>
+              <span className="font-semibold text-sidebar-foreground">VendorFlow</span>
+              <span className="text-xs text-sidebar-foreground/60">v1.0 • VMS Platform</span>
             </div>
           )}
         </div>
@@ -227,6 +237,10 @@ export function AppSidebar() {
             <DropdownMenuItem onClick={() => navigate('/settings')}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/subscription')}>
+              <Crown className="w-4 h-4 mr-2" />
+              Subscription
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
