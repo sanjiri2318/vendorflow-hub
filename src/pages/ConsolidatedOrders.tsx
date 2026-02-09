@@ -1,12 +1,22 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { mockConsolidatedOrders, portalConfigs } from '@/services/mockData';
-import { Download, FileSpreadsheet } from 'lucide-react';
+import { Download, FileSpreadsheet, TrendingUp, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+const dateRanges = [
+  { value: 'today', label: 'Today' },
+  { value: '7days', label: 'Last 7 Days' },
+  { value: '30days', label: 'Last 30 Days' },
+  { value: 'quarter', label: 'This Quarter' },
+];
 
 export default function ConsolidatedOrders() {
   const { toast } = useToast();
+  const [dateRange, setDateRange] = useState('7days');
 
   const handleExport = () => {
     toast({
@@ -25,22 +35,38 @@ export default function ConsolidatedOrders() {
     own_website: mockConsolidatedOrders.reduce((sum, row) => sum + row.own_website, 0),
   };
 
+  const highVolumeThreshold = 80;
+  const topSku = mockConsolidatedOrders.reduce((max, row) => row.total > max.total ? row : max, mockConsolidatedOrders[0]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Consolidated Orders</h1>
-          <p className="text-muted-foreground">Single sheet view of orders across all portals</p>
+          <p className="text-muted-foreground">Command center — single sheet view across all portals</p>
         </div>
-        <Button onClick={handleExport} className="gap-2">
-          <Download className="w-4 h-4" />
-          Export to Excel
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-[160px] gap-2">
+              <Calendar className="w-4 h-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {dateRanges.map(dr => (
+                <SelectItem key={dr.value} value={dr.value}>{dr.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleExport} className="gap-2">
+            <Download className="w-4 h-4" />
+            Export to Excel
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         {portalConfigs.map((portal) => (
           <Card key={portal.id}>
             <CardContent className="pt-4 pb-3">
@@ -61,13 +87,22 @@ export default function ConsolidatedOrders() {
             </div>
           </CardContent>
         </Card>
+        <Card className="bg-emerald-500/5 border-emerald-500/20">
+          <CardContent className="pt-4 pb-3">
+            <div className="text-center">
+              <TrendingUp className="w-6 h-6 mx-auto text-emerald-600" />
+              <p className="text-lg font-bold mt-1 text-emerald-600">{topSku.skuName.split(' ').slice(0, 2).join(' ')}</p>
+              <p className="text-xs text-muted-foreground">Top SKU ({topSku.total})</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Consolidated Table */}
       <Card>
         <CardHeader>
           <CardTitle>Order Summary by SKU</CardTitle>
-          <CardDescription>Order quantities across all sales channels</CardDescription>
+          <CardDescription>Order quantities across all sales channels • High-volume SKUs (&gt;{highVolumeThreshold}) are highlighted</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -85,56 +120,37 @@ export default function ConsolidatedOrders() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockConsolidatedOrders.map((row) => (
-                  <TableRow key={row.skuId}>
-                    <TableCell className="font-medium">{row.skuName}</TableCell>
-                    <TableCell className="text-center">
-                      {row.amazon > 0 ? (
-                        <span className="font-medium">{row.amazon}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.flipkart > 0 ? (
-                        <span className="font-medium">{row.flipkart}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.meesho > 0 ? (
-                        <span className="font-medium">{row.meesho}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.firstcry > 0 ? (
-                        <span className="font-medium">{row.firstcry}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.blinkit > 0 ? (
-                        <span className="font-medium">{row.blinkit}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {row.own_website > 0 ? (
-                        <span className="font-medium">{row.own_website}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center bg-primary/5">
-                      <span className="font-bold text-primary">{row.total}</span>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {mockConsolidatedOrders.map((row) => {
+                  const isHighVolume = row.total >= highVolumeThreshold;
+                  return (
+                    <TableRow key={row.skuId} className={isHighVolume ? 'bg-emerald-500/5' : ''}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {row.skuName}
+                          {isHighVolume && (
+                            <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                          )}
+                        </div>
+                      </TableCell>
+                      {(['amazon', 'flipkart', 'meesho', 'firstcry', 'blinkit', 'own_website'] as const).map(portal => (
+                        <TableCell key={portal} className="text-center">
+                          {row[portal] > 0 ? (
+                            <span className={`font-medium ${row[portal] >= 50 ? 'text-emerald-600' : ''}`}>
+                              {row[portal]}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell className="text-center bg-primary/5">
+                        <span className={`font-bold ${isHighVolume ? 'text-emerald-600' : 'text-primary'}`}>
+                          {row.total}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {/* Totals Row */}
                 <TableRow className="bg-muted/50 font-bold border-t-2">
                   <TableCell>Total Orders</TableCell>

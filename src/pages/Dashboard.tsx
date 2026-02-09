@@ -122,7 +122,10 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <Badge variant="outline" className="text-xs font-mono">VendorFlow v1.0</Badge>
+          </div>
           <p className="text-muted-foreground">
             Welcome back, {user?.name}! Here's your business overview.
           </p>

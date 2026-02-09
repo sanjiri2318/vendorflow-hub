@@ -25,6 +25,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     return <Navigate to="/login" replace />;
   }
 
+  const lastSynced = new Date();
+  lastSynced.setMinutes(lastSynced.getMinutes() - 3);
+  const syncLabel = `Last synced: ${lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -47,7 +51,12 @@ export function AppLayout({ children }: AppLayoutProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* Last Synced */}
+              <span className="text-xs text-muted-foreground hidden lg:block">
+                {syncLabel}
+              </span>
+
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
