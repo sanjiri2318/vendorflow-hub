@@ -1,12 +1,25 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Eye, Heart, Play, MessageCircle, Share2, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, Eye, Heart, Play, ExternalLink, LogIn, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-const mockMetrics = [
-  { platform: 'Facebook', icon: '📘', reach: '24.5K', engagement: '3.2K', growth: 12.4, color: 'bg-blue-500/10 text-blue-600' },
-  { platform: 'Instagram', icon: '📸', reach: '38.7K', engagement: '5.8K', growth: 18.2, color: 'bg-pink-500/10 text-pink-600' },
-  { platform: 'YouTube', icon: '🎬', reach: '12.3K', engagement: '1.4K', growth: 8.7, color: 'bg-red-500/10 text-red-600' },
-  { platform: 'Twitter/X', icon: '🐦', reach: '8.1K', engagement: '920', growth: -2.3, color: 'bg-sky-500/10 text-sky-600' },
+interface SocialChannel {
+  platform: string;
+  icon: string;
+  reach: string;
+  engagement: string;
+  growth: number;
+  color: string;
+  connected: boolean;
+}
+
+const initialChannels: SocialChannel[] = [
+  { platform: 'Facebook', icon: '📘', reach: '24.5K', engagement: '3.2K', growth: 12.4, color: 'bg-blue-500/10 text-blue-600', connected: true },
+  { platform: 'Instagram', icon: '📸', reach: '38.7K', engagement: '5.8K', growth: 18.2, color: 'bg-pink-500/10 text-pink-600', connected: false },
+  { platform: 'YouTube', icon: '🎬', reach: '12.3K', engagement: '1.4K', growth: 8.7, color: 'bg-red-500/10 text-red-600', connected: false },
+  { platform: 'WhatsApp', icon: '💬', reach: '8.4K', engagement: '1.2K', growth: 5.1, color: 'bg-emerald-500/10 text-emerald-600', connected: false },
 ];
 
 const mockCampaigns = [
@@ -24,12 +37,25 @@ const mockPosts = [
   { id: 5, platform: '📘 Facebook', title: 'Customer testimonial: Baby Care Set', engagement: '456 reactions', time: '2d ago', type: 'post' },
   { id: 6, platform: '🎬 YouTube', title: 'How to choose the right speaker', engagement: '1.8K views', time: '3d ago', type: 'video' },
   { id: 7, platform: '📸 Instagram', title: 'New arrivals: LED Desk Lamp', engagement: '987 likes', time: '3d ago', type: 'image' },
-  { id: 8, platform: '🐦 Twitter/X', title: 'Exciting updates coming soon!', engagement: '234 likes', time: '4d ago', type: 'tweet' },
+  { id: 8, platform: '💬 WhatsApp', title: 'Order confirmation broadcast', engagement: '4.2K delivered', time: '4d ago', type: 'broadcast' },
   { id: 9, platform: '📘 Facebook', title: 'Weekly deals roundup', engagement: '678 reactions', time: '5d ago', type: 'post' },
   { id: 10, platform: '📸 Instagram', title: 'Yoga Mat Premium — Perfect for home', engagement: '1.5K likes', time: '6d ago', type: 'image' },
 ];
 
 export default function SocialInsights() {
+  const { toast } = useToast();
+  const [channels, setChannels] = useState(initialChannels);
+
+  const handleConnect = (platform: string) => {
+    setChannels(prev => prev.map(c => c.platform === platform ? { ...c, connected: true } : c));
+    toast({ title: `${platform} Connected`, description: `Your ${platform} account has been linked successfully.` });
+  };
+
+  const handleDisconnect = (platform: string) => {
+    setChannels(prev => prev.map(c => c.platform === platform ? { ...c, connected: false } : c));
+    toast({ title: `${platform} Disconnected`, description: `Your ${platform} account has been unlinked.` });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -37,17 +63,30 @@ export default function SocialInsights() {
         <p className="text-muted-foreground">Monitor marketing performance across social channels</p>
       </div>
 
-      {/* Platform Metrics */}
+      {/* Platform Metrics with Connect Buttons */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {mockMetrics.map(m => (
+        {channels.map(m => (
           <Card key={m.platform}>
             <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${m.color}`}>
-                  <span className="text-xl">{m.icon}</span>
-                </div>
-                <div className="flex-1">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={`p-2 rounded-lg ${m.color}`}>
+                    <span className="text-xl">{m.icon}</span>
+                  </div>
                   <p className="text-sm font-medium text-muted-foreground">{m.platform}</p>
+                </div>
+                {m.connected ? (
+                  <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-1 cursor-pointer" onClick={() => handleDisconnect(m.platform)}>
+                    <Wifi className="w-3 h-3" />Connected
+                  </Badge>
+                ) : (
+                  <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => handleConnect(m.platform)}>
+                    <LogIn className="w-3 h-3" />Connect
+                  </Button>
+                )}
+              </div>
+              {m.connected ? (
+                <>
                   <p className="text-xl font-bold">{m.reach}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <TrendingUp className={`w-3 h-3 ${m.growth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} />
@@ -55,12 +94,17 @@ export default function SocialInsights() {
                       {m.growth >= 0 ? '+' : ''}{m.growth}%
                     </span>
                   </div>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{m.engagement}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{m.reach}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="py-3 text-center">
+                  <WifiOff className="w-6 h-6 text-muted-foreground/30 mx-auto mb-1" />
+                  <p className="text-xs text-muted-foreground">Connect to see insights</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{m.engagement}</span>
-                <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{m.reach}</span>
-              </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -127,7 +171,7 @@ export default function SocialInsights() {
         </Card>
       </div>
 
-      {/* Video Preview Placeholder */}
+      {/* Video Preview */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Play className="w-5 h-5" />Video Content</CardTitle>

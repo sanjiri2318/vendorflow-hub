@@ -109,7 +109,7 @@ export default function ConsolidatedOrders() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">SKU Name</TableHead>
+                  <TableHead className="font-semibold">Product</TableHead>
                   <TableHead className="text-center font-semibold">🛒 Amazon</TableHead>
                   <TableHead className="text-center font-semibold">🛍️ Flipkart</TableHead>
                   <TableHead className="text-center font-semibold">📦 Meesho</TableHead>
@@ -125,11 +125,18 @@ export default function ConsolidatedOrders() {
                   return (
                     <TableRow key={row.skuId} className={isHighVolume ? 'bg-emerald-500/5' : ''}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {row.skuName}
-                          {isHighVolume && (
-                            <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                          )}
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={`https://images.unsplash.com/photo-${['1590658268037-6bf12165a8df','1579586337278-3befd40fd17a','1521572163474-6864f9cf17ab','1602143407151-7111542de6e8','1515488042361-ee00e0ddd4e4','1608043152269-423dbba4e7e1','1601925260368-ae2f83cf8b7f','1507473885765-e6ed057f782c'][parseInt(row.skuId.replace('MSK-00','')) - 1] || '1590658268037-6bf12165a8df'}?w=80`}
+                            alt={row.skuName}
+                            className="w-8 h-8 rounded object-cover shrink-0"
+                          />
+                          <div>
+                            {row.skuName}
+                            {isHighVolume && (
+                              <TrendingUp className="w-3.5 h-3.5 text-emerald-600 inline ml-1" />
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       {(['amazon', 'flipkart', 'meesho', 'firstcry', 'blinkit', 'own_website'] as const).map(portal => (
