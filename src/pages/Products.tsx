@@ -113,7 +113,16 @@ export default function Products() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="brand">Brand</Label>
-                        <Input id="brand" placeholder="Enter brand name" />
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select or type brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['Boat', 'Samsung', 'Nike', 'Puma', 'Mamaearth', 'Sony', 'Apple'].map(b => (
+                              <SelectItem key={b} value={b}>{b}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">

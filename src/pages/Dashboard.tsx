@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Portal } from '@/types';
 import { dashboardApi } from '@/services/api';
-import { mockKPIData, mockSalesData, mockInventory, mockOrders, mockReturns, mockSettlements, portalConfigs } from '@/services/mockData';
+import { mockKPIData, mockSalesData, mockInventory, mockOrders, mockReturns, mockSettlements, mockConsolidatedOrders, portalConfigs } from '@/services/mockData';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { SalesChart, InventoryChart, ReturnsChart, PortalSalesChart, CHART_COLORS } from '@/components/dashboard/Charts';
@@ -14,7 +14,9 @@ import {
   RotateCcw, 
   CreditCard,
   TrendingUp,
-  Clock
+  TrendingDown,
+  Clock,
+  Star
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -88,6 +90,30 @@ export default function Dashboard() {
   // Recent orders
   const recentOrders = mockOrders.slice(0, 5);
 
+  // Brand analytics
+  const brandAnalytics = useMemo(() => {
+    const brandOrders: Record<string, number> = {};
+    mockConsolidatedOrders.forEach(row => {
+      brandOrders[row.brand] = (brandOrders[row.brand] || 0) + row.total;
+    });
+    // Mock growth percentages per brand
+    const growthMap: Record<string, number> = {
+      'Boat': 12.4,
+      'Samsung': 8.7,
+      'Nike': -4.2,
+      'Puma': 15.1,
+      'Mamaearth': 6.3,
+      'Sony': -1.8,
+      'Apple': 22.5,
+    };
+    return Object.entries(brandOrders)
+      .map(([brand, orders]) => ({
+        brand,
+        orders,
+        growth: growthMap[brand] ?? Math.round((Math.random() - 0.3) * 20 * 10) / 10,
+      }))
+      .sort((a, b) => b.orders - a.orders);
+  }, []);
   // Get KPIs based on selected portal
   const kpiData = useMemo(() => {
     if (selectedPortal === 'all') return mockKPIData;
@@ -278,6 +304,49 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Brand Analytics */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Star className="w-4 h-4 text-amber-500" />
+            Top Performing Brands
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {brandAnalytics.map((item, index) => (
+              <div 
+                key={item.brand}
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{item.brand}</p>
+                    <p className="text-xs text-muted-foreground">{item.orders} orders</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.growth >= 0 ? (
+                    <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 gap-0.5 text-xs">
+                      <TrendingUp className="w-3 h-3" />
+                      +{item.growth}%
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-rose-500/10 text-rose-600 gap-0.5 text-xs">
+                      <TrendingDown className="w-3 h-3" />
+                      {item.growth}%
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

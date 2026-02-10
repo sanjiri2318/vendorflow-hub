@@ -27,6 +27,7 @@ export type SKUMappingStatus = 'mapped' | 'unmapped';
 export interface MasterSKUMapping {
   masterSkuId: string;
   productName: string;
+  brand: string;
   amazonSku?: string;
   flipkartSku?: string;
   meeshoSku?: string;
@@ -51,6 +52,7 @@ export interface OrderReconciliation {
 export interface ConsolidatedOrderRow {
   skuId: string;
   skuName: string;
+  brand: string;
   amazon: number;
   flipkart: number;
   meesho: number;
@@ -96,6 +98,7 @@ export interface InventoryItem {
   skuId: string;
   productId: string;
   productName: string;
+  brand: string;
   portal: Portal;
   availableStock: number;
   reservedStock: number;

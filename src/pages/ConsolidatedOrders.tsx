@@ -274,6 +274,7 @@ export default function ConsolidatedOrders() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Product</TableHead>
+                  <TableHead className="font-semibold">Brand</TableHead>
                   {activeView === 'comparison' ? (
                     <>
                       <TableHead className="text-center font-semibold">🛒 Amazon</TableHead>
@@ -319,6 +320,9 @@ export default function ConsolidatedOrders() {
                             )}
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">{row.brand}</Badge>
                       </TableCell>
                       {activeView === 'comparison' ? (
                         <>
@@ -371,7 +375,7 @@ export default function ConsolidatedOrders() {
                 })}
                 {/* Totals Row */}
                 <TableRow className="bg-muted/50 font-bold border-t-2">
-                  <TableCell>Total Orders</TableCell>
+                  <TableCell colSpan={2}>Total Orders</TableCell>
                   {activeView === 'comparison' ? (
                     <>
                       {portals.map(p => (
