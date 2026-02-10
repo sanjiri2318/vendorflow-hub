@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, CheckCircle, Clock, AlertTriangle, TrendingUp, Percent } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
+import OrderPaymentSettlement from '@/components/settlements/OrderPaymentSettlement';
 
 const settlementStatusConfig: Record<SettlementStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'bg-warning/10 text-warning', icon: Clock },
@@ -113,6 +114,7 @@ export default function Settlements() {
         <TabsList>
           <TabsTrigger value="batch">Batch Settlement View</TabsTrigger>
           <TabsTrigger value="individual">Individual Order Settlement</TabsTrigger>
+          <TabsTrigger value="detailed">Order Payment Settlement</TabsTrigger>
         </TabsList>
 
         <TabsContent value="batch">
@@ -206,6 +208,10 @@ export default function Settlements() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="detailed">
+          <OrderPaymentSettlement />
         </TabsContent>
       </Tabs>
     </div>
