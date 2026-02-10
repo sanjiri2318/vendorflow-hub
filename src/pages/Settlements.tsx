@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, CheckCircle, Clock, AlertTriangle, TrendingUp, Percent } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 import OrderPaymentSettlement from '@/components/settlements/OrderPaymentSettlement';
+import LandingCostAnalysis from '@/components/settlements/LandingCostAnalysis';
 
 const settlementStatusConfig: Record<SettlementStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'bg-warning/10 text-warning', icon: Clock },
@@ -115,6 +116,7 @@ export default function Settlements() {
           <TabsTrigger value="batch">Batch Settlement View</TabsTrigger>
           <TabsTrigger value="individual">Individual Order Settlement</TabsTrigger>
           <TabsTrigger value="detailed">Order Payment Settlement</TabsTrigger>
+          <TabsTrigger value="landing-cost">Landing Cost Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="batch">
@@ -212,6 +214,10 @@ export default function Settlements() {
 
         <TabsContent value="detailed">
           <OrderPaymentSettlement />
+        </TabsContent>
+
+        <TabsContent value="landing-cost">
+          <LandingCostAnalysis />
         </TabsContent>
       </Tabs>
     </div>

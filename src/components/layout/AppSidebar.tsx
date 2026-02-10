@@ -128,6 +128,12 @@ const navigationGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'Admin',
+    items: [
+      { title: 'System Settings', url: '/system-settings', icon: Settings, roles: ['admin'] },
+    ],
+  },
+  {
     label: 'System',
     items: [
       { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
