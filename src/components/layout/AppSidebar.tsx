@@ -42,6 +42,8 @@ import {
   Shield,
   FileText,
   IndianRupee,
+  Database,
+  Blocks,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -129,6 +131,8 @@ const navigationGroups: NavGroup[] = [
     label: 'System',
     items: [
       { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
+      { title: 'Data Configuration', url: '/data-configuration', icon: Database, roles: ['admin'] },
+      { title: 'System Architecture', url: '/system-architecture', icon: Blocks, roles: ['admin'] },
       { title: 'Permissions', url: '/permissions', icon: Shield, roles: ['admin'] },
       { title: 'Subscription', url: '/subscription', icon: Crown, roles: ['admin'] },
       { title: 'AI Hub', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },

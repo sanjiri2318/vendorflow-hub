@@ -275,6 +275,9 @@ export default function ConsolidatedOrders() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Product</TableHead>
                   <TableHead className="font-semibold">Brand</TableHead>
+                  <TableHead className="font-semibold">Barcode</TableHead>
+                  <TableHead className="font-semibold">SKU ID</TableHead>
+                  <TableHead className="font-semibold">Master SKU</TableHead>
                   {activeView === 'comparison' ? (
                     <>
                       <TableHead className="text-center font-semibold">🛒 Amazon</TableHead>
@@ -324,6 +327,11 @@ export default function ConsolidatedOrders() {
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">{row.brand}</Badge>
                       </TableCell>
+                      <TableCell>
+                        <span className="font-mono text-xs tracking-widest text-muted-foreground">||||| || ||||</span>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{row.skuId}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{row.skuId.replace('MSK', 'MSK')}</TableCell>
                       {activeView === 'comparison' ? (
                         <>
                           {portals.map(portal => (
@@ -375,7 +383,7 @@ export default function ConsolidatedOrders() {
                 })}
                 {/* Totals Row */}
                 <TableRow className="bg-muted/50 font-bold border-t-2">
-                  <TableCell colSpan={2}>Total Orders</TableCell>
+                  <TableCell colSpan={5}>Total Orders</TableCell>
                   {activeView === 'comparison' ? (
                     <>
                       {portals.map(p => (

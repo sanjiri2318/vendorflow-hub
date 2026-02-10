@@ -31,6 +31,8 @@ import Permissions from "./pages/Permissions";
 import Reports from "./pages/Reports";
 import PricePayout from "./pages/PricePayout";
 import NotFound from "./pages/NotFound";
+import DataConfiguration from "./pages/DataConfiguration";
+import SystemArchitecture from "./pages/SystemArchitecture";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +71,8 @@ const App = () => (
             <Route path="/reports" element={<AppLayout><Reports /></AppLayout>} />
             <Route path="/price-payout" element={<AppLayout><PricePayout /></AppLayout>} />
             <Route path="/settings" element={<AppLayout><Permissions /></AppLayout>} />
+            <Route path="/data-configuration" element={<AppLayout><DataConfiguration /></AppLayout>} />
+            <Route path="/system-architecture" element={<AppLayout><SystemArchitecture /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
