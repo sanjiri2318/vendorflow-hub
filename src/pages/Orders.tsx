@@ -7,48 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { 
-  Search, 
-  Download, 
-  ShoppingCart, 
-  Package, 
-  Truck, 
-  CheckCircle, 
-  Clock,
-  X,
-  Eye,
-  Users,
-  UserPlus,
-  UserCheck,
-  Star,
-  Layers,
+  Search, Download, ShoppingCart, Package, Truck, CheckCircle, Clock,
+  X, Eye, Users, UserPlus, UserCheck, Star, Layers,
 } from 'lucide-react';
+import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'bg-warning/10 text-warning', icon: Clock },
@@ -85,6 +59,7 @@ export default function Orders() {
   const [customerTypeFilter, setCustomerTypeFilter] = useState<CustomerTypeFilter>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState('30days');
 
   const customerProfiles = useMemo(() => computeCustomerProfiles(mockOrders), []);
 
@@ -110,6 +85,8 @@ export default function Orders() {
       return matchesPortal && matchesSearch && matchesStatus && matchesCustomerType;
     });
   }, [selectedPortal, searchQuery, statusFilter, customerTypeFilter, customerProfiles]);
+
+  const rowSelection = useRowSelection(filteredOrders.map(o => o.orderId));
 
   const stats = useMemo(() => {
     const orders = selectedPortal === 'all' ? mockOrders : mockOrders.filter(o => o.portal === selectedPortal);
@@ -150,10 +127,7 @@ export default function Orders() {
             <p className="text-muted-foreground">Manage orders across all sales channels</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2">
-              <Download className="w-4 h-4" />
-              {exportLabel}
-            </Button>
+            <ExportButton label={rowSelection.count > 0 ? undefined : exportLabel} selectedCount={rowSelection.count} />
           </div>
         </div>
 
@@ -220,6 +194,7 @@ export default function Orders() {
               <PortalFilter selectedPortal={selectedPortal} onPortalChange={setSelectedPortal} />
               
               <div className="flex flex-1 flex-wrap gap-3">
+                <DateFilter value={dateFilter} onChange={setDateFilter} />
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -265,6 +240,7 @@ export default function Orders() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
+                    <TableHead className="w-10"><SelectAllCheckbox checked={rowSelection.isAllSelected} onCheckedChange={rowSelection.toggleAll} /></TableHead>
                     <TableHead className="font-semibold">Order ID</TableHead>
                     <TableHead className="font-semibold">Portal</TableHead>
                     <TableHead className="font-semibold">Customer</TableHead>
@@ -285,8 +261,9 @@ export default function Orders() {
                     const custType = getCustomerType(order.customerId);
                     const totalSkus = order.items.reduce((s, i) => s + i.quantity, 0);
                     
-                    return (
-                      <TableRow key={order.orderId} className="hover:bg-muted/30">
+                      return (
+                        <TableRow key={order.orderId} className={`hover:bg-muted/30 ${rowSelection.isSelected(order.orderId) ? 'bg-primary/5' : ''}`}>
+                          <TableCell><RowCheckbox checked={rowSelection.isSelected(order.orderId)} onCheckedChange={() => rowSelection.toggle(order.orderId)} /></TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{order.orderId}</p>
