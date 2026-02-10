@@ -21,6 +21,15 @@ import DataImport from "./pages/DataImport";
 import SocialInsights from "./pages/SocialInsights";
 import Subscription from "./pages/Subscription";
 import Support from "./pages/Support";
+import Vendors from "./pages/Vendors";
+import Warehouses from "./pages/Warehouses";
+import Tasks from "./pages/Tasks";
+import Analytics from "./pages/Analytics";
+import AIChatbot from "./pages/AIChatbot";
+import OwnWebsite from "./pages/OwnWebsite";
+import Permissions from "./pages/Permissions";
+import Reports from "./pages/Reports";
+import PricePayout from "./pages/PricePayout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,13 +59,16 @@ const App = () => (
             <Route path="/subscription" element={<AppLayout><Subscription /></AppLayout>} />
             <Route path="/support" element={<AppLayout><Support /></AppLayout>} />
             <Route path="/alerts" element={<AppLayout><Alerts /></AppLayout>} />
-            <Route path="/vendors" element={<AppLayout><Dashboard /></AppLayout>} />
-            <Route path="/warehouses" element={<AppLayout><Dashboard /></AppLayout>} />
-            <Route path="/tasks" element={<AppLayout><Dashboard /></AppLayout>} />
-            <Route path="/analytics" element={<AppLayout><Dashboard /></AppLayout>} />
-            <Route path="/ecommerce" element={<AppLayout><Dashboard /></AppLayout>} />
-            <Route path="/chatbot" element={<AppLayout><Dashboard /></AppLayout>} />
-            <Route path="/settings" element={<AppLayout><Dashboard /></AppLayout>} />
+            <Route path="/vendors" element={<AppLayout><Vendors /></AppLayout>} />
+            <Route path="/warehouses" element={<AppLayout><Warehouses /></AppLayout>} />
+            <Route path="/tasks" element={<AppLayout><Tasks /></AppLayout>} />
+            <Route path="/analytics" element={<AppLayout><Analytics /></AppLayout>} />
+            <Route path="/ecommerce" element={<AppLayout><OwnWebsite /></AppLayout>} />
+            <Route path="/chatbot" element={<AppLayout><AIChatbot /></AppLayout>} />
+            <Route path="/permissions" element={<AppLayout><Permissions /></AppLayout>} />
+            <Route path="/reports" element={<AppLayout><Reports /></AppLayout>} />
+            <Route path="/price-payout" element={<AppLayout><PricePayout /></AppLayout>} />
+            <Route path="/settings" element={<AppLayout><Permissions /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

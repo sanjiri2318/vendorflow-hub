@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExcelProductUpload } from '@/components/ExcelProductUpload';
 import {
   Table,
   TableBody,
@@ -97,63 +99,74 @@ export default function Products() {
               <DialogHeader>
                 <DialogTitle>Add New Product</DialogTitle>
               </DialogHeader>
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Product Name</Label>
-                    <Input id="name" placeholder="Enter product name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="brand">Brand</Label>
-                    <Input id="brand" placeholder="Enter brand name" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Base Price (₹)</Label>
-                    <Input id="price" type="number" placeholder="0.00" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" placeholder="Enter product description" rows={3} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Product Image</Label>
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
-                      <Image className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Click to upload image</p>
+              <Tabs defaultValue="manual" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                  <TabsTrigger value="excel">Excel Upload</TabsTrigger>
+                </TabsList>
+                <TabsContent value="manual">
+                  <form className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Product Name</Label>
+                        <Input id="name" placeholder="Enter product name" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="brand">Brand</Label>
+                        <Input id="brand" placeholder="Enter brand name" />
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Product Video (Optional)</Label>
-                    <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
-                      <Video className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Click to upload video</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Category</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(cat => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="price">Base Price (₹)</Label>
+                        <Input id="price" type="number" placeholder="0.00" />
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Create Product</Button>
-                </div>
-              </form>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea id="description" placeholder="Enter product description" rows={3} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Product Image</Label>
+                        <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
+                          <Image className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">Click to upload image</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Product Video (Optional)</Label>
+                        <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
+                          <Video className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground">Click to upload video</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit">Create Product</Button>
+                    </div>
+                  </form>
+                </TabsContent>
+                <TabsContent value="excel">
+                  <ExcelProductUpload onClose={() => setIsAddDialogOpen(false)} />
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
         </div>

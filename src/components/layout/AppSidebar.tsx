@@ -39,6 +39,9 @@ import {
   Share2,
   Crown,
   LifeBuoy,
+  Shield,
+  FileText,
+  IndianRupee,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -90,6 +93,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       { title: 'Settlements', url: '/settlements', icon: CreditCard, roles: ['admin', 'vendor'] },
       { title: 'Reconciliation', url: '/reconciliation', icon: Scale, roles: ['admin', 'operations'] },
+      { title: 'Price & Payout', url: '/price-payout', icon: IndianRupee, roles: ['admin', 'vendor'] },
     ],
   },
   {
@@ -116,11 +120,18 @@ const navigationGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'Reports',
+    items: [
+      { title: 'Reports & History', url: '/reports', icon: FileText, roles: ['admin', 'vendor', 'operations'] },
+    ],
+  },
+  {
     label: 'System',
     items: [
       { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
+      { title: 'Permissions', url: '/permissions', icon: Shield, roles: ['admin'] },
       { title: 'Subscription', url: '/subscription', icon: Crown, roles: ['admin'] },
-      { title: 'AI Chatbot', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },
+      { title: 'AI Hub', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },
     ],
   },
 ];
@@ -144,7 +155,6 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r-0" collapsible="icon">
-      {/* Header */}
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sidebar-primary">
@@ -159,7 +169,6 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      {/* Navigation Content */}
       <SidebarContent className="px-2 py-4 scrollbar-thin">
         {filteredGroups.map((group) => (
           <SidebarGroup key={group.label}>
@@ -206,7 +215,6 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      {/* Footer - User Menu */}
       <SidebarFooter className="p-3 border-t border-sidebar-border">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -234,7 +242,7 @@ export function AppSidebar() {
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/settings')}>
+            <DropdownMenuItem onClick={() => navigate('/permissions')}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </DropdownMenuItem>
