@@ -114,6 +114,7 @@ export type OrderStatus = 'pending' | 'confirmed' | 'packed' | 'shipped' | 'deli
 export interface OrderItem {
   skuId: string;
   productName: string;
+  brand: string;
   quantity: number;
   price: number;
   status: OrderStatus;

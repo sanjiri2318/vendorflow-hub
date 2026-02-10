@@ -16,7 +16,11 @@ import {
   TrendingUp,
   TrendingDown,
   Clock,
-  Star
+  Star,
+  Users,
+  UserPlus,
+  UserCheck,
+  Percent,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -96,7 +100,6 @@ export default function Dashboard() {
     mockConsolidatedOrders.forEach(row => {
       brandOrders[row.brand] = (brandOrders[row.brand] || 0) + row.total;
     });
-    // Mock growth percentages per brand
     const growthMap: Record<string, number> = {
       'Boat': 12.4,
       'Samsung': 8.7,
@@ -113,6 +116,19 @@ export default function Dashboard() {
         growth: growthMap[brand] ?? Math.round((Math.random() - 0.3) * 20 * 10) / 10,
       }))
       .sort((a, b) => b.orders - a.orders);
+  }, []);
+
+  // Customer intelligence metrics
+  const customerMetrics = useMemo(() => {
+    const customerMap: Record<string, number> = {};
+    mockOrders.forEach(o => {
+      customerMap[o.customerId] = (customerMap[o.customerId] || 0) + 1;
+    });
+    const totalCustomers = Object.keys(customerMap).length;
+    const repeatCustomers = Object.values(customerMap).filter(c => c > 1).length;
+    const newCustomers = totalCustomers - repeatCustomers;
+    const repeatRate = totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
+    return { newCustomers, repeatCustomers, repeatRate };
   }, []);
   // Get KPIs based on selected portal
   const kpiData = useMemo(() => {
@@ -304,6 +320,47 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Customer Insights */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            Customer Insights
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg bg-muted/30 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-2 rounded-lg bg-emerald-500/10">
+                  <UserPlus className="w-5 h-5 text-emerald-600" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{customerMetrics.newCustomers}</p>
+              <p className="text-sm text-muted-foreground">New Customers</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/30 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <UserCheck className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{customerMetrics.repeatCustomers}</p>
+              <p className="text-sm text-muted-foreground">Repeat Customers</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/30 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Percent className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold">{customerMetrics.repeatRate}%</p>
+              <p className="text-sm text-muted-foreground">Repeat Rate</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Brand Analytics */}
       <Card>
