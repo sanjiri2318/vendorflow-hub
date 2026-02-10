@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { mockInventory, portalConfigs } from '@/services/mockData';
 import { Portal } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Download, AlertTriangle, Package, Filter } from 'lucide-react';
+import { Search, Download, AlertTriangle, Package } from 'lucide-react';
+
+const allBrands = Array.from(new Set(mockInventory.map(i => i.brand))).sort();
 
 export default function Inventory() {
   const [selectedPortal, setSelectedPortal] = useState<Portal | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [stockFilter, setStockFilter] = useState<string>('all');
+  const [brandFilter, setBrandFilter] = useState<string>('all');
 
   const warehouses = useMemo(() => {
     const unique = new Set(mockInventory.map(i => i.warehouse));
@@ -43,10 +46,11 @@ export default function Inventory() {
       const matchesStock = stockFilter === 'all' || 
                           (stockFilter === 'low' && item.availableStock <= item.lowStockThreshold) ||
                           (stockFilter === 'healthy' && item.availableStock > item.lowStockThreshold);
+      const matchesBrand = brandFilter === 'all' || item.brand === brandFilter;
       
-      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock;
+      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock && matchesBrand;
     });
-  }, [selectedPortal, searchQuery, warehouseFilter, stockFilter]);
+  }, [selectedPortal, searchQuery, warehouseFilter, stockFilter, brandFilter]);
 
   const stats = useMemo(() => {
     const items = selectedPortal === 'all' ? mockInventory : mockInventory.filter(i => i.portal === selectedPortal);
@@ -64,11 +68,7 @@ export default function Inventory() {
     return { label: 'Healthy', variant: 'success' as const };
   };
 
-  const getAgingBadge = (days: number) => {
-    if (days > 90) return { label: `${days}d`, variant: 'destructive' as const };
-    if (days > 60) return { label: `${days}d`, variant: 'warning' as const };
-    return { label: `${days}d`, variant: 'secondary' as const };
-  };
+  const exportLabel = brandFilter !== 'all' ? `Export – ${brandFilter} Inventory` : 'Export';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -81,7 +81,7 @@ export default function Inventory() {
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
-            Export
+            {exportLabel}
           </Button>
         </div>
       </div>
@@ -104,8 +104,8 @@ export default function Inventory() {
         <Card className="bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <Package className="w-5 h-5 text-success" />
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <Package className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalStock.toLocaleString()}</p>
@@ -117,8 +117,8 @@ export default function Inventory() {
         <Card className="bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-warning/10">
-                <AlertTriangle className="w-5 h-5 text-warning" />
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.lowStock}</p>
@@ -130,8 +130,8 @@ export default function Inventory() {
         <Card className="bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
+              <div className="p-2 rounded-lg bg-rose-500/10">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.aging}</p>
@@ -171,6 +171,18 @@ export default function Inventory() {
                 </SelectContent>
               </Select>
 
+              <Select value={brandFilter} onValueChange={setBrandFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Brands</SelectItem>
+                  {allBrands.map(b => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={stockFilter} onValueChange={setStockFilter}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Stock Status" />
@@ -195,6 +207,7 @@ export default function Inventory() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">SKU ID</TableHead>
                   <TableHead className="font-semibold">Product Name</TableHead>
+                  <TableHead className="font-semibold">Brand</TableHead>
                   <TableHead className="font-semibold">Portal</TableHead>
                   <TableHead className="font-semibold text-center">Available</TableHead>
                   <TableHead className="font-semibold text-center">Reserved</TableHead>
@@ -206,7 +219,6 @@ export default function Inventory() {
               <TableBody>
                 {filteredInventory.map((item) => {
                   const status = getStockStatus(item.availableStock, item.lowStockThreshold);
-                  const aging = getAgingBadge(item.agingDays);
                   const portal = portalConfigs.find(p => p.id === item.portal);
                   
                   return (
@@ -214,13 +226,16 @@ export default function Inventory() {
                       <TableCell className="font-mono text-sm">{item.skuId}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{item.productName}</TableCell>
                       <TableCell>
+                        <Badge variant="secondary" className="text-xs">{item.brand}</Badge>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant="outline" className="gap-1">
                           {portal?.icon} {portal?.name}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <span className={`font-semibold ${
-                          item.availableStock <= item.lowStockThreshold ? 'text-warning' : 'text-foreground'
+                          item.availableStock <= item.lowStockThreshold ? 'text-amber-600' : 'text-foreground'
                         }`}>
                           {item.availableStock}
                         </span>
@@ -233,8 +248,8 @@ export default function Inventory() {
                         <Badge 
                           variant="secondary"
                           className={`${
-                            item.agingDays > 90 ? 'bg-destructive/10 text-destructive' :
-                            item.agingDays > 60 ? 'bg-warning/10 text-warning' : ''
+                            item.agingDays > 90 ? 'bg-rose-500/10 text-rose-600' :
+                            item.agingDays > 60 ? 'bg-amber-500/10 text-amber-600' : ''
                           }`}
                         >
                           {item.agingDays}d
@@ -244,9 +259,9 @@ export default function Inventory() {
                         <Badge 
                           variant="secondary"
                           className={`${
-                            status.variant === 'destructive' ? 'bg-destructive/10 text-destructive' :
-                            status.variant === 'warning' ? 'bg-warning/10 text-warning' :
-                            'bg-success/10 text-success'
+                            status.variant === 'destructive' ? 'bg-rose-500/10 text-rose-600' :
+                            status.variant === 'warning' ? 'bg-amber-500/10 text-amber-600' :
+                            'bg-emerald-500/10 text-emerald-600'
                           }`}
                         >
                           {status.label}

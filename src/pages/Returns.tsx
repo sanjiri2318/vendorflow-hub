@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { mockReturns, mockOrders, portalConfigs } from '@/services/mockData';
+import { mockReturns, mockProducts, portalConfigs } from '@/services/mockData';
 import { Portal, ClaimStatus, ReturnReason } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,12 +31,30 @@ import {
   FileText
 } from 'lucide-react';
 
+// Brand lookup from SKU to brand
+const skuBrandMap: Record<string, string> = {};
+mockProducts.forEach(p => {
+  skuBrandMap[p.productId] = p.brand;
+});
+
+// Map return items to brands
+function getReturnBrand(returnOrder: typeof mockReturns[0]): string {
+  if (returnOrder.items.length > 0) {
+    const skuId = returnOrder.items[0].skuId;
+    // Extract product ID pattern from SKU
+    const num = skuId.replace(/SKU-[A-Z]+-/, '');
+    const product = mockProducts.find(p => p.productId === `PROD-${num}`);
+    return product?.brand || 'Unknown';
+  }
+  return 'Unknown';
+}
+
 const claimStatusConfig: Record<ClaimStatus, { label: string; color: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'bg-warning/10 text-warning', icon: Clock },
-  eligible: { label: 'Eligible', color: 'bg-info/10 text-info', icon: AlertTriangle },
+  pending: { label: 'Pending', color: 'bg-amber-500/10 text-amber-600', icon: Clock },
+  eligible: { label: 'Eligible', color: 'bg-blue-500/10 text-blue-600', icon: AlertTriangle },
   ineligible: { label: 'Ineligible', color: 'bg-muted text-muted-foreground', icon: XCircle },
-  approved: { label: 'Approved', color: 'bg-success/10 text-success', icon: CheckCircle },
-  rejected: { label: 'Rejected', color: 'bg-destructive/10 text-destructive', icon: XCircle },
+  approved: { label: 'Approved', color: 'bg-emerald-500/10 text-emerald-600', icon: CheckCircle },
+  rejected: { label: 'Rejected', color: 'bg-rose-500/10 text-rose-600', icon: XCircle },
   completed: { label: 'Completed', color: 'bg-primary/10 text-primary', icon: CheckCircle },
 };
 
@@ -110,8 +128,8 @@ export default function Returns() {
         <Card className="bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-warning/10">
-                <Clock className="w-5 h-5 text-warning" />
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Clock className="w-5 h-5 text-amber-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.pending}</p>
@@ -123,8 +141,8 @@ export default function Returns() {
         <Card className="bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-info/10">
-                <AlertTriangle className="w-5 h-5 text-info" />
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <AlertTriangle className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.eligible}</p>
@@ -136,8 +154,8 @@ export default function Returns() {
         <Card className="bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <CheckCircle className="w-5 h-5 text-success" />
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.completed}</p>
@@ -190,6 +208,7 @@ export default function Returns() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Return ID</TableHead>
                   <TableHead className="font-semibold">Order ID</TableHead>
+                  <TableHead className="font-semibold">Brand</TableHead>
                   <TableHead className="font-semibold">Portal</TableHead>
                   <TableHead className="font-semibold">Reason</TableHead>
                   <TableHead className="font-semibold">Request Date</TableHead>
@@ -204,6 +223,7 @@ export default function Returns() {
                   const status = claimStatusConfig[ret.status];
                   const portal = portalConfigs.find(p => p.id === ret.portal);
                   const StatusIcon = status.icon;
+                  const brand = getReturnBrand(ret);
                   
                   return (
                     <TableRow key={ret.returnId} className="hover:bg-muted/30">
@@ -212,6 +232,9 @@ export default function Returns() {
                         <a href={`/orders/${ret.orderId}`} className="text-accent hover:underline">
                           {ret.orderId}
                         </a>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">{brand}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="gap-1">
@@ -229,7 +252,7 @@ export default function Returns() {
                       </TableCell>
                       <TableCell>
                         {ret.claimEligible ? (
-                          <Badge variant="secondary" className="bg-success/10 text-success gap-1">
+                          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 gap-1">
                             <CheckCircle className="w-3 h-3" />
                             Eligible
                           </Badge>

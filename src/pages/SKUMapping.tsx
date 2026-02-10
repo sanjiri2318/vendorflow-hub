@@ -206,6 +206,7 @@ export default function SKUMapping() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Master SKU</TableHead>
                   <TableHead className="font-semibold">Product Name</TableHead>
+                  <TableHead className="font-semibold">Brand</TableHead>
                   <TableHead className="text-center font-semibold">🛒 Amazon</TableHead>
                   <TableHead className="text-center font-semibold">🛍️ Flipkart</TableHead>
                   <TableHead className="text-center font-semibold">📦 Meesho</TableHead>
@@ -234,6 +235,9 @@ export default function SKUMapping() {
                     <TableRow key={mapping.masterSkuId}>
                       <TableCell className="font-mono text-sm font-medium">{mapping.masterSkuId}</TableCell>
                       <TableCell className="max-w-[200px] truncate font-medium">{mapping.productName}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">{mapping.brand}</Badge>
+                      </TableCell>
                       {skuCell(mapping.amazonSku)}
                       {skuCell(mapping.flipkartSku)}
                       {skuCell(mapping.meeshoSku)}
@@ -286,7 +290,7 @@ export default function SKUMapping() {
                 })}
                 {filteredMappings.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
                       <Unlink className="w-10 h-10 mx-auto mb-3 opacity-30" />
                       <p className="font-medium">No mappings found</p>
                       <p className="text-sm">Try adjusting your filters</p>
