@@ -3,11 +3,18 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { portalConfigs } from '@/services/mockData';
 import { Portal } from '@/types';
 import { CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, Target, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
+import ReconciliationHealthScore from '@/components/reconciliation/ReconciliationHealthScore';
+import SettlementCycleTracker from '@/components/reconciliation/SettlementCycleTracker';
+import ChargebackTracker from '@/components/reconciliation/ChargebackTracker';
+import FeeVariationMonitor from '@/components/reconciliation/FeeVariationMonitor';
+import SKUProfitabilityTrend from '@/components/reconciliation/SKUProfitabilityTrend';
+import FinancialRiskAlerts from '@/components/reconciliation/FinancialRiskAlerts';
 
 type ReconStatus = 'matched' | 'minor_difference' | 'mismatch';
 
@@ -59,6 +66,7 @@ const statusBadge = (status: ReconStatus) => {
 export default function Reconciliation() {
   const [filterPortal, setFilterPortal] = useState<Portal | 'all'>('all');
   const [dateFilter, setDateFilter] = useState('30days');
+  const [activeTab, setActiveTab] = useState('overview');
 
   const filtered = useMemo(() => {
     return filterPortal === 'all' ? mockReconData : mockReconData.filter(r => r.marketplace === filterPortal);
@@ -73,14 +81,17 @@ export default function Reconciliation() {
   const mismatchCount = filtered.filter(r => r.status === 'mismatch').length;
   const accuracy = totalExpected > 0 ? ((totalSettled / totalExpected) * 100).toFixed(1) : '100.0';
 
+  const matchedPct = (matchedCount / filtered.length) * 100;
+  const mismatchPct = (mismatchCount / filtered.length) * 100;
+
   const dateLabel = dateFilter === 'today' ? 'Today' : dateFilter === '7days' ? 'Last 7 Days' : dateFilter === '30days' ? 'Last 30 Days' : dateFilter === 'this_month' ? 'This Month' : dateFilter === 'this_year' ? 'This Year' : 'Custom';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Order Reconciliation</h1>
-          <p className="text-muted-foreground">Deep matching of expected vs settled amounts across all portals</p>
+          <h1 className="text-2xl font-bold text-foreground">Reconciliation & Financial Risk</h1>
+          <p className="text-muted-foreground">Proactive seller-loss prevention and settlement intelligence</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <DateFilter value={dateFilter} onChange={setDateFilter} />
@@ -95,78 +106,115 @@ export default function Reconciliation() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Activity className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{filtered.length}</p><p className="text-sm text-muted-foreground">Records</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><TrendingUp className="w-5 h-5 text-blue-600" /></div><div><p className="text-2xl font-bold">₹{(totalExpected / 1000).toFixed(1)}K</p><p className="text-sm text-muted-foreground">Expected</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><CheckCircle2 className="w-5 h-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{matchedCount}</p><p className="text-sm text-muted-foreground">Matched</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-rose-500/10"><XCircle className="w-5 h-5 text-rose-600" /></div><div><p className="text-2xl font-bold">{mismatchCount}</p><p className="text-sm text-muted-foreground">Mismatches</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-rose-500/10"><TrendingDown className="w-5 h-5 text-rose-600" /></div><div><p className="text-2xl font-bold text-rose-600">-₹{totalDifference.toLocaleString()}</p><p className="text-sm text-muted-foreground">Total Gap</p></div></div></CardContent></Card>
-        <Card className="bg-primary/5 border-primary/20"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Target className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-primary">{accuracy}%</p><p className="text-sm text-muted-foreground">Accuracy</p></div></div></CardContent></Card>
-      </div>
+      <ReconciliationHealthScore matchedPct={matchedPct} mismatchPct={mismatchPct} delayedPct={37.5} chargebackLossPct={4.2} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Reconciliation Report</CardTitle>
-          <CardDescription>Order-level matching with SKU, batch, and amount details — mismatches highlighted in red</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="w-10"><SelectAllCheckbox checked={rowSelection.isAllSelected} onCheckedChange={rowSelection.toggleAll} /></TableHead>
-                  <TableHead className="font-semibold">Date</TableHead>
-                  <TableHead className="font-semibold">Order ID</TableHead>
-                  <TableHead className="font-semibold">Order Item</TableHead>
-                  <TableHead className="font-semibold">SKU ID</TableHead>
-                  <TableHead className="font-semibold">Master SKU</TableHead>
-                  <TableHead className="font-semibold">Batch ID</TableHead>
-                  <TableHead className="font-semibold">Marketplace</TableHead>
-                  <TableHead className="text-right font-semibold">Expected ₹</TableHead>
-                  <TableHead className="text-right font-semibold">Settled ₹</TableHead>
-                  <TableHead className="text-right font-semibold">Difference</TableHead>
-                  <TableHead className="text-center font-semibold">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((record) => {
-                  const portal = portalConfigs.find(p => p.id === record.marketplace);
-                  const isMismatch = record.status === 'mismatch';
-                  return (
-                    <TableRow key={record.id} className={`${isMismatch ? 'bg-rose-500/5' : record.status === 'minor_difference' ? 'bg-amber-500/5' : ''} ${rowSelection.isSelected(record.id) ? 'ring-1 ring-primary/30' : ''}`}>
-                      <TableCell><RowCheckbox checked={rowSelection.isSelected(record.id)} onCheckedChange={() => rowSelection.toggle(record.id)} /></TableCell>
-                      <TableCell className="font-medium">{format(new Date(record.date), 'dd MMM yyyy')}</TableCell>
-                      <TableCell className="font-medium">{record.orderId}</TableCell>
-                      <TableCell className="text-sm">{record.orderItem}</TableCell>
-                      <TableCell className="font-mono text-xs">{record.skuId}</TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{record.masterSku}</TableCell>
-                      <TableCell className="font-mono text-xs">{record.batchId}</TableCell>
-                      <TableCell><span className="flex items-center gap-1.5 text-sm">{portal?.icon} {portal?.name}</span></TableCell>
-                      <TableCell className="text-right font-medium">₹{record.expectedAmount.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-medium">₹{record.settledAmount.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
-                        {record.difference === 0 ? (
-                          <span className="text-muted-foreground">₹0</span>
-                        ) : (
-                          <span className="font-bold text-rose-600">-₹{record.difference.toLocaleString()}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">{statusBadge(record.status)}</TableCell>
-                    </TableRow>
-                  );
-                })}
-                <TableRow className="bg-muted/50 font-bold border-t-2">
-                  <TableCell colSpan={8}>Totals</TableCell>
-                  <TableCell className="text-right">₹{totalExpected.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">₹{totalSettled.toLocaleString()}</TableCell>
-                  <TableCell className="text-right text-rose-600">-₹{totalDifference.toLocaleString()}</TableCell>
-                  <TableCell className="text-center"><span className="text-sm text-muted-foreground">{accuracy}%</span></TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="overview">Reconciliation Report</TabsTrigger>
+          <TabsTrigger value="settlement-cycles">Settlement Cycles</TabsTrigger>
+          <TabsTrigger value="chargebacks">Chargebacks & Disputes</TabsTrigger>
+          <TabsTrigger value="fee-variation">Fee Variation</TabsTrigger>
+          <TabsTrigger value="sku-trends">SKU Profitability</TabsTrigger>
+          <TabsTrigger value="risk-alerts">Risk Alerts <Badge variant="destructive" className="ml-1.5 text-[10px] px-1.5 py-0">5</Badge></TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Activity className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{filtered.length}</p><p className="text-sm text-muted-foreground">Records</p></div></div></CardContent></Card>
+              <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><TrendingUp className="w-5 h-5 text-blue-600" /></div><div><p className="text-2xl font-bold">₹{(totalExpected / 1000).toFixed(1)}K</p><p className="text-sm text-muted-foreground">Expected</p></div></div></CardContent></Card>
+              <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><CheckCircle2 className="w-5 h-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{matchedCount}</p><p className="text-sm text-muted-foreground">Matched</p></div></div></CardContent></Card>
+              <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-rose-500/10"><XCircle className="w-5 h-5 text-rose-600" /></div><div><p className="text-2xl font-bold">{mismatchCount}</p><p className="text-sm text-muted-foreground">Mismatches</p></div></div></CardContent></Card>
+              <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-rose-500/10"><TrendingDown className="w-5 h-5 text-rose-600" /></div><div><p className="text-2xl font-bold text-rose-600">-₹{totalDifference.toLocaleString()}</p><p className="text-sm text-muted-foreground">Total Gap</p></div></div></CardContent></Card>
+              <Card className="bg-primary/5 border-primary/20"><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Target className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold text-primary">{accuracy}%</p><p className="text-sm text-muted-foreground">Accuracy</p></div></div></CardContent></Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Reconciliation Report</CardTitle>
+                <CardDescription>Order-level matching with SKU, batch, and amount details — mismatches highlighted in red</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="w-10"><SelectAllCheckbox checked={rowSelection.isAllSelected} onCheckedChange={rowSelection.toggleAll} /></TableHead>
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Order ID</TableHead>
+                        <TableHead className="font-semibold">Order Item</TableHead>
+                        <TableHead className="font-semibold">SKU ID</TableHead>
+                        <TableHead className="font-semibold">Master SKU</TableHead>
+                        <TableHead className="font-semibold">Batch ID</TableHead>
+                        <TableHead className="font-semibold">Marketplace</TableHead>
+                        <TableHead className="text-right font-semibold">Expected ₹</TableHead>
+                        <TableHead className="text-right font-semibold">Settled ₹</TableHead>
+                        <TableHead className="text-right font-semibold">Difference</TableHead>
+                        <TableHead className="text-center font-semibold">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((record) => {
+                        const portal = portalConfigs.find(p => p.id === record.marketplace);
+                        const isMismatch = record.status === 'mismatch';
+                        return (
+                          <TableRow key={record.id} className={`${isMismatch ? 'bg-rose-500/5' : record.status === 'minor_difference' ? 'bg-amber-500/5' : ''} ${rowSelection.isSelected(record.id) ? 'ring-1 ring-primary/30' : ''}`}>
+                            <TableCell><RowCheckbox checked={rowSelection.isSelected(record.id)} onCheckedChange={() => rowSelection.toggle(record.id)} /></TableCell>
+                            <TableCell className="font-medium">{format(new Date(record.date), 'dd MMM yyyy')}</TableCell>
+                            <TableCell className="font-medium">{record.orderId}</TableCell>
+                            <TableCell className="text-sm">{record.orderItem}</TableCell>
+                            <TableCell className="font-mono text-xs">{record.skuId}</TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">{record.masterSku}</TableCell>
+                            <TableCell className="font-mono text-xs">{record.batchId}</TableCell>
+                            <TableCell><span className="flex items-center gap-1.5 text-sm">{portal?.icon} {portal?.name}</span></TableCell>
+                            <TableCell className="text-right font-medium">₹{record.expectedAmount.toLocaleString()}</TableCell>
+                            <TableCell className="text-right font-medium">₹{record.settledAmount.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">
+                              {record.difference === 0 ? (
+                                <span className="text-muted-foreground">₹0</span>
+                              ) : (
+                                <span className="font-bold text-rose-600">-₹{record.difference.toLocaleString()}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">{statusBadge(record.status)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      <TableRow className="bg-muted/50 font-bold border-t-2">
+                        <TableCell colSpan={8}>Totals</TableCell>
+                        <TableCell className="text-right">₹{totalExpected.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">₹{totalSettled.toLocaleString()}</TableCell>
+                        <TableCell className="text-right text-rose-600">-₹{totalDifference.toLocaleString()}</TableCell>
+                        <TableCell className="text-center"><span className="text-sm text-muted-foreground">{accuracy}%</span></TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="settlement-cycles">
+          <SettlementCycleTracker />
+        </TabsContent>
+
+        <TabsContent value="chargebacks">
+          <ChargebackTracker />
+        </TabsContent>
+
+        <TabsContent value="fee-variation">
+          <FeeVariationMonitor />
+        </TabsContent>
+
+        <TabsContent value="sku-trends">
+          <SKUProfitabilityTrend />
+        </TabsContent>
+
+        <TabsContent value="risk-alerts">
+          <FinancialRiskAlerts />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
