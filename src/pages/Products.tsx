@@ -7,46 +7,28 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ExcelProductUpload } from '@/components/ExcelProductUpload';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { 
-  Search, 
-  Plus, 
-  Package, 
-  Edit, 
-  Eye, 
-  Video,
-  Image,
-  CheckCircle,
-  XCircle
+  Search, Plus, Package, Edit, Eye, Video, Image, CheckCircle, XCircle, Upload, FileSpreadsheet
 } from 'lucide-react';
 
 export default function Products() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   const categories = useMemo(() => {
     const unique = new Set(mockProducts.map(p => p.category));
@@ -60,7 +42,6 @@ export default function Products() {
                            product.brand.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
       const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-      
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [searchQuery, categoryFilter, statusFilter]);
@@ -74,9 +55,7 @@ export default function Products() {
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString()}`;
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    day: 'numeric', month: 'short', year: 'numeric',
   });
 
   return (
@@ -88,6 +67,23 @@ export default function Products() {
           <p className="text-muted-foreground">Manage your central product catalog and SKU mappings</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Bulk Upload Button */}
+          <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Upload className="w-4 h-4" />
+                Bulk Upload via Excel
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="w-5 h-5" />Bulk Product Upload</DialogTitle>
+              </DialogHeader>
+              <ExcelProductUpload onClose={() => setIsBulkUploadOpen(false)} />
+            </DialogContent>
+          </Dialog>
+
+          {/* Add Product Button */}
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -165,9 +161,7 @@ export default function Products() {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                        Cancel
-                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
                       <Button type="submit">Create Product</Button>
                     </div>
                   </form>
@@ -183,58 +177,10 @@ export default function Products() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Package className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-muted-foreground">Total Products</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <CheckCircle className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.active}</p>
-                <p className="text-sm text-muted-foreground">Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-muted">
-                <XCircle className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.inactive}</p>
-                <p className="text-sm text-muted-foreground">Inactive</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent/10">
-                <Package className="w-5 h-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.categories}</p>
-                <p className="text-sm text-muted-foreground">Categories</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card className="bg-card"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Package className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{stats.total}</p><p className="text-sm text-muted-foreground">Total Products</p></div></div></CardContent></Card>
+        <Card className="bg-card"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><CheckCircle className="w-5 h-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{stats.active}</p><p className="text-sm text-muted-foreground">Active</p></div></div></CardContent></Card>
+        <Card className="bg-card"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-muted"><XCircle className="w-5 h-5 text-muted-foreground" /></div><div><p className="text-2xl font-bold">{stats.inactive}</p><p className="text-sm text-muted-foreground">Inactive</p></div></div></CardContent></Card>
+        <Card className="bg-card"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Package className="w-5 h-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{stats.categories}</p><p className="text-sm text-muted-foreground">Categories</p></div></div></CardContent></Card>
       </div>
 
       {/* Filters */}
@@ -243,30 +189,17 @@ export default function Products() {
           <div className="flex flex-wrap gap-4">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, ID, or brand..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Search by name, ID, or brand..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
             </div>
-            
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
+                {categories.map(cat => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
               </SelectContent>
             </Select>
-
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
@@ -298,46 +231,26 @@ export default function Products() {
                   <TableRow key={product.productId} className="hover:bg-muted/30">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <img 
-                          src={product.imageUrl} 
-                          alt={product.name}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
+                        <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
                         <div>
                           <p className="font-medium">{product.name}</p>
                           <p className="text-xs text-muted-foreground">{product.productId}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{product.category}</Badge>
-                    </TableCell>
+                    <TableCell><Badge variant="secondary">{product.category}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{product.brand}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(product.basePrice)}
-                    </TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(product.basePrice)}</TableCell>
                     <TableCell>
-                      <Badge 
-                        variant="secondary"
-                        className={product.status === 'active' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-muted text-muted-foreground'
-                        }
-                      >
+                      <Badge variant="secondary" className={product.status === 'active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'}>
                         {product.status === 'active' ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(product.updatedAt)}
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(product.updatedAt)}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="w-4 h-4" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -345,7 +258,6 @@ export default function Products() {
               </TableBody>
             </Table>
           </div>
-          
           {filteredProducts.length === 0 && (
             <div className="text-center py-12">
               <Package className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />

@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { mockVendors } from '@/services/mockData';
-import { Users, Plus, MapPin, Package, ShoppingCart } from 'lucide-react';
+import { Users, Plus, MapPin, Package, ShoppingCart, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 
 const statusBadge = (status: string) => {
@@ -13,6 +13,12 @@ const statusBadge = (status: string) => {
     case 'suspended': return <Badge variant="outline" className="bg-rose-500/15 text-rose-600 border-rose-500/30">Suspended</Badge>;
     default: return null;
   }
+};
+
+const subscriptionData: Record<string, { plan: string; status: string }> = {
+  'VEN-001': { plan: 'Pro', status: 'active' },
+  'VEN-002': { plan: 'Enterprise', status: 'active' },
+  'VEN-003': { plan: 'Basic', status: 'expired' },
 };
 
 export default function Vendors() {
@@ -40,7 +46,7 @@ export default function Vendors() {
       <Card>
         <CardHeader>
           <CardTitle>Vendor List</CardTitle>
-          <CardDescription>All registered vendor partners</CardDescription>
+          <CardDescription>All registered vendor partners with subscription status</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -52,37 +58,52 @@ export default function Vendors() {
                 <TableHead className="font-semibold">Warehouses</TableHead>
                 <TableHead className="text-center font-semibold">Products</TableHead>
                 <TableHead className="text-center font-semibold">Orders</TableHead>
+                <TableHead className="font-semibold">Subscription</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Joined</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockVendors.map(v => (
-                <TableRow key={v.vendorId}>
-                  <TableCell className="font-mono text-sm">{v.vendorId}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{v.name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{v.address.split(',').slice(-2).join(',').trim()}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <p>{v.email}</p>
-                      <p className="text-muted-foreground">{v.phone}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {v.warehouses.map(w => <Badge key={w} variant="secondary" className="text-xs">{w}</Badge>)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center font-medium">{v.totalProducts}</TableCell>
-                  <TableCell className="text-center font-medium">{v.totalOrders.toLocaleString()}</TableCell>
-                  <TableCell>{statusBadge(v.status)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{format(new Date(v.joinDate), 'dd MMM yyyy')}</TableCell>
-                </TableRow>
-              ))}
+              {mockVendors.map(v => {
+                const sub = subscriptionData[v.vendorId];
+                return (
+                  <TableRow key={v.vendorId}>
+                    <TableCell className="font-mono text-sm">{v.vendorId}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{v.name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{v.address.split(',').slice(-2).join(',').trim()}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <p>{v.email}</p>
+                        <p className="text-muted-foreground">{v.phone}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {v.warehouses.map(w => <Badge key={w} variant="secondary" className="text-xs">{w}</Badge>)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center font-medium">{v.totalProducts}</TableCell>
+                    <TableCell className="text-center font-medium">{v.totalOrders.toLocaleString()}</TableCell>
+                    <TableCell>
+                      {sub && (
+                        <div className="flex items-center gap-1.5">
+                          <Crown className="w-3.5 h-3.5 text-amber-500" />
+                          <Badge variant="secondary" className="text-xs">{sub.plan}</Badge>
+                          <Badge variant="outline" className={`text-xs ${sub.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' : 'bg-rose-500/15 text-rose-600 border-rose-500/30'}`}>
+                            {sub.status}
+                          </Badge>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{statusBadge(v.status)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{format(new Date(v.joinDate), 'dd MMM yyyy')}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

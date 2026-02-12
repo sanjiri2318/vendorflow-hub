@@ -117,7 +117,7 @@ const navigationGroups: NavGroup[] = [
   {
     label: 'Marketing',
     items: [
-      { title: 'Social Insights', url: '/social-insights', icon: Share2, roles: ['admin', 'vendor'] },
+      { title: 'Unified Inbox', url: '/social-insights', icon: Share2, roles: ['admin', 'vendor'] },
       { title: 'Own Website', url: '/ecommerce', icon: Globe, roles: ['admin', 'vendor'] },
     ],
   },
@@ -131,17 +131,10 @@ const navigationGroups: NavGroup[] = [
     label: 'Admin',
     items: [
       { title: 'System Settings', url: '/system-settings', icon: Settings, roles: ['admin'] },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
-      { title: 'Data Configuration', url: '/data-configuration', icon: Database, roles: ['admin'] },
-      { title: 'System Architecture', url: '/system-architecture', icon: Blocks, roles: ['admin'] },
       { title: 'Permissions', url: '/permissions', icon: Shield, roles: ['admin'] },
       { title: 'Subscription', url: '/subscription', icon: Crown, roles: ['admin'] },
       { title: 'AI Hub', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },
+      { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
     ],
   },
 ];
@@ -252,13 +245,17 @@ export function AppSidebar() {
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/permissions')}>
+            <DropdownMenuItem onClick={() => navigate('/system-settings')}>
               <Settings className="w-4 h-4 mr-2" />
-              Settings
+              System Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/subscription')}>
-              <Crown className="w-4 h-4 mr-2" />
-              Subscription
+            <DropdownMenuItem onClick={() => navigate('/system-architecture')}>
+              <Blocks className="w-4 h-4 mr-2" />
+              System Architecture
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/data-configuration')}>
+              <Database className="w-4 h-4 mr-2" />
+              Data Configuration
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
