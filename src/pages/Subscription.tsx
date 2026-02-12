@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, X, Crown, Zap, Building2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CheckCircle2, X, Crown, Zap, Building2, Users, Package, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Plan {
@@ -15,16 +17,18 @@ interface Plan {
   features: { name: string; included: boolean }[];
   popular?: boolean;
   current?: boolean;
+  moduleAccess: string[];
 }
 
 const plans: Plan[] = [
   {
-    id: 'starter',
-    name: 'Starter',
+    id: 'basic',
+    name: 'Basic',
     price: '₹4,999',
     period: '/month',
     description: 'Perfect for small vendors getting started',
     icon: Zap,
+    moduleAccess: ['Dashboard', 'Products', 'Orders', 'Inventory'],
     features: [
       { name: 'Up to 3 marketplaces', included: true },
       { name: '500 orders/month', included: true },
@@ -39,14 +43,15 @@ const plans: Plan[] = [
     ],
   },
   {
-    id: 'growth',
-    name: 'Growth',
+    id: 'pro',
+    name: 'Pro',
     price: '₹14,999',
     period: '/month',
     description: 'For growing businesses scaling operations',
     icon: Crown,
     popular: true,
     current: true,
+    moduleAccess: ['Dashboard', 'Products', 'Orders', 'Inventory', 'Returns', 'Settlements', 'SKU Mapping', 'Analytics'],
     features: [
       { name: 'All 6 marketplaces', included: true },
       { name: '5,000 orders/month', included: true },
@@ -67,6 +72,7 @@ const plans: Plan[] = [
     period: '/month',
     description: 'Full-scale enterprise vendor management',
     icon: Building2,
+    moduleAccess: ['All Modules', 'AI Hub', 'System Settings', 'Custom Integrations'],
     features: [
       { name: 'Unlimited marketplaces', included: true },
       { name: 'Unlimited orders', included: true },
@@ -82,20 +88,46 @@ const plans: Plan[] = [
   },
 ];
 
+interface VendorSub {
+  vendorId: string;
+  name: string;
+  plan: string;
+  status: 'active' | 'expired' | 'trial';
+  enabled: boolean;
+  lastPayment: string;
+}
+
+const initialVendorSubs: VendorSub[] = [
+  { vendorId: 'VEN-001', name: 'TechGadgets India Pvt Ltd', plan: 'Pro', status: 'active', enabled: true, lastPayment: '2026-02-01' },
+  { vendorId: 'VEN-002', name: 'FashionHub Exports', plan: 'Enterprise', status: 'active', enabled: true, lastPayment: '2026-02-05' },
+  { vendorId: 'VEN-003', name: 'BabyCare Essentials', plan: 'Basic', status: 'expired', enabled: false, lastPayment: '2026-01-15' },
+];
+
 export default function Subscription() {
   const { toast } = useToast();
+  const [vendorSubs, setVendorSubs] = useState(initialVendorSubs);
 
   const handleUpgrade = (planName: string) => {
     toast({ title: 'Upgrade Requested', description: `Your request to upgrade to ${planName} has been submitted.` });
+  };
+
+  const toggleVendor = (vendorId: string) => {
+    setVendorSubs(prev => prev.map(v => v.vendorId === vendorId ? { ...v, enabled: !v.enabled } : v));
+    const vendor = vendorSubs.find(v => v.vendorId === vendorId);
+    toast({
+      title: vendor?.enabled ? 'Vendor Disabled' : 'Vendor Enabled',
+      description: `${vendor?.name} has been ${vendor?.enabled ? 'disabled' : 'enabled'}.`,
+    });
   };
 
   return (
     <div className="space-y-6">
       <div className="text-center max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold text-foreground">Subscription Plans</h1>
-        <p className="text-muted-foreground mt-2">Choose the plan that fits your business. Upgrade or downgrade anytime.</p>
+        <p className="text-muted-foreground mt-2">Choose the plan that fits your business. Each plan controls module access and feature availability.</p>
       </div>
 
+      {/* Plans */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {plans.map(plan => {
           const Icon = plan.icon;
@@ -123,6 +155,12 @@ export default function Subscription() {
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Module Access:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {plan.moduleAccess.map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}
+                  </div>
+                </div>
                 <div className="space-y-3 mb-6">
                   {plan.features.map((f, i) => (
                     <div key={i} className="flex items-center gap-2.5">
@@ -147,6 +185,52 @@ export default function Subscription() {
           );
         })}
       </div>
+
+      {/* Vendor Subscription Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />Vendor Subscription Status</CardTitle>
+          <CardDescription>Enable or disable vendor access based on subscription payment status</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="font-semibold">Vendor ID</TableHead>
+                <TableHead className="font-semibold">Vendor Name</TableHead>
+                <TableHead className="font-semibold">Plan</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Last Payment</TableHead>
+                <TableHead className="font-semibold text-center">Active</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {vendorSubs.map(v => (
+                <TableRow key={v.vendorId} className={!v.enabled ? 'opacity-60' : ''}>
+                  <TableCell className="font-mono text-sm">{v.vendorId}</TableCell>
+                  <TableCell className="font-medium">{v.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{v.plan}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={
+                      v.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' :
+                      v.status === 'trial' ? 'bg-blue-500/15 text-blue-600 border-blue-500/30' :
+                      'bg-rose-500/15 text-rose-600 border-rose-500/30'
+                    }>
+                      {v.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{new Date(v.lastPayment).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
+                  <TableCell className="text-center">
+                    <Switch checked={v.enabled} onCheckedChange={() => toggleVendor(v.vendorId)} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

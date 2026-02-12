@@ -2,197 +2,228 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Eye, Heart, Play, ExternalLink, LogIn, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { TrendingUp, Eye, Heart, Search, Send, MessageCircle, Instagram, Facebook, Mail, MessageSquare as WhatsApp, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface SocialChannel {
-  platform: string;
-  icon: string;
-  reach: string;
-  engagement: string;
-  growth: number;
-  color: string;
-  connected: boolean;
+type Channel = 'all' | 'instagram' | 'facebook' | 'whatsapp' | 'email' | 'marketplace';
+
+interface Message {
+  id: string;
+  channel: Channel;
+  channelIcon: string;
+  sender: string;
+  subject: string;
+  preview: string;
+  time: string;
+  status: 'unread' | 'replied' | 'pending';
+  avatar: string;
 }
 
-const initialChannels: SocialChannel[] = [
-  { platform: 'Facebook', icon: '📘', reach: '24.5K', engagement: '3.2K', growth: 12.4, color: 'bg-blue-500/10 text-blue-600', connected: true },
-  { platform: 'Instagram', icon: '📸', reach: '38.7K', engagement: '5.8K', growth: 18.2, color: 'bg-pink-500/10 text-pink-600', connected: false },
-  { platform: 'YouTube', icon: '🎬', reach: '12.3K', engagement: '1.4K', growth: 8.7, color: 'bg-red-500/10 text-red-600', connected: false },
-  { platform: 'WhatsApp', icon: '💬', reach: '8.4K', engagement: '1.2K', growth: 5.1, color: 'bg-emerald-500/10 text-emerald-600', connected: false },
+const mockMessages: Message[] = [
+  { id: 'MSG-001', channel: 'instagram', channelIcon: '📸', sender: 'priya_fashion', subject: 'Product inquiry', preview: 'Hi, is the wireless earbuds available in white?', time: '2m ago', status: 'unread', avatar: 'P' },
+  { id: 'MSG-002', channel: 'facebook', channelIcon: '📘', sender: 'Rahul Sharma', subject: 'Order status', preview: 'Can you check my order ORD-2024-001 status?', time: '15m ago', status: 'unread', avatar: 'R' },
+  { id: 'MSG-003', channel: 'whatsapp', channelIcon: '💬', sender: '+91 98765 43210', subject: 'Bulk order', preview: 'We need 50 units of the fitness watch. Whats the bulk price?', time: '32m ago', status: 'pending', avatar: 'W' },
+  { id: 'MSG-004', channel: 'email', channelIcon: '📧', sender: 'kavita.m@email.com', subject: 'Return request', preview: 'I received a damaged speaker, need to initiate return process.', time: '1h ago', status: 'replied', avatar: 'K' },
+  { id: 'MSG-005', channel: 'marketplace', channelIcon: '🛒', sender: 'Amazon Buyer', subject: 'Quality concern', preview: 'The yoga mat seems different from the product image shown...', time: '2h ago', status: 'pending', avatar: 'A' },
+  { id: 'MSG-006', channel: 'instagram', channelIcon: '📸', sender: 'sneha_reviews', subject: 'Collaboration', preview: 'Would love to review your products. Please DM details.', time: '3h ago', status: 'unread', avatar: 'S' },
+  { id: 'MSG-007', channel: 'whatsapp', channelIcon: '💬', sender: '+91 87654 32109', subject: 'Payment query', preview: 'My payment got debited but order not confirmed yet', time: '4h ago', status: 'replied', avatar: 'W' },
+  { id: 'MSG-008', channel: 'facebook', channelIcon: '📘', sender: 'Amit Kumar', subject: 'Product feedback', preview: 'The baby care gift set was amazing! Can you add more variants?', time: '5h ago', status: 'replied', avatar: 'A' },
+  { id: 'MSG-009', channel: 'email', channelIcon: '📧', sender: 'vendor@partner.com', subject: 'Stock update', preview: 'Please update availability for SKU-AMZ-006 on your portal.', time: '6h ago', status: 'pending', avatar: 'V' },
+  { id: 'MSG-010', channel: 'marketplace', channelIcon: '🛒', sender: 'Flipkart Buyer', subject: 'Size exchange', preview: 'Need size L instead of M for the cotton t-shirt order', time: '8h ago', status: 'replied', avatar: 'F' },
 ];
 
-const mockCampaigns = [
-  { id: 'CMP-001', name: 'Summer Sale 2026', platform: 'Facebook + Instagram', status: 'active', impressions: '45.2K', clicks: '3.8K', ctr: '8.4%', spend: '₹12,500' },
-  { id: 'CMP-002', name: 'New Product Launch', platform: 'YouTube', status: 'active', impressions: '18.9K', clicks: '1.2K', ctr: '6.3%', spend: '₹8,200' },
-  { id: 'CMP-003', name: 'Festive Collection', platform: 'Instagram', status: 'completed', impressions: '62.1K', clicks: '5.4K', ctr: '8.7%', spend: '₹15,800' },
-  { id: 'CMP-004', name: 'Flash Deals', platform: 'Facebook', status: 'paused', impressions: '9.5K', clicks: '680', ctr: '7.2%', spend: '₹4,300' },
+const channelTabs: { id: Channel; label: string; icon: React.ElementType }[] = [
+  { id: 'all', label: 'All', icon: MessageCircle },
+  { id: 'instagram', label: 'Instagram', icon: Instagram },
+  { id: 'facebook', label: 'Facebook', icon: Facebook },
+  { id: 'whatsapp', label: 'WhatsApp', icon: WhatsApp },
+  { id: 'email', label: 'Email', icon: Mail },
+  { id: 'marketplace', label: 'Marketplace', icon: ShoppingCart },
 ];
 
-const mockPosts = [
-  { id: 1, platform: '📸 Instagram', title: 'Premium Earbuds — Now Available!', engagement: '1.2K likes', time: '2h ago', type: 'image' },
-  { id: 2, platform: '📘 Facebook', title: 'Summer Sale up to 40% off', engagement: '890 reactions', time: '5h ago', type: 'post' },
-  { id: 3, platform: '🎬 YouTube', title: 'Fitness Watch X2 — Full Review', engagement: '3.4K views', time: '1d ago', type: 'video' },
-  { id: 4, platform: '📸 Instagram', title: 'Behind the scenes: Warehouse tour', engagement: '2.1K likes', time: '1d ago', type: 'reel' },
-  { id: 5, platform: '📘 Facebook', title: 'Customer testimonial: Baby Care Set', engagement: '456 reactions', time: '2d ago', type: 'post' },
-  { id: 6, platform: '🎬 YouTube', title: 'How to choose the right speaker', engagement: '1.8K views', time: '3d ago', type: 'video' },
-  { id: 7, platform: '📸 Instagram', title: 'New arrivals: LED Desk Lamp', engagement: '987 likes', time: '3d ago', type: 'image' },
-  { id: 8, platform: '💬 WhatsApp', title: 'Order confirmation broadcast', engagement: '4.2K delivered', time: '4d ago', type: 'broadcast' },
-  { id: 9, platform: '📘 Facebook', title: 'Weekly deals roundup', engagement: '678 reactions', time: '5d ago', type: 'post' },
-  { id: 10, platform: '📸 Instagram', title: 'Yoga Mat Premium — Perfect for home', engagement: '1.5K likes', time: '6d ago', type: 'image' },
-];
+const statusConfig: Record<string, { label: string; className: string }> = {
+  unread: { label: 'Unread', className: 'bg-blue-500/15 text-blue-600 border-blue-500/30' },
+  replied: { label: 'Replied', className: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
+  pending: { label: 'Pending', className: 'bg-amber-500/15 text-amber-600 border-amber-500/30' },
+};
 
 export default function SocialInsights() {
   const { toast } = useToast();
-  const [channels, setChannels] = useState(initialChannels);
+  const [activeChannel, setActiveChannel] = useState<Channel>('all');
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(mockMessages[0]);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleConnect = (platform: string) => {
-    setChannels(prev => prev.map(c => c.platform === platform ? { ...c, connected: true } : c));
-    toast({ title: `${platform} Connected`, description: `Your ${platform} account has been linked successfully.` });
-  };
+  const filteredMessages = mockMessages.filter(m => {
+    const matchesChannel = activeChannel === 'all' || m.channel === activeChannel;
+    const matchesSearch = m.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      m.preview.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesChannel && matchesSearch;
+  });
 
-  const handleDisconnect = (platform: string) => {
-    setChannels(prev => prev.map(c => c.platform === platform ? { ...c, connected: false } : c));
-    toast({ title: `${platform} Disconnected`, description: `Your ${platform} account has been unlinked.` });
+  const stats = {
+    total: mockMessages.length,
+    unread: mockMessages.filter(m => m.status === 'unread').length,
+    pending: mockMessages.filter(m => m.status === 'pending').length,
+    replied: mockMessages.filter(m => m.status === 'replied').length,
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Social Media & Insights</h1>
-        <p className="text-muted-foreground">Monitor marketing performance across social channels</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Unified Inbox</h1>
+          <p className="text-muted-foreground">All customer conversations across channels in one place</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-blue-500/15 text-blue-600 border-blue-500/30">{stats.unread} unread</Badge>
+          <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">{stats.pending} pending</Badge>
+        </div>
       </div>
 
-      {/* Platform Metrics with Connect Buttons */}
+      {/* KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {channels.map(m => (
-          <Card key={m.platform}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className={`p-2 rounded-lg ${m.color}`}>
-                    <span className="text-xl">{m.icon}</span>
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">{m.platform}</p>
-                </div>
-                {m.connected ? (
-                  <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-1 cursor-pointer" onClick={() => handleDisconnect(m.platform)}>
-                    <Wifi className="w-3 h-3" />Connected
-                  </Badge>
-                ) : (
-                  <Button variant="outline" size="sm" className="gap-1 text-xs h-7" onClick={() => handleConnect(m.platform)}>
-                    <LogIn className="w-3 h-3" />Connect
-                  </Button>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><MessageCircle className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{stats.total}</p><p className="text-sm text-muted-foreground">Total Messages</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Eye className="w-5 h-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{stats.unread}</p><p className="text-sm text-muted-foreground">Unread</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-amber-500/10"><TrendingUp className="w-5 h-5 text-amber-600" /></div><div><p className="text-2xl font-bold">{stats.pending}</p><p className="text-sm text-muted-foreground">Pending</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><Heart className="w-5 h-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{stats.replied}</p><p className="text-sm text-muted-foreground">Replied</p></div></div></CardContent></Card>
+      </div>
+
+      {/* Unified Inbox Layout */}
+      <div className="grid grid-cols-12 gap-4 h-[600px]">
+        {/* Channel Sidebar */}
+        <Card className="col-span-12 md:col-span-2">
+          <CardContent className="p-2 h-full">
+            <div className="space-y-1">
+              {channelTabs.map(ch => {
+                const Icon = ch.icon;
+                const count = ch.id === 'all' ? mockMessages.length : mockMessages.filter(m => m.channel === ch.id).length;
+                return (
+                  <button
+                    key={ch.id}
+                    onClick={() => setActiveChannel(ch.id)}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                      activeChannel === ch.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{ch.label}</span>
+                    <Badge variant="secondary" className="ml-auto text-xs h-5 px-1.5">{count}</Badge>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Message List */}
+        <Card className="col-span-12 md:col-span-4">
+          <CardHeader className="p-3 pb-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search messages..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="h-[500px]">
+              <div className="space-y-0.5 p-2">
+                {filteredMessages.map(msg => (
+                  <button
+                    key={msg.id}
+                    onClick={() => setSelectedMessage(msg)}
+                    className={`w-full text-left p-3 rounded-lg transition-colors ${
+                      selectedMessage?.id === msg.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50'
+                    } ${msg.status === 'unread' ? 'bg-blue-500/5' : ''}`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                        {msg.avatar}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className={`text-sm truncate ${msg.status === 'unread' ? 'font-semibold' : 'font-medium'}`}>{msg.sender}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">{msg.time}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{msg.subject}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-xs">{msg.channelIcon}</span>
+                          <Badge variant="outline" className={`text-[10px] h-4 px-1 ${statusConfig[msg.status].className}`}>
+                            {statusConfig[msg.status].label}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                {filteredMessages.length === 0 && (
+                  <div className="text-center py-8 text-sm text-muted-foreground">No messages found</div>
                 )}
               </div>
-              {m.connected ? (
-                <>
-                  <p className="text-xl font-bold">{m.reach}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <TrendingUp className={`w-3 h-3 ${m.growth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`} />
-                    <span className={`text-xs font-medium ${m.growth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {m.growth >= 0 ? '+' : ''}{m.growth}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Heart className="w-3 h-3" />{m.engagement}</span>
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{m.reach}</span>
-                  </div>
-                </>
-              ) : (
-                <div className="py-3 text-center">
-                  <WifiOff className="w-6 h-6 text-muted-foreground/30 mx-auto mb-1" />
-                  <p className="text-xs text-muted-foreground">Connect to see insights</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Campaign Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Campaign Performance</CardTitle>
-            <CardDescription>Active and recent marketing campaigns</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {mockCampaigns.map(c => (
-                <div key={c.id} className="p-3 bg-muted/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
+        {/* Message Detail */}
+        <Card className="col-span-12 md:col-span-6">
+          {selectedMessage ? (
+            <div className="h-full flex flex-col">
+              <CardHeader className="pb-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-medium">
+                      {selectedMessage.avatar}
+                    </div>
                     <div>
-                      <p className="font-medium text-sm">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{c.platform}</p>
-                    </div>
-                    <Badge variant="outline" className={
-                      c.status === 'active' ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' :
-                      c.status === 'paused' ? 'bg-amber-500/15 text-amber-600 border-amber-500/30' :
-                      'bg-muted text-muted-foreground'
-                    }>
-                      {c.status}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 text-xs">
-                    <div><span className="text-muted-foreground">Impressions</span><p className="font-medium">{c.impressions}</p></div>
-                    <div><span className="text-muted-foreground">Clicks</span><p className="font-medium">{c.clicks}</p></div>
-                    <div><span className="text-muted-foreground">CTR</span><p className="font-medium">{c.ctr}</p></div>
-                    <div><span className="text-muted-foreground">Spend</span><p className="font-medium">{c.spend}</p></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Posts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Posts</CardTitle>
-            <CardDescription>Last 10 social media posts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {mockPosts.map(post => (
-                <div key={post.id} className="flex items-center justify-between p-2.5 hover:bg-muted/30 rounded-lg transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-sm shrink-0">{post.platform.split(' ')[0]}</span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{post.title}</p>
-                      <p className="text-xs text-muted-foreground">{post.engagement} • {post.time}</p>
+                      <CardTitle className="text-base">{selectedMessage.sender}</CardTitle>
+                      <CardDescription className="flex items-center gap-1.5">
+                        <span>{selectedMessage.channelIcon}</span>
+                        <span>{selectedMessage.subject}</span>
+                      </CardDescription>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="text-xs shrink-0 ml-2">{post.type}</Badge>
+                  <Badge variant="outline" className={statusConfig[selectedMessage.status].className}>
+                    {statusConfig[selectedMessage.status].label}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardHeader>
+              <CardContent className="flex-1 p-4">
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">{selectedMessage.time}</p>
+                    <p className="text-sm">{selectedMessage.preview}</p>
+                  </div>
 
-      {/* Video Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Play className="w-5 h-5" />Video Content</CardTitle>
-          <CardDescription>Latest product videos and promotional content</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {['Fitness Watch X2 Review', 'Premium Earbuds Unboxing', 'Warehouse Tour BTS'].map((title, i) => (
-              <div key={i} className="aspect-video bg-muted rounded-lg flex items-center justify-center relative group cursor-pointer">
-                <div className="text-center">
-                  <Play className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm font-medium text-muted-foreground">{title}</p>
+                  {/* Response Tracking */}
+                  <Card className="bg-muted/20">
+                    <CardContent className="p-3">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2">Response Tracking</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div><span className="text-muted-foreground block">First Response</span><span className="font-medium">{selectedMessage.status === 'replied' ? '12m' : 'Pending'}</span></div>
+                        <div><span className="text-muted-foreground block">Assigned To</span><span className="font-medium">Team A</span></div>
+                        <div><span className="text-muted-foreground block">Priority</span><span className="font-medium">{selectedMessage.status === 'unread' ? 'High' : 'Normal'}</span></div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ExternalLink className="w-4 h-4 text-muted-foreground" />
+              </CardContent>
+              <div className="p-4 border-t">
+                <div className="flex items-center gap-2">
+                  <Input placeholder="Type a reply..." className="flex-1" />
+                  <Button size="icon" onClick={() => toast({ title: 'Reply Sent', description: 'Message reply sent successfully (UI only).' })}>
+                    <Send className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              <p className="text-sm">Select a message to view details</p>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
