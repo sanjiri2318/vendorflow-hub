@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useSyncExternalStore } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { portalConfigs } from '@/services/mockData';
 import { Portal } from '@/types';
-import { CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, Target, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, Target, XCircle, SlidersHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 import ReconciliationHealthScore from '@/components/reconciliation/ReconciliationHealthScore';
@@ -15,6 +15,7 @@ import ChargebackTracker from '@/components/reconciliation/ChargebackTracker';
 import FeeVariationMonitor from '@/components/reconciliation/FeeVariationMonitor';
 import SKUProfitabilityTrend from '@/components/reconciliation/SKUProfitabilityTrend';
 import FinancialRiskAlerts from '@/components/reconciliation/FinancialRiskAlerts';
+import { getReconciliationSettings, subscribeReconciliationSettings } from '@/services/reconciliationSettings';
 
 type ReconStatus = 'matched' | 'minor_difference' | 'mismatch';
 
@@ -68,9 +69,24 @@ export default function Reconciliation() {
   const [dateFilter, setDateFilter] = useState('30days');
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Get tolerance from shared settings
+  const reconSettings = useSyncExternalStore(
+    subscribeReconciliationSettings,
+    getReconciliationSettings,
+  );
+  const tolerance = reconSettings.toleranceValue;
+
+  // Apply tolerance-based status reclassification
+  const getEffectiveStatus = (record: ReconRecord): ReconStatus => {
+    if (record.difference <= tolerance) return 'matched';
+    if (record.difference <= 500) return 'minor_difference';
+    return 'mismatch';
+  };
+
   const filtered = useMemo(() => {
-    return filterPortal === 'all' ? mockReconData : mockReconData.filter(r => r.marketplace === filterPortal);
-  }, [filterPortal]);
+    const base = filterPortal === 'all' ? mockReconData : mockReconData.filter(r => r.marketplace === filterPortal);
+    return base.map(r => ({ ...r, status: getEffectiveStatus(r) }));
+  }, [filterPortal, tolerance]);
 
   const rowSelection = useRowSelection(filtered.map(r => r.id));
 
@@ -94,6 +110,10 @@ export default function Reconciliation() {
           <p className="text-muted-foreground">Proactive seller-loss prevention and settlement intelligence</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <Badge variant="outline" className="gap-1.5 px-3 py-1.5 bg-primary/5 border-primary/20">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Tolerance: ₹{tolerance}
+          </Badge>
           <DateFilter value={dateFilter} onChange={setDateFilter} />
           <Select value={filterPortal} onValueChange={(v) => setFilterPortal(v as Portal | 'all')}>
             <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Marketplaces" /></SelectTrigger>

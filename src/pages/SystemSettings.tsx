@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Settings, Cog, Upload, Download, FileSpreadsheet, Eye, Pencil, ToggleLeft, Blocks, Clock, Zap, Users, Lock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Shield, Settings, Cog, Upload, Download, FileSpreadsheet, Eye, Pencil, ToggleLeft, Blocks, Clock, Zap, Users, Lock, IndianRupee, CheckCircle2, AlertTriangle, SlidersHorizontal } from 'lucide-react';
+import { getReconciliationSettings, setReconciliationSettings, subscribeReconciliationSettings } from '@/services/reconciliationSettings';
+import { useToast } from '@/hooks/use-toast';
 
 // TAB 1 — Field Configuration
 interface FieldConfig {
@@ -129,9 +133,18 @@ const permissionsData: PermissionRow[] = [
 ];
 
 export default function SystemSettings() {
+  const { toast } = useToast();
   const [fields, setFields] = useState(initialFields);
   const [features, setFeatures] = useState(initialFeatures);
   const [permissions, setPermissions] = useState(permissionsData);
+
+  // Financial Controls — tolerance threshold
+  const reconSettings = useSyncExternalStore(
+    subscribeReconciliationSettings,
+    getReconciliationSettings,
+  );
+  const [tolerancePreset, setTolerancePreset] = useState(reconSettings.tolerancePreset);
+  const [customTolerance, setCustomTolerance] = useState(String(reconSettings.toleranceValue));
 
   const toggleField = (index: number, key: 'mandatory' | 'visible' | 'editable') => {
     setFields(prev => prev.map((f, i) => i === index ? { ...f, [key]: !f[key] } : f));
@@ -168,9 +181,10 @@ export default function SystemSettings() {
       </div>
 
       <Tabs defaultValue="fields" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="fields" className="text-xs sm:text-sm">Field Config</TabsTrigger>
           <TabsTrigger value="features" className="text-xs sm:text-sm">Features</TabsTrigger>
+          <TabsTrigger value="financial" className="text-xs sm:text-sm">Financial Controls</TabsTrigger>
           <TabsTrigger value="services" className="text-xs sm:text-sm">Services</TabsTrigger>
           <TabsTrigger value="import-export" className="text-xs sm:text-sm">Import / Export</TabsTrigger>
           <TabsTrigger value="permissions" className="text-xs sm:text-sm">Permissions</TabsTrigger>
@@ -252,6 +266,129 @@ export default function SystemSettings() {
                     </Card>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB — FINANCIAL CONTROLS */}
+        <TabsContent value="financial">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2"><SlidersHorizontal className="w-5 h-5" />Financial Controls</CardTitle>
+                  <CardDescription>Configure reconciliation tolerance thresholds and matching rules</CardDescription>
+                </div>
+                <Badge variant="outline" className="gap-1 bg-primary/5">
+                  <IndianRupee className="w-3 h-3" />Reconciliation Engine
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Tolerance Threshold Setting */}
+              <div className="p-5 rounded-lg border bg-card">
+                <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-warning" />
+                  Mismatch Tolerance Threshold
+                </h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  If the difference between expected and settled amounts is within this threshold, the record will be auto-marked as <span className="font-semibold text-emerald-600">Matched</span>. Differences above the threshold are flagged as <span className="font-semibold text-rose-600">Mismatch</span>.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                  {[
+                    { value: '1' as const, label: '₹1', desc: 'Strict — only ignore ₹1 or less' },
+                    { value: '5' as const, label: '₹5', desc: 'Standard — ignore ₹5 or less' },
+                    { value: 'custom' as const, label: 'Custom', desc: 'Set your own threshold value' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setTolerancePreset(opt.value);
+                        if (opt.value !== 'custom') setCustomTolerance(opt.value);
+                      }}
+                      className={`p-4 rounded-lg border text-left transition-all ${
+                        tolerancePreset === opt.value
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                          : 'hover:bg-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-lg">{opt.label}</span>
+                        {tolerancePreset === opt.value && (
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+
+                {tolerancePreset === 'custom' && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 mb-4">
+                    <span className="text-sm font-medium">Custom Value:</span>
+                    <div className="relative w-32">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={customTolerance}
+                        onChange={e => setCustomTolerance(e.target.value)}
+                        className="pl-7"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={() => {
+                    const value = tolerancePreset === 'custom' ? parseFloat(customTolerance) || 0 : parseFloat(tolerancePreset);
+                    setReconciliationSettings({ tolerancePreset, toleranceValue: value });
+                    toast({ title: 'Tolerance Updated', description: `Reconciliation mismatch tolerance set to ₹${value}` });
+                  }}
+                  className="gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Save Tolerance Setting
+                </Button>
+              </div>
+
+              {/* Preview */}
+              <div className="p-4 rounded-lg border bg-muted/30">
+                <h4 className="text-sm font-semibold mb-3">How Tolerance Works</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 gap-1">
+                      <CheckCircle2 className="w-3 h-3" />Matched
+                    </Badge>
+                    <span className="text-muted-foreground">Difference ≤ ₹{tolerancePreset === 'custom' ? customTolerance || '0' : tolerancePreset}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30 gap-1">
+                      <AlertTriangle className="w-3 h-3" />Minor Diff
+                    </Badge>
+                    <span className="text-muted-foreground">Difference {">"} ₹{tolerancePreset === 'custom' ? customTolerance || '0' : tolerancePreset} and ≤ ₹500</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="bg-rose-500/15 text-rose-600 border-rose-500/30 gap-1">
+                      <AlertTriangle className="w-3 h-3" />Mismatch
+                    </Badge>
+                    <span className="text-muted-foreground">Difference {">"} ₹500</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Setting Display */}
+              <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <IndianRupee className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Current Active Tolerance:</span>
+                  <Badge className="text-sm">₹{reconSettings.toleranceValue}</Badge>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({reconSettings.tolerancePreset === 'custom' ? 'Custom' : `Preset ₹${reconSettings.tolerancePreset}`})
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
