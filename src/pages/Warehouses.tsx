@@ -116,13 +116,13 @@ export default function Warehouses() {
             <TableBody>
               {mockInventory.sort((a, b) => b.agingDays - a.agingDays).map(item => {
                 const wh = mockWarehouses.find(w => w.name === item.warehouse);
-                const storageCost = item.availableStock * (wh?.storageCostPerDay || 0.5) * item.agingDays;
+                const storageCost = item.availableQuantity * (wh?.storageCostPerDay || 0.5) * item.agingDays;
                 return (
                   <TableRow key={item.skuId} className={item.agingDays > 90 ? 'bg-rose-500/5' : item.agingDays > 60 ? 'bg-amber-500/5' : ''}>
                     <TableCell className="font-mono text-sm">{item.skuId}</TableCell>
                     <TableCell className="font-medium">{item.productName}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.warehouse}</TableCell>
-                    <TableCell className="text-center">{item.availableStock}</TableCell>
+                    <TableCell className="text-center">{item.availableQuantity}</TableCell>
                     <TableCell className="text-center font-medium">{item.agingDays}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={

@@ -60,9 +60,9 @@ export default function Dashboard() {
       ? mockInventory 
       : mockInventory.filter(i => i.portal === selectedPortal);
     
-    const healthy = items.filter(i => i.availableStock > i.lowStockThreshold).length;
-    const low = items.filter(i => i.availableStock <= i.lowStockThreshold && i.availableStock > 0).length;
-    const out = items.filter(i => i.availableStock === 0).length;
+    const healthy = items.filter(i => i.availableQuantity > i.lowStockThreshold).length;
+    const low = items.filter(i => i.availableQuantity <= i.lowStockThreshold && i.availableQuantity > 0).length;
+    const out = items.filter(i => i.availableQuantity === 0).length;
 
     return [
       { name: 'Healthy', value: healthy, color: CHART_COLORS.success },
@@ -143,8 +143,8 @@ export default function Dashboard() {
     return {
       totalSales: portalOrders.reduce((sum, o) => sum + o.totalAmount, 0),
       ordersToday: portalOrders.filter(o => new Date(o.orderDate).toDateString() === new Date().toDateString()).length,
-      inventoryValue: portalInventory.reduce((sum, i) => sum + (i.availableStock * 500), 0),
-      lowStockItems: portalInventory.filter(i => i.availableStock <= i.lowStockThreshold).length,
+       inventoryValue: portalInventory.reduce((sum, i) => sum + (i.availableQuantity * 500), 0),
+       lowStockItems: portalInventory.filter(i => i.availableQuantity <= i.lowStockThreshold).length,
       pendingReturns: portalReturns.filter(r => r.status === 'pending').length,
       pendingSettlements: portalSettlements.filter(s => s.status === 'pending').length,
       salesGrowth: 8.2,
@@ -307,10 +307,10 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-bold text-lg ${
-                        item.availableStock === 0 ? 'text-destructive' : 'text-warning'
-                      }`}>
-                        {item.availableStock}
+                       <p className={`font-bold text-lg ${
+                         item.availableQuantity === 0 ? 'text-destructive' : 'text-warning'
+                       }`}>
+                         {item.availableQuantity}
                       </p>
                       <p className="text-xs text-muted-foreground">units left</p>
                     </div>

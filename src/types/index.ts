@@ -115,8 +115,10 @@ export interface InventoryItem {
   productName: string;
   brand: string;
   portal: Portal;
-  availableStock: number;
-  reservedStock: number;
+  masterQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  channelAllocations: Record<Portal, number>;
   warehouse: string;
   agingDays: number;
   lowStockThreshold: number;

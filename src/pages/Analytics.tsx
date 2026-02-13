@@ -93,9 +93,9 @@ export default function Analytics() {
 
   // Inventory status for pie chart
   const inventoryByStatus = useMemo(() => {
-    const healthy = mockInventory.filter(i => i.availableStock > i.lowStockThreshold).length;
-    const low = mockInventory.filter(i => i.availableStock <= i.lowStockThreshold && i.availableStock > 0).length;
-    const out = mockInventory.filter(i => i.availableStock === 0).length;
+    const healthy = mockInventory.filter(i => i.availableQuantity > i.lowStockThreshold).length;
+    const low = mockInventory.filter(i => i.availableQuantity <= i.lowStockThreshold && i.availableQuantity > 0).length;
+    const out = mockInventory.filter(i => i.availableQuantity === 0).length;
     return [
       { name: 'Healthy', value: healthy, color: 'hsl(142, 71%, 45%)' },
       { name: 'Low Stock', value: low, color: 'hsl(45, 100%, 51%)' },
