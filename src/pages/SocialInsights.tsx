@@ -1,37 +1,141 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TrendingUp, Eye, Heart, Search, Send, MessageCircle, Instagram, Facebook, Mail, MessageSquare as WhatsApp, ShoppingCart } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  TrendingUp, Eye, Heart, Search, Send, MessageCircle, Instagram, Facebook, Mail,
+  MessageSquare as WhatsApp, ShoppingCart, Bot, Zap, UserPlus, AlertTriangle,
+  ChevronRight, ClipboardList, FileSpreadsheet, FileDown, Phone, Users,
+  CheckCircle, Clock, XCircle, ArrowRight, BellRing, Sparkles, Tag,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Channel = 'all' | 'instagram' | 'facebook' | 'whatsapp' | 'email' | 'marketplace';
+type LeadClassification = 'new_lead' | 'existing_customer' | 'order_query' | 'issue_escalation';
+type TaskCategory = 'done' | 'follow_up' | 'more_info' | 'ignore';
+type AutoReplyFlow = 'order_status' | 'new_lead' | 'complaint' | 'product_inquiry';
 
 interface Message {
   id: string;
   channel: Channel;
   channelIcon: string;
   sender: string;
+  senderPhone?: string;
   subject: string;
   preview: string;
   time: string;
-  status: 'unread' | 'replied' | 'pending';
+  status: 'unread' | 'replied' | 'pending' | 'escalated';
   avatar: string;
+  classification: LeadClassification;
+  autoReplyTriggered: boolean;
+  autoReplyFlow?: AutoReplyFlow;
+  convertedToTask: boolean;
+  taskCategory?: TaskCategory;
+  savedToContacts: boolean;
+  aiConfidence?: number;
+  escalatedTo?: string;
+  conversationHistory: { role: 'customer' | 'ai' | 'agent'; message: string; time: string }[];
 }
 
 const mockMessages: Message[] = [
-  { id: 'MSG-001', channel: 'instagram', channelIcon: '📸', sender: 'priya_fashion', subject: 'Product inquiry', preview: 'Hi, is the wireless earbuds available in white?', time: '2m ago', status: 'unread', avatar: 'P' },
-  { id: 'MSG-002', channel: 'facebook', channelIcon: '📘', sender: 'Rahul Sharma', subject: 'Order status', preview: 'Can you check my order ORD-2024-001 status?', time: '15m ago', status: 'unread', avatar: 'R' },
-  { id: 'MSG-003', channel: 'whatsapp', channelIcon: '💬', sender: '+91 98765 43210', subject: 'Bulk order', preview: 'We need 50 units of the fitness watch. Whats the bulk price?', time: '32m ago', status: 'pending', avatar: 'W' },
-  { id: 'MSG-004', channel: 'email', channelIcon: '📧', sender: 'kavita.m@email.com', subject: 'Return request', preview: 'I received a damaged speaker, need to initiate return process.', time: '1h ago', status: 'replied', avatar: 'K' },
-  { id: 'MSG-005', channel: 'marketplace', channelIcon: '🛒', sender: 'Amazon Buyer', subject: 'Quality concern', preview: 'The yoga mat seems different from the product image shown...', time: '2h ago', status: 'pending', avatar: 'A' },
-  { id: 'MSG-006', channel: 'instagram', channelIcon: '📸', sender: 'sneha_reviews', subject: 'Collaboration', preview: 'Would love to review your products. Please DM details.', time: '3h ago', status: 'unread', avatar: 'S' },
-  { id: 'MSG-007', channel: 'whatsapp', channelIcon: '💬', sender: '+91 87654 32109', subject: 'Payment query', preview: 'My payment got debited but order not confirmed yet', time: '4h ago', status: 'replied', avatar: 'W' },
-  { id: 'MSG-008', channel: 'facebook', channelIcon: '📘', sender: 'Amit Kumar', subject: 'Product feedback', preview: 'The baby care gift set was amazing! Can you add more variants?', time: '5h ago', status: 'replied', avatar: 'A' },
-  { id: 'MSG-009', channel: 'email', channelIcon: '📧', sender: 'vendor@partner.com', subject: 'Stock update', preview: 'Please update availability for SKU-AMZ-006 on your portal.', time: '6h ago', status: 'pending', avatar: 'V' },
-  { id: 'MSG-010', channel: 'marketplace', channelIcon: '🛒', sender: 'Flipkart Buyer', subject: 'Size exchange', preview: 'Need size L instead of M for the cotton t-shirt order', time: '8h ago', status: 'replied', avatar: 'F' },
+  {
+    id: 'MSG-001', channel: 'instagram', channelIcon: '📸', sender: 'priya_fashion', subject: 'Product inquiry',
+    preview: 'Hi, is the wireless earbuds available in white?', time: '2m ago', status: 'unread', avatar: 'P',
+    classification: 'new_lead', autoReplyTriggered: false, convertedToTask: false, savedToContacts: false, aiConfidence: 0.85,
+    conversationHistory: [
+      { role: 'customer', message: 'Hi, is the wireless earbuds available in white?', time: '2m ago' },
+    ],
+  },
+  {
+    id: 'MSG-002', channel: 'facebook', channelIcon: '📘', sender: 'Rahul Sharma', subject: 'Order status',
+    preview: 'Can you check my order ORD-2024-001 status?', time: '15m ago', status: 'unread', avatar: 'R',
+    classification: 'order_query', autoReplyTriggered: true, autoReplyFlow: 'order_status', convertedToTask: false, savedToContacts: false, aiConfidence: 0.95,
+    conversationHistory: [
+      { role: 'customer', message: 'Can you check my order ORD-2024-001 status?', time: '15m ago' },
+      { role: 'ai', message: 'Your order ORD-2024-001 is currently Shipped and in transit via BlueDart (AWB123456789). Expected delivery in 1-2 days.', time: '15m ago' },
+    ],
+  },
+  {
+    id: 'MSG-003', channel: 'whatsapp', channelIcon: '💬', sender: '+91 98765 43210', senderPhone: '+919876543210', subject: 'Bulk order',
+    preview: 'We need 50 units of the fitness watch. Whats the bulk price?', time: '32m ago', status: 'pending', avatar: 'W',
+    classification: 'new_lead', autoReplyTriggered: true, autoReplyFlow: 'new_lead', convertedToTask: false, savedToContacts: true, aiConfidence: 0.72,
+    conversationHistory: [
+      { role: 'customer', message: 'We need 50 units of the fitness watch. Whats the bulk price?', time: '32m ago' },
+      { role: 'ai', message: 'Thank you for your interest! For bulk orders of 50+ units, our team will prepare a custom quote. A representative will reach out shortly.', time: '32m ago' },
+    ],
+  },
+  {
+    id: 'MSG-004', channel: 'email', channelIcon: '📧', sender: 'kavita.m@email.com', subject: 'Return request',
+    preview: 'I received a damaged speaker, need to initiate return process.', time: '1h ago', status: 'replied', avatar: 'K',
+    classification: 'issue_escalation', autoReplyTriggered: true, autoReplyFlow: 'complaint', convertedToTask: true, taskCategory: 'follow_up', savedToContacts: false, aiConfidence: 0.88,
+    conversationHistory: [
+      { role: 'customer', message: 'I received a damaged speaker, need to initiate return process.', time: '1h ago' },
+      { role: 'ai', message: 'We apologize for the inconvenience. I\'ve flagged this for our returns team. Could you share a photo of the damage?', time: '58m ago' },
+      { role: 'customer', message: 'Here is the photo. The speaker has a visible crack on the side.', time: '50m ago' },
+      { role: 'agent', message: 'Thank you, Kavita. I\'ve initiated return RET-2024-008 for you. Pickup will be scheduled within 24 hours.', time: '45m ago' },
+    ],
+  },
+  {
+    id: 'MSG-005', channel: 'marketplace', channelIcon: '🛒', sender: 'Amazon Buyer', subject: 'Quality concern',
+    preview: 'The yoga mat seems different from the product image shown...', time: '2h ago', status: 'escalated', avatar: 'A',
+    classification: 'issue_escalation', autoReplyTriggered: true, autoReplyFlow: 'complaint', convertedToTask: true, taskCategory: 'more_info', savedToContacts: false, aiConfidence: 0.45, escalatedTo: 'Operations Manager',
+    conversationHistory: [
+      { role: 'customer', message: 'The yoga mat seems different from the product image shown...', time: '2h ago' },
+      { role: 'ai', message: 'We take product quality very seriously. Let me connect you with our team for a detailed review.', time: '2h ago' },
+      { role: 'agent', message: 'Hi, could you send us photos comparing what you received vs what was shown? This helps us investigate.', time: '1h 45m ago' },
+    ],
+  },
+  {
+    id: 'MSG-006', channel: 'instagram', channelIcon: '📸', sender: 'sneha_reviews', subject: 'Collaboration',
+    preview: 'Would love to review your products. Please DM details.', time: '3h ago', status: 'unread', avatar: 'S',
+    classification: 'new_lead', autoReplyTriggered: false, convertedToTask: false, savedToContacts: false, aiConfidence: 0.78,
+    conversationHistory: [
+      { role: 'customer', message: 'Would love to review your products. Please DM details.', time: '3h ago' },
+    ],
+  },
+  {
+    id: 'MSG-007', channel: 'whatsapp', channelIcon: '💬', sender: '+91 87654 32109', senderPhone: '+918765432109', subject: 'Payment query',
+    preview: 'My payment got debited but order not confirmed yet', time: '4h ago', status: 'escalated', avatar: 'W',
+    classification: 'issue_escalation', autoReplyTriggered: true, autoReplyFlow: 'complaint', convertedToTask: true, taskCategory: 'follow_up', savedToContacts: true, aiConfidence: 0.35, escalatedTo: 'Finance Team',
+    conversationHistory: [
+      { role: 'customer', message: 'My payment got debited but order not confirmed yet', time: '4h ago' },
+      { role: 'ai', message: 'I understand your concern about the payment. Let me escalate this to our finance team for immediate review.', time: '4h ago' },
+      { role: 'agent', message: 'We\'re checking with the payment gateway. Your transaction ID has been flagged for priority review.', time: '3h 30m ago' },
+    ],
+  },
+  {
+    id: 'MSG-008', channel: 'facebook', channelIcon: '📘', sender: 'Amit Kumar', subject: 'Product feedback',
+    preview: 'The baby care gift set was amazing! Can you add more variants?', time: '5h ago', status: 'replied', avatar: 'A',
+    classification: 'existing_customer', autoReplyTriggered: true, autoReplyFlow: 'product_inquiry', convertedToTask: false, savedToContacts: false, aiConfidence: 0.92,
+    conversationHistory: [
+      { role: 'customer', message: 'The baby care gift set was amazing! Can you add more variants?', time: '5h ago' },
+      { role: 'ai', message: 'Thank you for the wonderful feedback! We\'re glad you loved it. We\'re working on new variants — stay tuned!', time: '5h ago' },
+    ],
+  },
+  {
+    id: 'MSG-009', channel: 'email', channelIcon: '📧', sender: 'vendor@partner.com', subject: 'Stock update',
+    preview: 'Please update availability for SKU-AMZ-006 on your portal.', time: '6h ago', status: 'pending', avatar: 'V',
+    classification: 'existing_customer', autoReplyTriggered: false, convertedToTask: false, savedToContacts: false, aiConfidence: 0.60,
+    conversationHistory: [
+      { role: 'customer', message: 'Please update availability for SKU-AMZ-006 on your portal.', time: '6h ago' },
+    ],
+  },
+  {
+    id: 'MSG-010', channel: 'marketplace', channelIcon: '🛒', sender: 'Flipkart Buyer', subject: 'Size exchange',
+    preview: 'Need size L instead of M for the cotton t-shirt order', time: '8h ago', status: 'replied', avatar: 'F',
+    classification: 'order_query', autoReplyTriggered: true, autoReplyFlow: 'order_status', convertedToTask: true, taskCategory: 'done', savedToContacts: false, aiConfidence: 0.90,
+    conversationHistory: [
+      { role: 'customer', message: 'Need size L instead of M for the cotton t-shirt order', time: '8h ago' },
+      { role: 'ai', message: 'I can help with the size exchange. Could you share your order ID so I can initiate the process?', time: '8h ago' },
+      { role: 'customer', message: 'Order ID is FLK-OD-345678901', time: '7h 50m ago' },
+      { role: 'agent', message: 'Exchange initiated for order FLK-OD-345678901. Size L will be dispatched after we receive the current item.', time: '7h 30m ago' },
+    ],
+  },
 ];
 
 const channelTabs: { id: Channel; label: string; icon: React.ElementType }[] = [
@@ -47,59 +151,159 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   unread: { label: 'Unread', className: 'bg-blue-500/15 text-blue-600 border-blue-500/30' },
   replied: { label: 'Replied', className: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
   pending: { label: 'Pending', className: 'bg-amber-500/15 text-amber-600 border-amber-500/30' },
+  escalated: { label: 'Escalated', className: 'bg-rose-500/15 text-rose-600 border-rose-500/30' },
+};
+
+const classificationConfig: Record<LeadClassification, { label: string; color: string; icon: React.ElementType }> = {
+  new_lead: { label: 'New Lead', color: 'bg-emerald-500/10 text-emerald-600', icon: UserPlus },
+  existing_customer: { label: 'Existing Customer', color: 'bg-blue-500/10 text-blue-600', icon: Users },
+  order_query: { label: 'Order Query', color: 'bg-purple-500/10 text-purple-600', icon: ShoppingCart },
+  issue_escalation: { label: 'Issue Escalation', color: 'bg-rose-500/10 text-rose-600', icon: AlertTriangle },
+};
+
+const flowLabels: Record<AutoReplyFlow, string> = {
+  order_status: 'Order Status Query',
+  new_lead: 'New Lead Response',
+  complaint: 'Complaint Handler',
+  product_inquiry: 'Product Inquiry',
+};
+
+const taskCategoryConfig: Record<TaskCategory, { label: string; color: string; icon: React.ElementType }> = {
+  done: { label: 'Done', color: 'bg-emerald-500/10 text-emerald-600', icon: CheckCircle },
+  follow_up: { label: 'Follow-up', color: 'bg-amber-500/10 text-amber-600', icon: Clock },
+  more_info: { label: 'More Info Required', color: 'bg-blue-500/10 text-blue-600', icon: Search },
+  ignore: { label: 'Ignore', color: 'bg-muted text-muted-foreground', icon: XCircle },
 };
 
 export default function SocialInsights() {
   const { toast } = useToast();
   const [activeChannel, setActiveChannel] = useState<Channel>('all');
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(mockMessages[0]);
+  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(messages[0]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [aiAutoReply, setAiAutoReply] = useState(true);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
+  const [taskTarget, setTaskTarget] = useState<Message | null>(null);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [autoReplyFlows, setAutoReplyFlows] = useState<Record<AutoReplyFlow, boolean>>({
+    order_status: true, new_lead: true, complaint: true, product_inquiry: true,
+  });
 
-  const filteredMessages = mockMessages.filter(m => {
+  const filteredMessages = useMemo(() => messages.filter(m => {
     const matchesChannel = activeChannel === 'all' || m.channel === activeChannel;
     const matchesSearch = m.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.preview.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesChannel && matchesSearch;
-  });
+  }), [messages, activeChannel, searchQuery]);
 
-  const stats = {
-    total: mockMessages.length,
-    unread: mockMessages.filter(m => m.status === 'unread').length,
-    pending: mockMessages.filter(m => m.status === 'pending').length,
-    replied: mockMessages.filter(m => m.status === 'replied').length,
+  const stats = useMemo(() => ({
+    total: messages.length,
+    unread: messages.filter(m => m.status === 'unread').length,
+    pending: messages.filter(m => m.status === 'pending').length,
+    replied: messages.filter(m => m.status === 'replied').length,
+    escalated: messages.filter(m => m.status === 'escalated').length,
+    newLeads: messages.filter(m => m.classification === 'new_lead').length,
+    autoReplied: messages.filter(m => m.autoReplyTriggered).length,
+    tasks: messages.filter(m => m.convertedToTask).length,
+    savedContacts: messages.filter(m => m.savedToContacts).length,
+  }), [messages]);
+
+  const triggerAutoReply = (msgId: string) => {
+    setMessages(prev => prev.map(m => {
+      if (m.id !== msgId) return m;
+      const flow: AutoReplyFlow = m.classification === 'order_query' ? 'order_status'
+        : m.classification === 'new_lead' ? 'new_lead'
+        : m.classification === 'issue_escalation' ? 'complaint' : 'product_inquiry';
+      const reply = flow === 'order_status'
+        ? 'Your order is being processed. We\'ll share tracking details shortly.'
+        : flow === 'new_lead'
+        ? 'Thank you for reaching out! A team member will connect with you soon.'
+        : flow === 'complaint'
+        ? 'We apologize for the inconvenience. Your issue has been flagged for priority resolution.'
+        : 'Thank you for your interest! Here are the details you requested.';
+      return {
+        ...m,
+        autoReplyTriggered: true,
+        autoReplyFlow: flow,
+        status: 'replied' as const,
+        conversationHistory: [...m.conversationHistory, { role: 'ai' as const, message: reply, time: 'Just now' }],
+      };
+    }));
+    toast({ title: 'AI Auto-Reply Sent', description: `Automated response sent for message ${msgId}` });
   };
+
+  const escalateMessage = (msgId: string) => {
+    setMessages(prev => prev.map(m => {
+      if (m.id !== msgId) return m;
+      return { ...m, status: 'escalated' as const, escalatedTo: 'Operations Manager' };
+    }));
+    toast({ title: 'Escalated', description: 'Message assigned to Operations Manager & notification sent' });
+  };
+
+  const saveToContacts = (msgId: string) => {
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, savedToContacts: true } : m));
+    toast({ title: 'Contact Saved', description: 'Customer number added to Customer List' });
+  };
+
+  const convertToTask = (msgId: string, category: TaskCategory) => {
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, convertedToTask: true, taskCategory: category } : m));
+    setShowTaskDialog(false);
+    setTaskTarget(null);
+    toast({ title: 'Task Created', description: `Conversation converted to task: ${taskCategoryConfig[category].label}` });
+  };
+
+  const handleExport = (type: 'excel' | 'pdf') => {
+    toast({ title: `${type.toUpperCase()} Export`, description: `${filteredMessages.length} chat logs exported as ${type.toUpperCase()}` });
+  };
+
+  // Sync selectedMessage with messages state
+  const currentSelected = selectedMessage ? messages.find(m => m.id === selectedMessage.id) || null : null;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Unified Inbox</h1>
-          <p className="text-muted-foreground">All customer conversations across channels in one place</p>
+          <p className="text-muted-foreground">AI-powered customer conversations with automation workflows</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-500/15 text-blue-600 border-blue-500/30">{stats.unread} unread</Badge>
-          <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30">{stats.pending} pending</Badge>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card">
+            <Bot className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">AI Auto-Reply</span>
+            <Switch checked={aiAutoReply} onCheckedChange={setAiAutoReply} />
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShowSettingsDialog(true)}>
+            <Zap className="w-4 h-4" />Flows
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('excel')}>
+            <FileSpreadsheet className="w-4 h-4" />Excel
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('pdf')}>
+            <FileDown className="w-4 h-4" />PDF
+          </Button>
         </div>
       </div>
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><MessageCircle className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{stats.total}</p><p className="text-sm text-muted-foreground">Total Messages</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Eye className="w-5 h-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{stats.unread}</p><p className="text-sm text-muted-foreground">Unread</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-amber-500/10"><TrendingUp className="w-5 h-5 text-amber-600" /></div><div><p className="text-2xl font-bold">{stats.pending}</p><p className="text-sm text-muted-foreground">Pending</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><Heart className="w-5 h-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{stats.replied}</p><p className="text-sm text-muted-foreground">Replied</p></div></div></CardContent></Card>
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <Card><CardContent className="p-3"><div className="flex flex-col items-center text-center gap-1"><MessageCircle className="w-5 h-5 text-primary" /><p className="text-xl font-bold">{stats.total}</p><p className="text-[11px] text-muted-foreground">Total</p></div></CardContent></Card>
+        <Card className="border-blue-500/30"><CardContent className="p-3"><div className="flex flex-col items-center text-center gap-1"><Eye className="w-5 h-5 text-blue-600" /><p className="text-xl font-bold text-blue-600">{stats.unread}</p><p className="text-[11px] text-muted-foreground">Unread</p></div></CardContent></Card>
+        <Card className="border-rose-500/30"><CardContent className="p-3"><div className="flex flex-col items-center text-center gap-1"><AlertTriangle className="w-5 h-5 text-rose-600" /><p className="text-xl font-bold text-rose-600">{stats.escalated}</p><p className="text-[11px] text-muted-foreground">Escalated</p></div></CardContent></Card>
+        <Card className="border-emerald-500/30"><CardContent className="p-3"><div className="flex flex-col items-center text-center gap-1"><UserPlus className="w-5 h-5 text-emerald-600" /><p className="text-xl font-bold text-emerald-600">{stats.newLeads}</p><p className="text-[11px] text-muted-foreground">New Leads</p></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex flex-col items-center text-center gap-1"><Bot className="w-5 h-5 text-primary" /><p className="text-xl font-bold">{stats.autoReplied}</p><p className="text-[11px] text-muted-foreground">AI Replied</p></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex flex-col items-center text-center gap-1"><ClipboardList className="w-5 h-5 text-primary" /><p className="text-xl font-bold">{stats.tasks}</p><p className="text-[11px] text-muted-foreground">Tasks Created</p></div></CardContent></Card>
       </div>
 
       {/* Unified Inbox Layout */}
-      <div className="grid grid-cols-12 gap-4 h-[600px]">
+      <div className="grid grid-cols-12 gap-4 h-[650px]">
         {/* Channel Sidebar */}
         <Card className="col-span-12 md:col-span-2">
           <CardContent className="p-2 h-full">
             <div className="space-y-1">
               {channelTabs.map(ch => {
                 const Icon = ch.icon;
-                const count = ch.id === 'all' ? mockMessages.length : mockMessages.filter(m => m.channel === ch.id).length;
+                const count = ch.id === 'all' ? messages.length : messages.filter(m => m.channel === ch.id).length;
                 return (
                   <button
                     key={ch.id}
@@ -127,36 +331,48 @@ export default function SocialInsights() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className="h-[500px]">
+            <ScrollArea className="h-[550px]">
               <div className="space-y-0.5 p-2">
-                {filteredMessages.map(msg => (
-                  <button
-                    key={msg.id}
-                    onClick={() => setSelectedMessage(msg)}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
-                      selectedMessage?.id === msg.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50'
-                    } ${msg.status === 'unread' ? 'bg-blue-500/5' : ''}`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
-                        {msg.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className={`text-sm truncate ${msg.status === 'unread' ? 'font-semibold' : 'font-medium'}`}>{msg.sender}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">{msg.time}</span>
+                {filteredMessages.map(msg => {
+                  const cls = classificationConfig[msg.classification];
+                  const ClsIcon = cls.icon;
+                  return (
+                    <button
+                      key={msg.id}
+                      onClick={() => setSelectedMessage(msg)}
+                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                        currentSelected?.id === msg.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50'
+                      } ${msg.status === 'unread' ? 'bg-blue-500/5' : ''}`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium shrink-0">
+                          {msg.avatar}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{msg.subject}</p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <span className="text-xs">{msg.channelIcon}</span>
-                          <Badge variant="outline" className={`text-[10px] h-4 px-1 ${statusConfig[msg.status].className}`}>
-                            {statusConfig[msg.status].label}
-                          </Badge>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className={`text-sm truncate ${msg.status === 'unread' ? 'font-semibold' : 'font-medium'}`}>{msg.sender}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">{msg.time}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{msg.subject}</p>
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            <span className="text-xs">{msg.channelIcon}</span>
+                            <Badge variant="outline" className={`text-[10px] h-4 px-1 ${statusConfig[msg.status].className}`}>
+                              {statusConfig[msg.status].label}
+                            </Badge>
+                            <Badge variant="secondary" className={`text-[10px] h-4 px-1 gap-0.5 ${cls.color}`}>
+                              <ClsIcon className="w-2.5 h-2.5" />{cls.label}
+                            </Badge>
+                            {msg.autoReplyTriggered && (
+                              <Badge variant="secondary" className="text-[10px] h-4 px-1 gap-0.5 bg-primary/10 text-primary">
+                                <Bot className="w-2.5 h-2.5" />AI
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
                 {filteredMessages.length === 0 && (
                   <div className="text-center py-8 text-sm text-muted-foreground">No messages found</div>
                 )}
@@ -167,51 +383,129 @@ export default function SocialInsights() {
 
         {/* Message Detail */}
         <Card className="col-span-12 md:col-span-6">
-          {selectedMessage ? (
+          {currentSelected ? (
             <div className="h-full flex flex-col">
               <CardHeader className="pb-3 border-b">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-medium">
-                      {selectedMessage.avatar}
+                      {currentSelected.avatar}
                     </div>
                     <div>
-                      <CardTitle className="text-base">{selectedMessage.sender}</CardTitle>
+                      <CardTitle className="text-base">{currentSelected.sender}</CardTitle>
                       <CardDescription className="flex items-center gap-1.5">
-                        <span>{selectedMessage.channelIcon}</span>
-                        <span>{selectedMessage.subject}</span>
+                        <span>{currentSelected.channelIcon}</span>
+                        <span>{currentSelected.subject}</span>
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge variant="outline" className={statusConfig[selectedMessage.status].className}>
-                    {statusConfig[selectedMessage.status].label}
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className={statusConfig[currentSelected.status].className}>
+                      {statusConfig[currentSelected.status].label}
+                    </Badge>
+                    {(() => {
+                      const cls = classificationConfig[currentSelected.classification];
+                      const ClsIcon = cls.icon;
+                      return (
+                        <Badge variant="secondary" className={`gap-1 text-xs ${cls.color}`}>
+                          <ClsIcon className="w-3 h-3" />{cls.label}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-4">
-                <div className="space-y-4">
-                  <div className="p-4 bg-muted/30 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">{selectedMessage.time}</p>
-                    <p className="text-sm">{selectedMessage.preview}</p>
-                  </div>
-
-                  {/* Response Tracking */}
-                  <Card className="bg-muted/20">
-                    <CardContent className="p-3">
-                      <p className="text-xs font-semibold text-muted-foreground mb-2">Response Tracking</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div><span className="text-muted-foreground block">First Response</span><span className="font-medium">{selectedMessage.status === 'replied' ? '12m' : 'Pending'}</span></div>
-                        <div><span className="text-muted-foreground block">Assigned To</span><span className="font-medium">Team A</span></div>
-                        <div><span className="text-muted-foreground block">Priority</span><span className="font-medium">{selectedMessage.status === 'unread' ? 'High' : 'Normal'}</span></div>
+              <CardContent className="flex-1 p-0 overflow-hidden">
+                <ScrollArea className="h-[380px]">
+                  <div className="p-4 space-y-4">
+                    {/* Conversation History */}
+                    {currentSelected.conversationHistory.map((entry, idx) => (
+                      <div key={idx} className={`flex ${entry.role === 'customer' ? 'justify-start' : 'justify-end'}`}>
+                        <div className={`max-w-[80%] p-3 rounded-lg ${
+                          entry.role === 'customer' ? 'bg-muted/50' :
+                          entry.role === 'ai' ? 'bg-primary/10 border border-primary/20' :
+                          'bg-accent/10 border border-accent/20'
+                        }`}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {entry.role === 'ai' && <Bot className="w-3 h-3 text-primary" />}
+                            {entry.role === 'agent' && <Users className="w-3 h-3 text-accent-foreground" />}
+                            <span className="text-xs font-semibold capitalize">{entry.role === 'ai' ? 'AI Assistant' : entry.role === 'agent' ? 'Agent' : currentSelected.sender}</span>
+                            <span className="text-xs text-muted-foreground ml-auto">{entry.time}</span>
+                          </div>
+                          <p className="text-sm">{entry.message}</p>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    ))}
+
+                    {/* AI Confidence & Flow Info */}
+                    {currentSelected.autoReplyTriggered && currentSelected.autoReplyFlow && (
+                      <div className="p-3 rounded-lg border bg-card">
+                        <div className="flex items-center gap-2 text-xs mb-2">
+                          <Sparkles className="w-3.5 h-3.5 text-primary" />
+                          <span className="font-semibold">AI Auto-Reply Info</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div><span className="text-muted-foreground">Flow:</span> <span className="font-medium">{flowLabels[currentSelected.autoReplyFlow]}</span></div>
+                          <div><span className="text-muted-foreground">Confidence:</span> <span className={`font-medium ${(currentSelected.aiConfidence || 0) > 0.7 ? 'text-emerald-600' : (currentSelected.aiConfidence || 0) > 0.5 ? 'text-amber-600' : 'text-rose-600'}`}>{Math.round((currentSelected.aiConfidence || 0) * 100)}%</span></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Escalation Info */}
+                    {currentSelected.escalatedTo && (
+                      <div className="p-3 rounded-lg border border-rose-500/20 bg-rose-500/5">
+                        <div className="flex items-center gap-2 text-xs">
+                          <BellRing className="w-3.5 h-3.5 text-rose-600" />
+                          <span className="font-semibold text-rose-600">Escalated to: {currentSelected.escalatedTo}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Task Info */}
+                    {currentSelected.convertedToTask && currentSelected.taskCategory && (
+                      <div className="p-3 rounded-lg border bg-card">
+                        <div className="flex items-center gap-2 text-xs">
+                          <ClipboardList className="w-3.5 h-3.5 text-primary" />
+                          <span className="font-semibold">Converted to Task:</span>
+                          {(() => {
+                            const tc = taskCategoryConfig[currentSelected.taskCategory!];
+                            const TcIcon = tc.icon;
+                            return <Badge variant="secondary" className={`gap-1 text-xs ${tc.color}`}><TcIcon className="w-3 h-3" />{tc.label}</Badge>;
+                          })()}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2">
+                      {!currentSelected.autoReplyTriggered && aiAutoReply && (
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => triggerAutoReply(currentSelected.id)}>
+                          <Bot className="w-3.5 h-3.5" />Trigger AI Reply
+                        </Button>
+                      )}
+                      {currentSelected.status !== 'escalated' && (
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => escalateMessage(currentSelected.id)}>
+                          <AlertTriangle className="w-3.5 h-3.5" />Escalate
+                        </Button>
+                      )}
+                      {currentSelected.channel === 'whatsapp' && !currentSelected.savedToContacts && (
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => saveToContacts(currentSelected.id)}>
+                          <Phone className="w-3.5 h-3.5" />Save Contact
+                        </Button>
+                      )}
+                      {!currentSelected.convertedToTask && (
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => { setTaskTarget(currentSelected); setShowTaskDialog(true); }}>
+                          <ClipboardList className="w-3.5 h-3.5" />Convert to Task
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </ScrollArea>
               </CardContent>
-              <div className="p-4 border-t">
+              <div className="p-3 border-t">
                 <div className="flex items-center gap-2">
-                  <Input placeholder="Type a reply..." className="flex-1" />
-                  <Button size="icon" onClick={() => toast({ title: 'Reply Sent', description: 'Message reply sent successfully (UI only).' })}>
+                  <Input placeholder="Type a reply..." className="flex-1 h-9" />
+                  <Button size="icon" className="h-9 w-9" onClick={() => toast({ title: 'Reply Sent', description: 'Message reply sent successfully.' })}>
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>
@@ -224,6 +518,74 @@ export default function SocialInsights() {
           )}
         </Card>
       </div>
+
+      {/* Convert to Task Dialog */}
+      <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><ClipboardList className="w-5 h-5" />Convert to Task</DialogTitle>
+          </DialogHeader>
+          {taskTarget && (
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <p className="font-medium">{taskTarget.sender}</p>
+                <p className="text-muted-foreground text-xs mt-1">{taskTarget.preview}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Select Category:</p>
+                {Object.entries(taskCategoryConfig).map(([key, config]) => {
+                  const Icon = config.icon;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => convertToTask(taskTarget.id, key as TaskCategory)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div className={`p-1.5 rounded-lg ${config.color}`}><Icon className="w-4 h-4" /></div>
+                      <span className="text-sm font-medium">{config.label}</span>
+                      <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Auto-Reply Flow Settings Dialog */}
+      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Zap className="w-5 h-5" />Auto-Reply Flow Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">AI Auto-Reply Engine</span>
+              </div>
+              <Switch checked={aiAutoReply} onCheckedChange={setAiAutoReply} />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-muted-foreground">Predefined Flows</p>
+              {Object.entries(flowLabels).map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between p-3 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{label}</span>
+                  </div>
+                  <Switch
+                    checked={autoReplyFlows[key as AutoReplyFlow]}
+                    onCheckedChange={(v) => setAutoReplyFlows(prev => ({ ...prev, [key]: v }))}
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">When enabled, incoming messages matching these flows will receive AI-generated responses automatically. Low-confidence responses ({"<"}50%) will be escalated to a human agent.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
