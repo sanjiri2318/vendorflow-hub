@@ -211,6 +211,11 @@ export interface Vendor {
   joinDate: string;
   totalProducts: number;
   totalOrders: number;
+  gstNumber?: string;
+  gstVerified?: boolean;
+  gstBusinessName?: string;
+  gstAddress?: string;
+  gstStatus?: string;
 }
 
 export interface Warehouse {
