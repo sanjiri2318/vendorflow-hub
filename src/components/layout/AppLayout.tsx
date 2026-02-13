@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { AIAccessBanner, AIAccessControl } from '@/components/AIAccessControl';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -56,6 +57,9 @@ export function AppLayout({ children }: AppLayoutProps) {
               <span className="text-xs text-muted-foreground hidden lg:block">
                 {syncLabel}
               </span>
+
+              {/* AI Access Control */}
+              <AIAccessControl />
 
               {/* Notifications */}
               <DropdownMenu>
@@ -106,6 +110,9 @@ export function AppLayout({ children }: AppLayoutProps) {
               </Badge>
             </div>
           </header>
+
+          {/* AI Banner */}
+          <AIAccessBanner />
 
           {/* Main Content */}
           <main className="flex-1 p-6 overflow-auto bg-background">
