@@ -70,16 +70,31 @@ export interface PortalConfig {
 }
 
 // Product Types
+export interface PortalPrices {
+  amazon?: number;
+  flipkart?: number;
+  meesho?: number;
+  website?: number;
+  blinkit?: number;
+}
+
 export interface Product {
   productId: string;
+  masterSkuId: string;
   name: string;
   category: string;
   brand: string;
   description: string;
+  features?: string;
   basePrice: number;
+  mrp: number;
+  gstPercent: number;
+  hsnCode: string;
+  portalPrices: PortalPrices;
   status: 'active' | 'inactive';
   imageUrl: string;
   videoUrl?: string;
+  portalsEnabled: Portal[];
   createdAt: string;
   updatedAt: string;
 }

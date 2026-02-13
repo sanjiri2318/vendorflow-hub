@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
+import CatalogManager from "./pages/CatalogManager";
 import Inventory from "./pages/Inventory";
 import Orders from "./pages/Orders";
 import Returns from "./pages/Returns";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
             <Route path="/products" element={<AppLayout><Products /></AppLayout>} />
+            <Route path="/catalog-manager" element={<AppLayout><CatalogManager /></AppLayout>} />
             <Route path="/product-health" element={<AppLayout><ProductHealth /></AppLayout>} />
             <Route path="/inventory" element={<AppLayout><Inventory /></AppLayout>} />
             <Route path="/orders" element={<AppLayout><Orders /></AppLayout>} />
