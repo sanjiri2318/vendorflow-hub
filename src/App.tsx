@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 import DataConfiguration from "./pages/DataConfiguration";
 import SystemArchitecture from "./pages/SystemArchitecture";
 import SystemSettings from "./pages/SystemSettings";
+import FinanceTaxation from "./pages/FinanceTaxation";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/data-configuration" element={<AppLayout><DataConfiguration /></AppLayout>} />
             <Route path="/system-architecture" element={<AppLayout><SystemArchitecture /></AppLayout>} />
             <Route path="/system-settings" element={<AppLayout><SystemSettings /></AppLayout>} />
+            <Route path="/finance" element={<AppLayout><FinanceTaxation /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

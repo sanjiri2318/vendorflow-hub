@@ -42,6 +42,7 @@ import {
   Shield,
   FileText,
   IndianRupee,
+  Receipt,
   Database,
   Blocks,
 } from 'lucide-react';
@@ -97,6 +98,7 @@ const navigationGroups: NavGroup[] = [
       { title: 'Settlements', url: '/settlements', icon: CreditCard, roles: ['admin', 'vendor'] },
       { title: 'Reconciliation', url: '/reconciliation', icon: Scale, roles: ['admin', 'operations'] },
       { title: 'Price & Payout', url: '/price-payout', icon: IndianRupee, roles: ['admin', 'vendor'] },
+      { title: 'Finance & Tax', url: '/finance', icon: Receipt, roles: ['admin', 'vendor'] },
     ],
   },
   {
