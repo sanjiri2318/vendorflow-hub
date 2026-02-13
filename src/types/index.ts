@@ -126,7 +126,7 @@ export interface InventoryItem {
 }
 
 // Order Types
-export type OrderStatus = 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
+export type OrderStatus = 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'rto' | 'customer_return' | 'courier_return';
 
 export interface OrderItem {
   skuId: string;
@@ -146,6 +146,9 @@ export interface Order {
   customerEmail: string;
   customerPhone: string;
   shippingAddress: string;
+  customerPinCode?: string;
+  customerCity?: string;
+  customerState?: string;
   items: OrderItem[];
   totalAmount: number;
   status: OrderStatus;
