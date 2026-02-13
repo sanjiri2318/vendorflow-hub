@@ -899,6 +899,11 @@ export const mockVendors: Vendor[] = [
     joinDate: daysAgo(365),
     totalProducts: 45,
     totalOrders: 2840,
+    gstNumber: '29AABCT1332L1ZG',
+    gstVerified: true,
+    gstBusinessName: 'TechGadgets India Pvt Ltd',
+    gstAddress: '123 Electronic City, Phase 1, Bangalore, Karnataka - 560100',
+    gstStatus: 'Active',
   },
   {
     vendorId: 'VEN-002',
@@ -911,6 +916,11 @@ export const mockVendors: Vendor[] = [
     joinDate: daysAgo(280),
     totalProducts: 128,
     totalOrders: 5620,
+    gstNumber: '27AADCF8765M1ZP',
+    gstVerified: true,
+    gstBusinessName: 'FashionHub Exports LLP',
+    gstAddress: '456 Textile Market, Kalbadevi, Mumbai, Maharashtra - 400001',
+    gstStatus: 'Active',
   },
   {
     vendorId: 'VEN-003',
@@ -923,6 +933,7 @@ export const mockVendors: Vendor[] = [
     joinDate: daysAgo(180),
     totalProducts: 56,
     totalOrders: 1890,
+    gstNumber: '07AAFCB9012K1ZR',
   },
 ];
 
