@@ -165,7 +165,7 @@ export const inventoryApi = {
       data = data.filter(i => i.warehouse === params.warehouse);
     }
     if (params?.lowStock) {
-      data = data.filter(i => i.availableStock <= i.lowStockThreshold);
+      data = data.filter(i => i.availableQuantity <= i.lowStockThreshold);
     }
     
     return { data, success: true };
@@ -189,9 +189,9 @@ export const inventoryApi = {
     }
     const updated = {
       ...item,
-      availableStock: type === 'add' 
-        ? item.availableStock + quantity 
-        : Math.max(0, item.availableStock - quantity),
+      availableQuantity: type === 'add' 
+        ? item.availableQuantity + quantity 
+        : Math.max(0, item.availableQuantity - quantity),
       lastUpdated: new Date().toISOString(),
     };
     return { data: updated, success: true };

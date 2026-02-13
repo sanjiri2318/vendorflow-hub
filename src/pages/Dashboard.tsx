@@ -282,7 +282,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {mockInventory
-                .filter(i => i.availableStock <= i.lowStockThreshold)
+                .filter(i => i.availableQuantity <= i.lowStockThreshold)
                 .slice(0, 5)
                 .map((item) => (
                   <div 
@@ -291,10 +291,10 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        item.availableStock === 0 ? 'bg-destructive/10' : 'bg-warning/10'
+                        item.availableQuantity === 0 ? 'bg-destructive/10' : 'bg-warning/10'
                       }`}>
                         <AlertTriangle className={`w-5 h-5 ${
-                          item.availableStock === 0 ? 'text-destructive' : 'text-warning'
+                          item.availableQuantity === 0 ? 'text-destructive' : 'text-warning'
                         }`} />
                       </div>
                       <div>

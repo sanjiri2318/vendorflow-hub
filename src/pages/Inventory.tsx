@@ -40,6 +40,7 @@ export default function Inventory() {
   const [stockFilter, setStockFilter] = useState<string>('all');
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('30days');
+  const [importOpen, setImportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('inventory');
   const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>([
     {
@@ -84,6 +85,11 @@ export default function Inventory() {
   const [adjustSku, setAdjustSku] = useState<string | null>(null);
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+
+  // Mutable inventory state
+  const [inventoryState, setInventoryState] = useState(() =>
+    mockInventory.map(i => ({ ...i }))
+  );
 
   const warehouses = useMemo(() => {
     const unique = new Set(inventoryState.map(i => i.warehouse));
