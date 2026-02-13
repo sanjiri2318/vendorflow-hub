@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -20,7 +21,8 @@ import {
 } from '@/components/ui/tooltip';
 import { 
   Search, Download, ShoppingCart, Package, Truck, CheckCircle, Clock,
-  X, Eye, Users, UserPlus, UserCheck, Star, Layers,
+  X, Eye, Users, UserPlus, UserCheck, Star, Layers, RotateCcw, AlertTriangle,
+  MapPin, Timer, ArrowDownToLine, Ban,
 } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 
@@ -32,19 +34,58 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: Re
   delivered: { label: 'Delivered', color: 'bg-success/10 text-success', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'bg-destructive/10 text-destructive', icon: X },
   returned: { label: 'Returned', color: 'bg-muted text-muted-foreground', icon: Package },
+  rto: { label: 'RTO', color: 'bg-orange-500/10 text-orange-600', icon: RotateCcw },
+  customer_return: { label: 'Customer Return', color: 'bg-rose-500/10 text-rose-600', icon: ArrowDownToLine },
+  courier_return: { label: 'Courier Return', color: 'bg-amber-500/10 text-amber-600', icon: Ban },
 };
+
+// Portal cutoff configuration
+const portalCutoffs: Record<string, { label: string; hour: number | null; description: string }> = {
+  amazon: { label: 'Amazon', hour: 14, description: 'Cutoff 2:00 PM' },
+  flipkart: { label: 'Flipkart', hour: 15, description: 'Cutoff 3:00 PM' },
+  meesho: { label: 'Meesho', hour: 15, description: 'Cutoff 3:00 PM' },
+  firstcry: { label: 'FirstCry', hour: 16, description: 'Cutoff 4:00 PM' },
+  blinkit: { label: 'Blinkit', hour: null, description: 'Immediate' },
+  own_website: { label: 'Website', hour: null, description: 'Immediate' },
+};
+
+function getOrderCutoffStatus(order: Order): 'within' | 'missed' | 'immediate' {
+  const cutoff = portalCutoffs[order.portal];
+  if (!cutoff || cutoff.hour === null) return 'immediate';
+  const orderDate = new Date(order.orderDate);
+  const orderHour = orderDate.getHours();
+  return orderHour < cutoff.hour ? 'within' : 'missed';
+}
 
 // Compute customer intelligence from orders
 function computeCustomerProfiles(orders: Order[]) {
-  const map: Record<string, { name: string; phone: string; email: string; orderCount: number; totalSpend: number; lastOrderDate: string }> = {};
+  const map: Record<string, {
+    name: string; phone: string; email: string; orderCount: number; totalSpend: number;
+    lastOrderDate: string; addresses: string[]; pinCodes: string[]; cities: string[]; states: string[];
+    suspicious: boolean;
+  }> = {};
   orders.forEach(o => {
     if (!map[o.customerId]) {
-      map[o.customerId] = { name: o.customerName, phone: o.customerPhone, email: o.customerEmail, orderCount: 0, totalSpend: 0, lastOrderDate: o.orderDate };
+      map[o.customerId] = {
+        name: o.customerName, phone: o.customerPhone, email: o.customerEmail,
+        orderCount: 0, totalSpend: 0, lastOrderDate: o.orderDate,
+        addresses: [], pinCodes: [], cities: [], states: [], suspicious: false,
+      };
     }
-    map[o.customerId].orderCount++;
-    map[o.customerId].totalSpend += o.totalAmount;
-    if (new Date(o.orderDate) > new Date(map[o.customerId].lastOrderDate)) {
-      map[o.customerId].lastOrderDate = o.orderDate;
+    const p = map[o.customerId];
+    p.orderCount++;
+    p.totalSpend += o.totalAmount;
+    if (new Date(o.orderDate) > new Date(p.lastOrderDate)) p.lastOrderDate = o.orderDate;
+    if (o.shippingAddress && !p.addresses.includes(o.shippingAddress)) p.addresses.push(o.shippingAddress);
+    if (o.customerPinCode && !p.pinCodes.includes(o.customerPinCode)) p.pinCodes.push(o.customerPinCode);
+    if (o.customerCity && !p.cities.includes(o.customerCity)) p.cities.push(o.customerCity);
+    if (o.customerState && !p.states.includes(o.customerState)) p.states.push(o.customerState);
+  });
+  // Flag suspicious: many addresses or high return rate
+  Object.values(map).forEach(p => {
+    const returnOrders = orders.filter(o => o.customerId === Object.keys(map).find(k => map[k] === p) && ['returned', 'rto', 'customer_return', 'courier_return', 'cancelled'].includes(o.status));
+    if (p.addresses.length >= 3 || (p.orderCount >= 3 && returnOrders.length / p.orderCount > 0.5)) {
+      p.suspicious = true;
     }
   });
   return map;
@@ -60,6 +101,7 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState('30days');
+  const [activeTab, setActiveTab] = useState('orders');
 
   const customerProfiles = useMemo(() => computeCustomerProfiles(mockOrders), []);
 
@@ -88,14 +130,19 @@ export default function Orders() {
 
   const rowSelection = useRowSelection(filteredOrders.map(o => o.orderId));
 
-  const stats = useMemo(() => {
+  // Processing dashboard stats
+  const processingStats = useMemo(() => {
     const orders = selectedPortal === 'all' ? mockOrders : mockOrders.filter(o => o.portal === selectedPortal);
-    return {
-      total: orders.length,
-      pending: orders.filter(o => o.status === 'pending').length,
-      shipped: orders.filter(o => o.status === 'shipped').length,
-      delivered: orders.filter(o => o.status === 'delivered').length,
-    };
+    const withinCutoff = orders.filter(o => ['pending', 'confirmed'].includes(o.status) && getOrderCutoffStatus(o) === 'within').length;
+    const missedCutoff = orders.filter(o => ['pending', 'confirmed'].includes(o.status) && getOrderCutoffStatus(o) === 'missed').length;
+    const pendingDispatch = orders.filter(o => ['confirmed', 'packed'].includes(o.status)).length;
+    const rtoPending = orders.filter(o => o.status === 'rto').length;
+    const total = orders.length;
+    const customerReturns = orders.filter(o => o.status === 'customer_return').length;
+    const courierReturns = orders.filter(o => o.status === 'courier_return').length;
+    const delivered = orders.filter(o => o.status === 'delivered').length;
+    const shipped = orders.filter(o => o.status === 'shipped').length;
+    return { total, withinCutoff, missedCutoff, pendingDispatch, rtoPending, customerReturns, courierReturns, delivered, shipped };
   }, [selectedPortal]);
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString()}`;
@@ -124,68 +171,107 @@ export default function Orders() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Order Management</h1>
-            <p className="text-muted-foreground">Manage orders across all sales channels</p>
+            <p className="text-muted-foreground">Manage orders across all sales channels with processing intelligence</p>
           </div>
           <div className="flex items-center gap-2">
             <ExportButton label={rowSelection.count > 0 ? undefined : exportLabel} selectedCount={rowSelection.count} />
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Processing Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <Card className="bg-card">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <ShoppingCart className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
-                </div>
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <ShoppingCart className="w-5 h-5 text-primary" />
+                <p className="text-xl font-bold">{processingStats.total}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">Total Orders</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-success/30">
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <Timer className="w-5 h-5 text-success" />
+                <p className="text-xl font-bold text-success">{processingStats.withinCutoff}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">Within Cutoff</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-destructive/30">
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <p className="text-xl font-bold text-destructive">{processingStats.missedCutoff}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">Missed Cutoff</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-warning/30">
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <Package className="w-5 h-5 text-warning" />
+                <p className="text-xl font-bold text-warning">{processingStats.pendingDispatch}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">Pending Dispatch</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-orange-500/30">
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <RotateCcw className="w-5 h-5 text-orange-500" />
+                <p className="text-xl font-bold text-orange-500">{processingStats.rtoPending}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">RTO Pending</p>
               </div>
             </CardContent>
           </Card>
           <Card className="bg-card">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-warning/10">
-                  <Clock className="w-5 h-5 text-warning" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.pending}</p>
-                  <p className="text-sm text-muted-foreground">Pending</p>
-                </div>
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <Truck className="w-5 h-5 text-info" />
+                <p className="text-xl font-bold">{processingStats.shipped}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">In Transit</p>
               </div>
             </CardContent>
           </Card>
           <Card className="bg-card">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-info/10">
-                  <Truck className="w-5 h-5 text-info" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.shipped}</p>
-                  <p className="text-sm text-muted-foreground">In Transit</p>
-                </div>
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <CheckCircle className="w-5 h-5 text-success" />
+                <p className="text-xl font-bold">{processingStats.delivered}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">Delivered</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-card">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success/10">
-                  <CheckCircle className="w-5 h-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.delivered}</p>
-                  <p className="text-sm text-muted-foreground">Delivered</p>
-                </div>
+          <Card className="bg-card border-rose-500/30">
+            <CardContent className="p-3">
+              <div className="flex flex-col items-center text-center gap-1">
+                <ArrowDownToLine className="w-5 h-5 text-rose-500" />
+                <p className="text-xl font-bold text-rose-500">{processingStats.customerReturns + processingStats.courierReturns}</p>
+                <p className="text-[11px] text-muted-foreground leading-tight">Returns</p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Portal Cutoff Reference */}
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Timer className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold text-muted-foreground">Portal Cutoff Times</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(portalCutoffs).map(([key, config]) => (
+                <Badge key={key} variant="outline" className="gap-1.5 text-xs px-3 py-1">
+                  {portalConfigs.find(p => p.id === key)?.icon}
+                  <span className="font-medium">{config.label}:</span>
+                  <span className={config.hour === null ? 'text-success' : 'text-foreground'}>{config.description}</span>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <Card>
@@ -206,7 +292,7 @@ export default function Orders() {
                 </div>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -246,6 +332,7 @@ export default function Orders() {
                     <TableHead className="font-semibold">Customer</TableHead>
                     <TableHead className="font-semibold">Customer Type</TableHead>
                     <TableHead className="font-semibold">Order Type</TableHead>
+                    <TableHead className="font-semibold">Cutoff</TableHead>
                     <TableHead className="font-semibold">Date</TableHead>
                     <TableHead className="font-semibold text-right">Amount</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
@@ -259,7 +346,8 @@ export default function Orders() {
                     const StatusIcon = status.icon;
                     const isMulti = order.items.length > 1;
                     const custType = getCustomerType(order.customerId);
-                    const totalSkus = order.items.reduce((s, i) => s + i.quantity, 0);
+                    const cutoffStatus = getOrderCutoffStatus(order);
+                    const profile = customerProfiles[order.customerId];
                     
                       return (
                         <TableRow key={order.orderId} className={`hover:bg-muted/30 ${rowSelection.isSelected(order.orderId) ? 'bg-primary/5' : ''}`}>
@@ -276,14 +364,24 @@ export default function Orders() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <button
-                              className="font-medium text-primary hover:underline cursor-pointer text-left"
-                              onClick={() => setSelectedCustomerId(order.customerId)}
-                            >
-                              {order.customerName}
-                            </button>
-                            <p className="text-xs text-muted-foreground">{order.customerPhone}</p>
+                          <div className="flex items-center gap-1.5">
+                            <div>
+                              <button
+                                className="font-medium text-primary hover:underline cursor-pointer text-left"
+                                onClick={() => setSelectedCustomerId(order.customerId)}
+                              >
+                                {order.customerName}
+                              </button>
+                              <p className="text-xs text-muted-foreground">{order.customerPhone}</p>
+                            </div>
+                            {profile?.suspicious && (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                                </TooltipTrigger>
+                                <TooltipContent>Suspicious pattern detected</TooltipContent>
+                              </Tooltip>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -315,6 +413,26 @@ export default function Orders() {
                             </div>
                           ) : (
                             <span className="text-sm text-muted-foreground">Single Item</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {cutoffStatus === 'within' && (
+                            <Badge variant="secondary" className="gap-1 bg-success/10 text-success text-xs">
+                              <Timer className="w-3 h-3" />
+                              Within
+                            </Badge>
+                          )}
+                          {cutoffStatus === 'missed' && (
+                            <Badge variant="secondary" className="gap-1 bg-destructive/10 text-destructive text-xs">
+                              <AlertTriangle className="w-3 h-3" />
+                              Missed
+                            </Badge>
+                          )}
+                          {cutoffStatus === 'immediate' && (
+                            <Badge variant="secondary" className="gap-1 bg-info/10 text-info text-xs">
+                              <CheckCircle className="w-3 h-3" />
+                              Immediate
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
@@ -394,11 +512,40 @@ export default function Orders() {
                     <p className="text-sm text-muted-foreground">Total Amount</p>
                     <p className="font-bold text-lg">{formatCurrency(selectedOrder.totalAmount)}</p>
                   </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cutoff Status</p>
+                    {(() => {
+                      const cs = getOrderCutoffStatus(selectedOrder);
+                      const cutoff = portalCutoffs[selectedOrder.portal];
+                      return (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className={`gap-1 text-xs ${
+                            cs === 'within' ? 'bg-success/10 text-success' : cs === 'missed' ? 'bg-destructive/10 text-destructive' : 'bg-info/10 text-info'
+                          }`}>
+                            {cs === 'within' ? 'Within Cutoff' : cs === 'missed' ? 'Missed Cutoff' : 'Immediate'}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{cutoff?.description}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Order Type</p>
+                    <p className="font-medium">{selectedOrder.items.length > 1 ? 'Multi-SKU Order' : 'Single Order'}</p>
+                  </div>
                 </div>
 
                 {/* Customer Info */}
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <h4 className="font-semibold mb-3">Customer Information</h4>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    Customer Information
+                    {customerProfiles[selectedOrder.customerId]?.suspicious && (
+                      <Badge variant="destructive" className="gap-1 text-xs">
+                        <AlertTriangle className="w-3 h-3" />
+                        Suspicious
+                      </Badge>
+                    )}
+                  </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-muted-foreground">Name</p>
@@ -412,10 +559,22 @@ export default function Orders() {
                       <p className="text-muted-foreground">Shipping Address</p>
                       <p className="font-medium">{selectedOrder.shippingAddress}</p>
                     </div>
+                    {selectedOrder.customerCity && (
+                      <div>
+                        <p className="text-muted-foreground">City</p>
+                        <p className="font-medium">{selectedOrder.customerCity}, {selectedOrder.customerState}</p>
+                      </div>
+                    )}
+                    {selectedOrder.customerPinCode && (
+                      <div>
+                        <p className="text-muted-foreground">Pin Code</p>
+                        <p className="font-medium">{selectedOrder.customerPinCode}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Order Items - Enhanced SKU Table */}
+                {/* Order Items with Master SKU */}
                 <div>
                   <h4 className="font-semibold mb-3">Order Items ({selectedOrder.items.length} SKU{selectedOrder.items.length > 1 ? 's' : ''})</h4>
                   <div className="overflow-x-auto border rounded-lg">
@@ -433,7 +592,12 @@ export default function Orders() {
                       <TableBody>
                         {selectedOrder.items.map((item, index) => (
                           <TableRow key={index}>
-                            <TableCell className="text-xs font-mono">{item.skuId}</TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="text-xs font-mono font-medium">{item.skuId}</p>
+                                <p className="text-[10px] text-muted-foreground">Master: {item.skuId.replace(/^SKU-[A-Z]{3}-/, 'MSKU-')}</p>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-sm font-medium">{item.productName}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className="text-xs">{item.brand}</Badge>
@@ -483,7 +647,7 @@ export default function Orders() {
 
         {/* Customer Profile Modal */}
         <Dialog open={!!selectedCustomerId} onOpenChange={() => setSelectedCustomerId(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -521,6 +685,12 @@ export default function Orders() {
                       Frequent Buyer
                     </Badge>
                   )}
+                  {selectedProfile.suspicious && (
+                    <Badge variant="destructive" className="gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Suspicious Pattern
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50">
@@ -539,6 +709,46 @@ export default function Orders() {
                   <div>
                     <p className="text-sm text-muted-foreground">Last Order</p>
                     <p className="font-medium">{formatDate(selectedProfile.lastOrderDate)}</p>
+                  </div>
+                </div>
+
+                {/* Address & Location */}
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <h4 className="font-semibold mb-3 flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4" />
+                    Address Details
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    {selectedProfile.cities.length > 0 && (
+                      <div>
+                        <p className="text-muted-foreground">Cities</p>
+                        <p className="font-medium">{selectedProfile.cities.join(', ')}</p>
+                      </div>
+                    )}
+                    {selectedProfile.states.length > 0 && (
+                      <div>
+                        <p className="text-muted-foreground">States</p>
+                        <p className="font-medium">{selectedProfile.states.join(', ')}</p>
+                      </div>
+                    )}
+                    {selectedProfile.pinCodes.length > 0 && (
+                      <div>
+                        <p className="text-muted-foreground">Pin Codes</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {selectedProfile.pinCodes.map(pin => (
+                            <Badge key={pin} variant="outline" className="text-xs">{pin}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedProfile.addresses.length > 1 && (
+                      <div>
+                        <p className="text-muted-foreground">Shipping Addresses ({selectedProfile.addresses.length})</p>
+                        {selectedProfile.addresses.map((addr, i) => (
+                          <p key={i} className="font-medium text-xs mt-1">{addr}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
