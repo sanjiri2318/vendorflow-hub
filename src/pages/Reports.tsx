@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, FileText, Clock, ShoppingCart, Package, BarChart3, Upload, UserCheck, RefreshCw } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Download, FileText, Clock, ShoppingCart, Package, BarChart3, Upload, UserCheck, RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { TimelineFilter, type TimelineValue, getTimelineLabel } from '@/components/TimelineFilter';
 
 const daysAgo = (d: number) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString(); };
 
@@ -16,6 +18,7 @@ const mockReports = [
   { id: 'RPT-003', name: 'Order Reconciliation - Jan 2026', type: 'Orders', format: 'Excel', generatedAt: daysAgo(7), size: '2.1 MB' },
   { id: 'RPT-004', name: 'Returns Analysis - Q4 2025', type: 'Returns', format: 'PDF', generatedAt: daysAgo(12), size: '1.5 MB' },
   { id: 'RPT-005', name: 'Portal-wise Revenue - Jan 2026', type: 'Sales', format: 'Excel', generatedAt: daysAgo(2), size: '980 KB' },
+  { id: 'RPT-006', name: 'Settlement Report - Jan 2026', type: 'Settlement', format: 'Excel', generatedAt: daysAgo(4), size: '1.8 MB' },
 ];
 
 const mockHistory = [
@@ -38,14 +41,63 @@ const actionIcons: Record<string, React.ElementType> = {
   'Report Generated': FileText,
 };
 
+type SortField = 'name' | 'type' | 'format' | 'size' | 'generatedAt';
+type SortDir = 'asc' | 'desc';
+
+const reportCategories = [
+  { name: 'Sales Report', icon: BarChart3, color: 'bg-primary/10 text-primary', type: 'Sales' },
+  { name: 'Inventory Report', icon: Package, color: 'bg-emerald-500/10 text-emerald-600', type: 'Inventory' },
+  { name: 'Orders Report', icon: ShoppingCart, color: 'bg-blue-500/10 text-blue-600', type: 'Orders' },
+  { name: 'Returns Report', icon: RefreshCw, color: 'bg-amber-500/10 text-amber-600', type: 'Returns' },
+  { name: 'Settlement Report', icon: FileText, color: 'bg-violet-500/10 text-violet-600', type: 'Settlement' },
+];
+
 export default function Reports() {
   const { toast } = useToast();
+  const [timeline, setTimeline] = useState<TimelineValue>({ preset: '30days' });
+  const [sortField, setSortField] = useState<SortField>('generatedAt');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [scheduledReports, setScheduledReports] = useState<Record<string, boolean>>({});
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
+
+  const sortedReports = useMemo(() => {
+    return [...mockReports].sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      if (sortField === 'generatedAt') return dir * (new Date(a.generatedAt).getTime() - new Date(b.generatedAt).getTime());
+      return dir * (a[sortField] ?? '').localeCompare(b[sortField] ?? '');
+    });
+  }, [sortField, sortDir]);
+
+  const handleGenerate = (name: string) => {
+    const label = getTimelineLabel(timeline);
+    toast({ title: 'Generating Report', description: `${name} for "${label}" is being generated...` });
+  };
+
+  const handleExport = (type: 'excel' | 'pdf') => {
+    const label = getTimelineLabel(timeline);
+    toast({
+      title: `Export to ${type === 'excel' ? 'Excel' : 'PDF'}`,
+      description: `Preparing ${type.toUpperCase()} export for "${label}"...`,
+    });
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Reports & History</h1>
-        <p className="text-muted-foreground">Access reports and view platform activity log</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Reports & History</h1>
+          <p className="text-muted-foreground">Access reports and view platform activity log</p>
+        </div>
+        <TimelineFilter value={timeline} onChange={setTimeline} />
       </div>
 
       <Tabs defaultValue="reports">
@@ -55,15 +107,10 @@ export default function Reports() {
         </TabsList>
 
         <TabsContent value="reports" className="space-y-4 mt-4">
-          {/* Quick Generate */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { name: 'Sales Report', icon: BarChart3, color: 'bg-primary/10 text-primary' },
-              { name: 'Inventory Report', icon: Package, color: 'bg-emerald-500/10 text-emerald-600' },
-              { name: 'Orders Report', icon: ShoppingCart, color: 'bg-blue-500/10 text-blue-600' },
-              { name: 'Returns Report', icon: RefreshCw, color: 'bg-amber-500/10 text-amber-600' },
-            ].map(r => (
-              <Card key={r.name} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => toast({ title: 'Generating Report', description: `${r.name} is being generated...` })}>
+          {/* Quick Generate with timeline applied */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {reportCategories.map(r => (
+              <Card key={r.name} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleGenerate(r.name)}>
                 <CardContent className="pt-6 text-center">
                   <div className={`mx-auto p-3 rounded-xl w-fit mb-3 ${r.color}`}>
                     <r.icon className="w-6 h-6" />
@@ -75,7 +122,20 @@ export default function Reports() {
             ))}
           </div>
 
-          {/* Report History */}
+          {/* Export & Schedule Bar */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" className="gap-2" onClick={() => handleExport('excel')}>
+              <FileSpreadsheet className="w-4 h-4" />Export to Excel
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={() => handleExport('pdf')}>
+              <FileDown className="w-4 h-4" />Export to PDF
+            </Button>
+            <Badge variant="secondary" className="text-xs">
+              Timeline: {getTimelineLabel(timeline)}
+            </Badge>
+          </div>
+
+          {/* Report History Table with Sorting */}
           <Card>
             <CardHeader>
               <CardTitle>Generated Reports</CardTitle>
@@ -85,16 +145,27 @@ export default function Reports() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold">Report</TableHead>
-                    <TableHead className="font-semibold">Type</TableHead>
-                    <TableHead className="font-semibold">Format</TableHead>
-                    <TableHead className="font-semibold">Size</TableHead>
-                    <TableHead className="font-semibold">Generated</TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                      <span className="flex items-center">Report<SortIcon field="name" /></span>
+                    </TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('type')}>
+                      <span className="flex items-center">Type<SortIcon field="type" /></span>
+                    </TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('format')}>
+                      <span className="flex items-center">Format<SortIcon field="format" /></span>
+                    </TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('size')}>
+                      <span className="flex items-center">Size<SortIcon field="size" /></span>
+                    </TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('generatedAt')}>
+                      <span className="flex items-center">Generated<SortIcon field="generatedAt" /></span>
+                    </TableHead>
+                    <TableHead className="font-semibold">Scheduled</TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockReports.map(r => (
+                  {sortedReports.map(r => (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell><Badge variant="secondary">{r.type}</Badge></TableCell>
@@ -102,9 +173,29 @@ export default function Reports() {
                       <TableCell className="text-sm text-muted-foreground">{r.size}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{format(new Date(r.generatedAt), 'dd MMM yyyy')}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => toast({ title: 'Download Started', description: `Downloading ${r.name}...` })}>
-                          <Download className="w-3 h-3" />Download
-                        </Button>
+                        <Switch
+                          checked={!!scheduledReports[r.id]}
+                          onCheckedChange={(checked) => {
+                            setScheduledReports(prev => ({ ...prev, [r.id]: checked }));
+                            toast({
+                              title: checked ? 'Schedule Enabled' : 'Schedule Disabled',
+                              description: `${r.name} ${checked ? 'will be auto-generated weekly' : 'scheduling removed'}`,
+                            });
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => toast({ title: 'Download Started', description: `Downloading ${r.name}...` })}>
+                            <Download className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => handleExport('excel')}>
+                            <FileSpreadsheet className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => handleExport('pdf')}>
+                            <FileDown className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
