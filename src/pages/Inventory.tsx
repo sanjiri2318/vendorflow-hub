@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { mockInventory, portalConfigs } from '@/services/mockData';
+import { mockInventory, mockOrders, portalConfigs } from '@/services/mockData';
 import { Portal } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
+import { InventorySyncLog, type SyncLogEntry } from '@/components/inventory/InventorySyncLog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, AlertTriangle, Package, Upload, History, Minus, Plus, RotateCcw } from 'lucide-react';
+import { Search, AlertTriangle, Package, Upload, History, Minus, Plus, RotateCcw, Zap } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox, ImportModal } from '@/components/TableEnhancements';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -39,17 +40,39 @@ export default function Inventory() {
   const [stockFilter, setStockFilter] = useState<string>('all');
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('30days');
-  const [importOpen, setImportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('inventory');
-
-  // Mutable inventory state
-  const [inventoryState, setInventoryState] = useState(() =>
-    mockInventory.map(i => ({
-      ...i,
-      channelAllocation: Math.floor(i.availableStock * 0.7),
-      masterStock: i.availableStock + i.reservedStock + Math.floor(Math.random() * 50),
-    }))
-  );
+  const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>([
+    {
+      id: 'SYNC-001',
+      orderId: 'ORD-2024-010',
+      portal: 'amazon',
+      skuId: 'SKU-AMZ-001',
+      productName: 'Premium Wireless Earbuds Pro',
+      quantityDeducted: 5,
+      masterQuantityBefore: 250,
+      masterQuantityAfter: 245,
+      channelAllocationBefore: 150,
+      channelAllocationAfter: 145,
+      syncType: 'order_confirmed',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      status: 'synced',
+    },
+    {
+      id: 'SYNC-002',
+      orderId: 'ORD-2024-005',
+      portal: 'blinkit',
+      skuId: 'SKU-BLK-004',
+      productName: 'Stainless Steel Water Bottle',
+      quantityDeducted: 3,
+      masterQuantityBefore: 45,
+      masterQuantityAfter: 42,
+      channelAllocationBefore: 30,
+      channelAllocationAfter: 27,
+      syncType: 'order_shipped',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      status: 'synced',
+    },
+  ]);
 
   const [changeLogs, setChangeLogs] = useState<InventoryChangeLog[]>([
     { id: 'CL-001', skuId: 'SKU-AMZ-001', productName: 'Premium Wireless Earbuds Pro', type: 'order_confirmed', quantityBefore: 250, quantityAfter: 245, reason: 'Order ORD-2024-010 confirmed', user: 'System', timestamp: new Date(Date.now() - 3600000).toISOString() },
@@ -73,9 +96,9 @@ export default function Inventory() {
       const matchesSearch = item.productName.toLowerCase().includes(searchQuery.toLowerCase()) || item.skuId.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesWarehouse = warehouseFilter === 'all' || item.warehouse === warehouseFilter;
       const matchesStock = stockFilter === 'all' ||
-        (stockFilter === 'low' && item.availableStock <= item.lowStockThreshold) ||
-        (stockFilter === 'out' && item.availableStock === 0) ||
-        (stockFilter === 'healthy' && item.availableStock > item.lowStockThreshold);
+        (stockFilter === 'low' && item.availableQuantity <= item.lowStockThreshold) ||
+        (stockFilter === 'out' && item.availableQuantity === 0) ||
+        (stockFilter === 'healthy' && item.availableQuantity > item.lowStockThreshold);
       const matchesBrand = brandFilter === 'all' || item.brand === brandFilter;
       return matchesPortal && matchesSearch && matchesWarehouse && matchesStock && matchesBrand;
     });
@@ -87,9 +110,9 @@ export default function Inventory() {
     const items = selectedPortal === 'all' ? inventoryState : inventoryState.filter(i => i.portal === selectedPortal);
     return {
       totalSKUs: items.length,
-      totalStock: items.reduce((sum, i) => sum + i.availableStock, 0),
-      lowStock: items.filter(i => i.availableStock <= i.lowStockThreshold && i.availableStock > 0).length,
-      outOfStock: items.filter(i => i.availableStock === 0).length,
+      totalStock: items.reduce((sum, i) => sum + i.availableQuantity, 0),
+      lowStock: items.filter(i => i.availableQuantity <= i.lowStockThreshold && i.availableQuantity > 0).length,
+      outOfStock: items.filter(i => i.availableQuantity === 0).length,
       aging: items.filter(i => i.agingDays > 60).length,
     };
   }, [inventoryState, selectedPortal]);
@@ -107,19 +130,20 @@ export default function Inventory() {
 
     setInventoryState(prev => prev.map(item => {
       if (item.skuId !== adjustSku) return item;
-      const newStock = Math.max(0, item.availableStock + qty);
+      const newAvailable = Math.max(0, item.availableQuantity + qty);
+      const newMaster = Math.max(0, item.masterQuantity + qty);
       setChangeLogs(logs => [{
         id: `CL-${Date.now()}`,
         skuId: item.skuId,
         productName: item.productName,
         type: 'adjustment',
-        quantityBefore: item.availableStock,
-        quantityAfter: newStock,
+        quantityBefore: item.availableQuantity,
+        quantityAfter: newAvailable,
         reason: adjustReason,
         user: 'Admin',
         timestamp: new Date().toISOString(),
       }, ...logs]);
-      return { ...item, availableStock: newStock };
+      return { ...item, availableQuantity: newAvailable, masterQuantity: newMaster };
     }));
 
     toast({ title: 'Stock Adjusted', description: `${adjustSku}: ${qty > 0 ? '+' : ''}${qty} units — ${adjustReason}` });
@@ -152,6 +176,7 @@ export default function Inventory() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="inventory">Stock Overview</TabsTrigger>
+          <TabsTrigger value="sync">Inventory Sync Log ({syncLogs.length})</TabsTrigger>
           <TabsTrigger value="changelog">Change Log ({changeLogs.length})</TabsTrigger>
         </TabsList>
 
@@ -210,29 +235,29 @@ export default function Inventory() {
                   </TableHeader>
                   <TableBody>
                     {filteredInventory.map(item => {
-                      const status = getStockStatus(item.availableStock, item.lowStockThreshold);
-                      const portal = portalConfigs.find(p => p.id === item.portal);
-                      return (
-                        <TableRow key={item.skuId} className={`hover:bg-muted/30 ${rowSelection.isSelected(item.skuId) ? 'bg-primary/5' : ''}`}>
-                          <TableCell><RowCheckbox checked={rowSelection.isSelected(item.skuId)} onCheckedChange={() => rowSelection.toggle(item.skuId)} /></TableCell>
-                          <TableCell className="font-mono text-sm">{item.skuId}</TableCell>
-                          <TableCell className="max-w-[180px] truncate">{item.productName}</TableCell>
-                          <TableCell><Badge variant="secondary" className="text-xs">{item.brand}</Badge></TableCell>
-                          <TableCell><Badge variant="outline" className="gap-1">{portal?.icon} {portal?.name}</Badge></TableCell>
-                          <TableCell className="text-center font-medium">{item.masterStock}</TableCell>
-                          <TableCell className="text-center"><span className={`font-semibold ${item.availableStock <= item.lowStockThreshold ? 'text-amber-600' : ''}`}>{item.availableStock}</span></TableCell>
-                          <TableCell className="text-center text-muted-foreground">{item.channelAllocation}</TableCell>
-                          <TableCell className="text-center text-muted-foreground">{item.reservedStock}</TableCell>
-                          <TableCell>{item.warehouse}</TableCell>
-                          <TableCell><Badge variant="secondary" className={status.color}>{status.label}</Badge></TableCell>
-                          <TableCell className="text-center">
-                            <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setAdjustSku(item.skuId)}>
-                              <RotateCcw className="w-3 h-3" />Adjust
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                       const status = getStockStatus(item.availableQuantity, item.lowStockThreshold);
+                       const portal = portalConfigs.find(p => p.id === item.portal);
+                       return (
+                         <TableRow key={item.skuId} className={`hover:bg-muted/30 ${rowSelection.isSelected(item.skuId) ? 'bg-primary/5' : ''}`}>
+                           <TableCell><RowCheckbox checked={rowSelection.isSelected(item.skuId)} onCheckedChange={() => rowSelection.toggle(item.skuId)} /></TableCell>
+                           <TableCell className="font-mono text-sm">{item.skuId}</TableCell>
+                           <TableCell className="max-w-[180px] truncate">{item.productName}</TableCell>
+                           <TableCell><Badge variant="secondary" className="text-xs">{item.brand}</Badge></TableCell>
+                           <TableCell><Badge variant="outline" className="gap-1">{portal?.icon} {portal?.name}</Badge></TableCell>
+                           <TableCell className="text-center font-medium">{item.masterQuantity}</TableCell>
+                           <TableCell className="text-center"><span className={`font-semibold ${item.availableQuantity <= item.lowStockThreshold ? 'text-amber-600' : ''}`}>{item.availableQuantity}</span></TableCell>
+                           <TableCell className="text-center text-muted-foreground">{Object.values(item.channelAllocations).reduce((a, b) => a + b, 0)}</TableCell>
+                           <TableCell className="text-center text-muted-foreground">{item.reservedQuantity}</TableCell>
+                           <TableCell>{item.warehouse}</TableCell>
+                           <TableCell><Badge variant="secondary" className={status.color}>{status.label}</Badge></TableCell>
+                           <TableCell className="text-center">
+                             <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setAdjustSku(item.skuId)}>
+                               <RotateCcw className="w-3 h-3" />Adjust
+                             </Button>
+                           </TableCell>
+                         </TableRow>
+                       );
+                     })}
                   </TableBody>
                 </Table>
               </div>
