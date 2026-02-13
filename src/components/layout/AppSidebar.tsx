@@ -45,6 +45,7 @@ import {
   Receipt,
   Database,
   Blocks,
+  Code,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -135,6 +136,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       { title: 'System Settings', url: '/system-settings', icon: Settings, roles: ['admin'] },
       { title: 'Permissions', url: '/permissions', icon: Shield, roles: ['admin'] },
+      { title: 'API Settings', url: '/api-settings', icon: Code, roles: ['admin'] },
       { title: 'Subscription', url: '/subscription', icon: Crown, roles: ['admin'] },
       { title: 'AI Hub', url: '/chatbot', icon: MessageSquare, roles: ['admin'] },
       { title: 'Support', url: '/support', icon: LifeBuoy, roles: ['admin', 'vendor', 'operations'] },
