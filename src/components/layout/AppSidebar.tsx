@@ -46,6 +46,7 @@ import {
   Database,
   Blocks,
   Code,
+  Camera,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -113,6 +114,7 @@ const navigationGroups: NavGroup[] = [
     label: 'Operations',
     items: [
       { title: 'Data Import', url: '/data-import', icon: Upload, roles: ['admin', 'operations'] },
+      { title: 'Video Management', url: '/video-management', icon: Camera, roles: ['admin', 'operations'] },
       { title: 'Alerts', url: '/alerts', icon: Bell, roles: ['admin', 'vendor', 'operations'] },
       { title: 'Tasks', url: '/tasks', icon: ListTodo, roles: ['admin', 'operations'] },
       { title: 'Analytics', url: '/analytics', icon: BarChart3, roles: ['admin', 'vendor'] },
