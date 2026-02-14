@@ -39,6 +39,7 @@ import SystemSettings from "./pages/SystemSettings";
 import FinanceTaxation from "./pages/FinanceTaxation";
 import APISettings from "./pages/APISettings";
 import VideoManagement from "./pages/VideoManagement";
+import LegalCompliance from "./pages/LegalCompliance";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/finance" element={<AppLayout><FinanceTaxation /></AppLayout>} />
             <Route path="/api-settings" element={<AppLayout><APISettings /></AppLayout>} />
             <Route path="/video-management" element={<AppLayout><VideoManagement /></AppLayout>} />
+            <Route path="/legal-compliance" element={<AppLayout><LegalCompliance /></AppLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
