@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IndianRupee, TrendingUp, Download, FileSpreadsheet, AlertTriangle, CheckCircle2, XCircle, Shield } from 'lucide-react';
+import PriceAuditEngine from '@/components/settlements/PriceAuditEngine';
 import { useToast } from '@/hooks/use-toast';
 
 interface PriceBreakdown {
@@ -123,6 +124,7 @@ export default function PricePayout() {
         <TabsList>
           <TabsTrigger value="payout">Payout Breakdown</TabsTrigger>
           <TabsTrigger value="reconciliation">Reconciliation Engine</TabsTrigger>
+          <TabsTrigger value="price-audit">Price Audit</TabsTrigger>
         </TabsList>
 
         <TabsContent value="payout" className="space-y-6">
@@ -283,6 +285,10 @@ export default function PricePayout() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="price-audit" className="space-y-6">
+          <PriceAuditEngine />
         </TabsContent>
       </Tabs>
     </div>
