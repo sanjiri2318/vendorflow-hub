@@ -16,7 +16,7 @@ let currentSettings: ReconciliationSettings = {
 const listeners: Set<() => void> = new Set();
 
 export function getReconciliationSettings(): ReconciliationSettings {
-  return { ...currentSettings };
+  return currentSettings;
 }
 
 export function setReconciliationSettings(settings: ReconciliationSettings) {
