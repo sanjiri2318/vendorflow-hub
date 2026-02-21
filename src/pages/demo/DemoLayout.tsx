@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, TrendingUp, GitCompare, Upload, FileText, Settings, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, GitCompare, Upload, FileText, Settings, ChevronLeft, CreditCard, Building2, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -9,6 +9,9 @@ const navItems = [
   { label: 'VMS Reconciliation', to: '/demo/reconciliation', icon: GitCompare },
   { label: 'Data Import', to: '/demo/import', icon: Upload },
   { label: 'Reports', to: '/demo/reports', icon: FileText },
+  { label: 'Subscription', to: '/demo/subscription', icon: CreditCard },
+  { label: 'Onboarding', to: '/demo/onboarding', icon: Building2 },
+  { label: 'Support', to: '/demo/support', icon: MessageSquare },
   { label: 'Settings', to: '/demo/settings', icon: Settings },
 ];
 

@@ -40,6 +40,16 @@ import FinanceTaxation from "./pages/FinanceTaxation";
 import APISettings from "./pages/APISettings";
 import VideoManagement from "./pages/VideoManagement";
 import LegalCompliance from "./pages/LegalCompliance";
+import DemoLayout from "./pages/demo/DemoLayout";
+import DemoDashboard from "./pages/demo/DemoDashboard";
+import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
+import DemoReconciliation from "./pages/demo/DemoReconciliation";
+import DemoDataImport from "./pages/demo/DemoDataImport";
+import DemoReports from "./pages/demo/DemoReports";
+import DemoSettings from "./pages/demo/DemoSettings";
+import DemoSubscription from "./pages/demo/DemoSubscription";
+import DemoOnboarding from "./pages/demo/DemoOnboarding";
+import DemoTicketing from "./pages/demo/DemoTicketing";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +97,16 @@ const App = () => (
             <Route path="/api-settings" element={<AppLayout><APISettings /></AppLayout>} />
             <Route path="/video-management" element={<AppLayout><VideoManagement /></AppLayout>} />
             <Route path="/legal-compliance" element={<AppLayout><LegalCompliance /></AppLayout>} />
+            {/* Demo Routes */}
+            <Route path="/demo" element={<DemoLayout><DemoDashboard /></DemoLayout>} />
+            <Route path="/demo/sales" element={<DemoLayout><DemoSalesAnalysis /></DemoLayout>} />
+            <Route path="/demo/reconciliation" element={<DemoLayout><DemoReconciliation /></DemoLayout>} />
+            <Route path="/demo/import" element={<DemoLayout><DemoDataImport /></DemoLayout>} />
+            <Route path="/demo/reports" element={<DemoLayout><DemoReports /></DemoLayout>} />
+            <Route path="/demo/settings" element={<DemoLayout><DemoSettings /></DemoLayout>} />
+            <Route path="/demo/subscription" element={<DemoLayout><DemoSubscription /></DemoLayout>} />
+            <Route path="/demo/onboarding" element={<DemoLayout><DemoOnboarding /></DemoLayout>} />
+            <Route path="/demo/support" element={<DemoLayout><DemoTicketing /></DemoLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
