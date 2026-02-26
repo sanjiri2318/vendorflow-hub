@@ -53,6 +53,7 @@ import {
   MessageCircle,
   Building2,
   Contact,
+  PieChart,
 } from 'lucide-react';
 
 interface NavItem {
@@ -72,6 +73,7 @@ const navigationGroups: NavGroup[] = [
     label: 'Overview',
     items: [
       { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'vendor', 'operations'] },
+      { title: 'Insights', url: '/insights', icon: PieChart, roles: ['admin', 'vendor', 'operations'] },
     ],
   },
   {
