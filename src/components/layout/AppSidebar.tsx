@@ -52,6 +52,7 @@ import {
   UserPlus,
   MessageCircle,
   Building2,
+  Contact,
 } from 'lucide-react';
 
 interface NavItem {
@@ -116,6 +117,7 @@ const navigationGroups: NavGroup[] = [
       { title: 'Tasks', url: '/tasks', icon: ListTodo, roles: ['admin', 'operations'] },
       { title: 'Analytics', url: '/analytics', icon: BarChart3, roles: ['admin', 'vendor'] },
       { title: 'Lead Management', url: '/leads', icon: UserPlus, roles: ['admin', 'vendor'] },
+      { title: 'Customer Database', url: '/customers', icon: Contact, roles: ['admin', 'vendor', 'operations'] },
       { title: 'WhatsApp API', url: '/whatsapp', icon: MessageCircle, roles: ['admin'] },
     ],
   },
