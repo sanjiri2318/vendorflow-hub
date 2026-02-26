@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, UserPlus, Users, Phone, Mail, Globe, TrendingUp, Clock, CheckCircle2,
   XCircle, AlertCircle, Search, Filter, Download, Eye, Edit, Building2,
+  Upload, FileSpreadsheet, FileDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -80,6 +81,40 @@ export default function LeadManagement() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showNewLead, setShowNewLead] = useState(false);
   const [assignDialog, setAssignDialog] = useState<Lead | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [importFile, setImportFile] = useState<string | null>(null);
+  const [importMapping, setImportMapping] = useState(false);
+
+  const handleSampleDownload = () => {
+    const headers = ['Company Name', 'Contact Person', 'Phone', 'Email', 'Source', 'Priority', 'Estimated Value', 'Notes'];
+    const sample = [
+      ['Sample Corp', 'John Doe', '+91 98765 00000', 'john@sample.com', 'website', 'high', '100000', 'Sample lead'],
+    ];
+    const csv = [headers.join(','), ...sample.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'lead_import_template.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Template Downloaded', description: 'Fill the CSV template and import' });
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file.name);
+      setTimeout(() => {
+        setImportMapping(true);
+        toast({ title: 'File Parsed', description: `${file.name} — 15 rows detected. Fields auto-mapped.` });
+      }, 1000);
+    }
+  };
+
+  const handleImportConfirm = () => {
+    toast({ title: 'Import Complete', description: '15 leads imported successfully' });
+    setShowImport(false);
+    setImportFile(null);
+    setImportMapping(false);
+  };
 
   const filtered = useMemo(() => mockLeads.filter(l => {
     const matchSearch = l.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -117,6 +152,9 @@ export default function LeadManagement() {
           <p className="text-muted-foreground">Track and manage business leads from all sources</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+            <Upload className="w-4 h-4" />Import
+          </Button>
           <Button variant="outline" className="gap-2" onClick={() => toast({ title: 'Exported', description: 'Leads exported to Excel' })}>
             <Download className="w-4 h-4" />Export
           </Button>
@@ -327,6 +365,42 @@ export default function LeadManagement() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewLead(false)}>Cancel</Button>
             <Button onClick={() => { toast({ title: 'Lead Created', description: 'New lead added successfully' }); setShowNewLead(false); }}>Create Lead</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={showImport} onOpenChange={v => { setShowImport(v); if (!v) { setImportFile(null); setImportMapping(false); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Import Leads</DialogTitle><DialogDescription>Upload Excel or CSV file to bulk import leads</DialogDescription></DialogHeader>
+          <div className="space-y-4 py-4">
+            <Button variant="outline" className="w-full gap-2" onClick={handleSampleDownload}>
+              <FileDown className="w-4 h-4" />Download Sample Template
+            </Button>
+            <div className="border-2 border-dashed rounded-lg p-6 text-center">
+              <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground mb-2">Upload CSV or Excel file</p>
+              <Input type="file" accept=".csv,.xlsx,.xls" className="max-w-[200px] mx-auto" onChange={handleImportFile} />
+            </div>
+            {importFile && (
+              <div className="p-3 rounded-lg bg-muted/50 border">
+                <p className="text-sm font-medium flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />{importFile}</p>
+                {importMapping && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground">Auto-Mapped Fields:</p>
+                    {['Company Name → companyName', 'Contact Person → contactPerson', 'Phone → phone', 'Email → email', 'Source → source', 'Priority → priority', 'Value → value'].map(m => (
+                      <div key={m} className="flex items-center gap-2 text-xs">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />{m}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImport(false)}>Cancel</Button>
+            <Button disabled={!importMapping} onClick={handleImportConfirm}>Import 15 Leads</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

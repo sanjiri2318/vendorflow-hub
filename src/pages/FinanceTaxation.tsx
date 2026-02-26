@@ -18,6 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { GlobalDateFilter, type DateRange } from '@/components/GlobalDateFilter';
+import ChannelPnLComponent from '@/components/finance/ChannelPnL';
 
 // ── Mock GSTIN Auto-fill database ──
 const gstinDatabase: Record<string, { name: string; address: string; state: string; stateCode: string; taxStatus: 'Regular' | 'Composition' }> = {
@@ -742,66 +743,7 @@ export default function FinanceTaxation() {
 
         {/* ── PROFIT & LOSS TAB ── */}
         <TabsContent value="pnl" className="space-y-4 mt-4">
-          <div className="flex flex-wrap items-center gap-3 mb-2">
-            <Badge variant="secondary" className="gap-1"><TrendingUp className="w-3 h-3" />Current Period: Feb 2026</Badge>
-            <div className="ml-auto flex gap-2">
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('P&L Statement', 'excel')}><FileSpreadsheet className="w-3.5 h-3.5" />Excel</Button>
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('P&L Statement', 'pdf')}><FileDown className="w-3.5 h-3.5" />PDF</Button>
-            </div>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Profit & Loss Statement</CardTitle>
-              <CardDescription>Revenue breakdown and net profitability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-500/10"><TrendingUp className="w-4 h-4 text-emerald-600" /></div>
-                    <div><p className="font-semibold">Revenue</p><p className="text-xs text-muted-foreground">Total sales across all channels</p></div>
-                  </div>
-                  <p className="text-xl font-bold text-emerald-600">{fmt(plData.revenue)}</p>
-                </div>
-
-                {[
-                  { label: 'Commission', desc: 'Marketplace & platform fees', value: plData.commission, color: 'text-amber-600', bg: 'bg-amber-500/10', borderColor: 'border-amber-500/10' },
-                  { label: 'Logistics', desc: 'Shipping & delivery costs', value: plData.logistics, color: 'text-blue-600', bg: 'bg-blue-500/10', borderColor: 'border-blue-500/10' },
-                  { label: 'Refund Impact', desc: 'Returns & refund losses', value: plData.refundImpact, color: 'text-rose-600', bg: 'bg-rose-500/10', borderColor: 'border-rose-500/10' },
-                  { label: 'Other Expenses', desc: 'Packaging, ads & misc', value: plData.otherExpenses, color: 'text-muted-foreground', bg: 'bg-muted/50', borderColor: 'border-muted' },
-                ].map(item => (
-                  <div key={item.label} className={`flex items-center justify-between p-3 rounded-lg bg-background border ${item.borderColor}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${item.bg}`}><TrendingDown className={`w-4 h-4 ${item.color}`} /></div>
-                      <div><p className="font-medium">{item.label}</p><p className="text-xs text-muted-foreground">{item.desc}</p></div>
-                    </div>
-                    <p className={`text-lg font-semibold ${item.color}`}>- {fmt(item.value)}</p>
-                  </div>
-                ))}
-
-                <div className="border-t-2 border-dashed my-2" />
-
-                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border-2 border-primary/20">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10"><IndianRupee className="w-5 h-5 text-primary" /></div>
-                    <div><p className="font-bold text-lg">Net Profit</p><p className="text-sm text-muted-foreground">Margin: {marginPct}%</p></div>
-                  </div>
-                  <p className="text-2xl font-bold text-primary">{fmt(netProfit)}</p>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Profit Margin</span>
-                    <span className="font-semibold">{marginPct}%</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-500 transition-all" style={{ width: `${marginPct}%` }} />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ChannelPnLComponent />
         </TabsContent>
       </Tabs>
 

@@ -43,6 +43,7 @@ import LegalCompliance from "./pages/LegalCompliance";
 import LeadManagement from "./pages/LeadManagement";
 import WhatsAppAPI from "./pages/WhatsAppAPI";
 import BusinessOnboarding from "./pages/BusinessOnboarding";
+import CustomerManagement from "./pages/CustomerManagement";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
@@ -103,6 +104,7 @@ const App = () => (
             <Route path="/leads" element={<AppLayout><LeadManagement /></AppLayout>} />
             <Route path="/whatsapp" element={<AppLayout><WhatsAppAPI /></AppLayout>} />
             <Route path="/onboarding" element={<AppLayout><BusinessOnboarding /></AppLayout>} />
+            <Route path="/customers" element={<AppLayout><CustomerManagement /></AppLayout>} />
             {/* Demo Routes */}
             <Route path="/demo" element={<DemoLayout><DemoDashboard /></DemoLayout>} />
             <Route path="/demo/sales" element={<DemoLayout><DemoSalesAnalysis /></DemoLayout>} />

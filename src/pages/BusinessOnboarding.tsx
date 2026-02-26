@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -7,16 +7,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Building2, Plus, FileText, CheckCircle2, Clock, XCircle, Upload, Eye,
-  AlertCircle, Shield, Users, ClipboardList,
+  AlertCircle, Shield, Users, ClipboardList, Download, FileSpreadsheet,
+  Search, Bell, History, ToggleLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 
 type OnboardingStatus = 'submitted' | 'under_review' | 'approved' | 'rejected';
+type SubscriptionStatus = 'trial' | 'fully_paid' | 'partially_paid' | 'wallet_balance';
 
 interface OnboardingRequest {
   id: string;
@@ -32,30 +36,46 @@ interface OnboardingRequest {
   documents: { name: string; uploaded: boolean }[];
   adminNotes: string;
   auditLog: { action: string; by: string; time: string }[];
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionExpiry: string;
+  accessEnabled: boolean;
+  changeLog: { field: string; oldValue: string; newValue: string; by: string; time: string }[];
 }
 
 const daysAgo = (d: number) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString(); };
+const daysFromNow = (d: number) => { const dt = new Date(); dt.setDate(dt.getDate() + d); return dt.toISOString(); };
+
+const subStatusConfig: Record<SubscriptionStatus, { label: string; color: string }> = {
+  trial: { label: 'Trial', color: 'bg-blue-500/15 text-blue-600 border-blue-500/30' },
+  fully_paid: { label: 'Fully Paid', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
+  partially_paid: { label: 'Partially Paid', color: 'bg-amber-500/15 text-amber-600 border-amber-500/30' },
+  wallet_balance: { label: 'Wallet Balance', color: 'bg-violet-500/15 text-violet-600 border-violet-500/30' },
+};
 
 const mockRequests: OnboardingRequest[] = [
   {
     id: 'ONB-001', companyName: 'NovaTech Industries', contactPerson: 'Rajesh Gupta', email: 'rajesh@novatech.in', phone: '+91 98765 11111', gstin: '27AABCN1234M1Z5', platforms: ['Amazon', 'Flipkart'], status: 'submitted', submittedAt: daysAgo(0), updatedAt: daysAgo(0),
     documents: [{ name: 'GST Certificate', uploaded: true }, { name: 'PAN Card', uploaded: true }, { name: 'Bank Statement', uploaded: false }],
     adminNotes: '', auditLog: [{ action: 'Application submitted', by: 'Rajesh Gupta', time: daysAgo(0) }],
+    subscriptionStatus: 'trial', subscriptionExpiry: daysFromNow(5), accessEnabled: true, changeLog: [],
   },
   {
     id: 'ONB-002', companyName: 'EverGreen Foods', contactPerson: 'Sunita Devi', email: 'sunita@evergreen.com', phone: '+91 87654 22222', gstin: '29AADCE5678N1Z3', platforms: ['Meesho', 'Blinkit', 'Amazon'], status: 'under_review', submittedAt: daysAgo(3), updatedAt: daysAgo(1),
     documents: [{ name: 'GST Certificate', uploaded: true }, { name: 'PAN Card', uploaded: true }, { name: 'FSSAI License', uploaded: true }, { name: 'Bank Statement', uploaded: true }],
     adminNotes: 'FSSAI license validity check in progress', auditLog: [{ action: 'Application submitted', by: 'Sunita Devi', time: daysAgo(3) }, { action: 'Documents verified', by: 'Admin', time: daysAgo(2) }, { action: 'Under review — FSSAI check', by: 'Admin', time: daysAgo(1) }],
+    subscriptionStatus: 'fully_paid', subscriptionExpiry: daysFromNow(60), accessEnabled: true, changeLog: [{ field: 'subscriptionStatus', oldValue: 'trial', newValue: 'fully_paid', by: 'Admin', time: daysAgo(1) }],
   },
   {
     id: 'ONB-003', companyName: 'BrightWave Electronics', contactPerson: 'Karan Malhotra', email: 'karan@brightwave.in', phone: '+91 76543 33333', gstin: '07AABCB9012P1Z7', platforms: ['Amazon', 'Flipkart', 'Own Website'], status: 'approved', submittedAt: daysAgo(10), updatedAt: daysAgo(5),
     documents: [{ name: 'GST Certificate', uploaded: true }, { name: 'PAN Card', uploaded: true }, { name: 'Bank Statement', uploaded: true }, { name: 'Brand Authorization', uploaded: true }],
     adminNotes: 'All documents verified. Onboarding complete.', auditLog: [{ action: 'Application submitted', by: 'Karan Malhotra', time: daysAgo(10) }, { action: 'Documents verified', by: 'Admin', time: daysAgo(8) }, { action: 'Background check passed', by: 'Admin', time: daysAgo(6) }, { action: 'Approved', by: 'Admin', time: daysAgo(5) }],
+    subscriptionStatus: 'partially_paid', subscriptionExpiry: daysFromNow(20), accessEnabled: true, changeLog: [],
   },
   {
     id: 'ONB-004', companyName: 'UrbanStyle Clothing', contactPerson: 'Priya Kapoor', email: 'priya@urbanstyle.in', phone: '+91 65432 44444', gstin: '27AABC1234K1ZY', platforms: ['Meesho'], status: 'rejected', submittedAt: daysAgo(8), updatedAt: daysAgo(4),
     documents: [{ name: 'GST Certificate', uploaded: true }, { name: 'PAN Card', uploaded: false }, { name: 'Bank Statement', uploaded: false }],
     adminNotes: 'Incomplete documents. PAN and bank statement missing.', auditLog: [{ action: 'Application submitted', by: 'Priya Kapoor', time: daysAgo(8) }, { action: 'Documents incomplete', by: 'Admin', time: daysAgo(6) }, { action: 'Reminder sent', by: 'System', time: daysAgo(5) }, { action: 'Rejected — documents not provided', by: 'Admin', time: daysAgo(4) }],
+    subscriptionStatus: 'wallet_balance', subscriptionExpiry: daysFromNow(3), accessEnabled: false, changeLog: [{ field: 'accessEnabled', oldValue: 'true', newValue: 'false', by: 'Admin', time: daysAgo(4) }],
   },
 ];
 
@@ -74,6 +94,19 @@ export default function BusinessOnboarding() {
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<OnboardingRequest | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [subFilter, setSubFilter] = useState('all');
+  const [showChangeLog, setShowChangeLog] = useState<OnboardingRequest | null>(null);
+
+  const filtered = useMemo(() => requests.filter(r => {
+    const matchSearch = r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+    const matchSub = subFilter === 'all' || r.subscriptionStatus === subFilter;
+    return matchSearch && matchStatus && matchSub;
+  }), [requests, searchQuery, statusFilter, subFilter]);
 
   const stats = {
     total: requests.length,
@@ -87,9 +120,28 @@ export default function BusinessOnboarding() {
     setRequests(prev => prev.map(r => r.id === id ? {
       ...r, status: action, updatedAt: new Date().toISOString(),
       auditLog: [...r.auditLog, { action: action === 'approved' ? 'Approved by admin' : 'Rejected by admin', by: 'Admin', time: new Date().toISOString() }],
+      changeLog: [...r.changeLog, { field: 'status', oldValue: r.status, newValue: action, by: 'Admin', time: new Date().toISOString() }],
     } : r));
     toast({ title: action === 'approved' ? 'Application Approved' : 'Application Rejected', description: `Onboarding request ${id} has been ${action}` });
     setSelectedRequest(null);
+  };
+
+  const toggleAccess = (id: string) => {
+    setRequests(prev => prev.map(r => r.id === id ? {
+      ...r, accessEnabled: !r.accessEnabled, updatedAt: new Date().toISOString(),
+      changeLog: [...r.changeLog, { field: 'accessEnabled', oldValue: String(r.accessEnabled), newValue: String(!r.accessEnabled), by: 'Admin', time: new Date().toISOString() }],
+    } : r));
+  };
+
+  const handleExport = () => {
+    const headers = ['ID', 'Company', 'Contact', 'Email', 'GSTIN', 'Status', 'Subscription', 'Expiry', 'Access'];
+    const rows = requests.map(r => [r.id, r.companyName, r.contactPerson, r.email, r.gstin, r.status, r.subscriptionStatus, r.subscriptionExpiry, r.accessEnabled]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'onboarding_requests.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Exported', description: 'Onboarding data exported to CSV' });
   };
 
   return (
@@ -99,7 +151,10 @@ export default function BusinessOnboarding() {
           <h1 className="text-2xl font-bold text-foreground">Business Onboarding</h1>
           <p className="text-muted-foreground">Manage business onboarding requests and approvals</p>
         </div>
-        <Button className="gap-2" onClick={() => setShowNewRequest(true)}><Plus className="w-4 h-4" />New Request</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleExport}><FileSpreadsheet className="w-4 h-4" />Export</Button>
+          <Button className="gap-2" onClick={() => setShowNewRequest(true)}><Plus className="w-4 h-4" />New Request</Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -117,7 +172,29 @@ export default function BusinessOnboarding() {
           <TabsTrigger value="admin" className="gap-1.5"><Shield className="w-4 h-4" />Admin Panel</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="requests" className="mt-4">
+        <TabsContent value="requests" className="mt-4 space-y-4">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input placeholder="Search by company, contact, ID..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={subFilter} onValueChange={setSubFilter}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Subscription" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subscriptions</SelectItem>
+                {Object.entries(subStatusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -126,31 +203,43 @@ export default function BusinessOnboarding() {
                     <TableHead className="font-semibold">ID</TableHead>
                     <TableHead className="font-semibold">Company</TableHead>
                     <TableHead className="font-semibold">Contact</TableHead>
-                    <TableHead className="font-semibold">Platforms</TableHead>
-                    <TableHead className="font-semibold">Documents</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Submitted</TableHead>
+                    <TableHead className="font-semibold">Subscription</TableHead>
+                    <TableHead className="font-semibold">Expiry</TableHead>
+                    <TableHead className="font-semibold">Access</TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {requests.map(req => {
+                  {filtered.map(req => {
                     const st = statusConfig[req.status];
-                    const docsComplete = req.documents.every(d => d.uploaded);
+                    const sub = subStatusConfig[req.subscriptionStatus];
+                    const daysLeft = differenceInDays(new Date(req.subscriptionExpiry), new Date());
+                    const expiryWarning = daysLeft <= 7 && daysLeft > 0;
+                    const expired = daysLeft <= 0;
                     return (
                       <TableRow key={req.id}>
                         <TableCell className="font-mono text-sm">{req.id}</TableCell>
                         <TableCell><div><p className="font-medium">{req.companyName}</p><p className="text-xs text-muted-foreground">{req.gstin}</p></div></TableCell>
                         <TableCell><div><p className="text-sm">{req.contactPerson}</p><p className="text-xs text-muted-foreground">{req.email}</p></div></TableCell>
-                        <TableCell><div className="flex flex-wrap gap-1">{req.platforms.map(p => <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>)}</div></TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={docsComplete ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : 'bg-amber-500/10 text-amber-600 border-amber-500/30'}>
-                            {req.documents.filter(d => d.uploaded).length}/{req.documents.length}
-                          </Badge>
-                        </TableCell>
                         <TableCell><Badge variant="outline" className={`gap-1 ${st.color}`}><st.icon className="w-3 h-3" />{st.label}</Badge></TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{format(new Date(req.submittedAt), 'dd MMM yyyy')}</TableCell>
-                        <TableCell><Button variant="ghost" size="sm" onClick={() => setSelectedRequest(req)}><Eye className="w-4 h-4" /></Button></TableCell>
+                        <TableCell><Badge variant="outline" className={sub.color}>{sub.label}</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm">{format(new Date(req.subscriptionExpiry), 'dd MMM yyyy')}</span>
+                            {expiryWarning && <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px] gap-0.5"><Bell className="w-2.5 h-2.5" />{daysLeft}d</Badge>}
+                            {expired && <Badge variant="outline" className="bg-rose-500/10 text-rose-600 border-rose-500/30 text-[10px]">Expired</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Switch checked={req.accessEnabled} onCheckedChange={() => toggleAccess(req.id)} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedRequest(req)}><Eye className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => setShowChangeLog(req)}><History className="w-4 h-4" /></Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -287,6 +376,33 @@ export default function BusinessOnboarding() {
             <Button variant="outline" onClick={() => setShowNewRequest(false)}>Cancel</Button>
             <Button onClick={() => { toast({ title: 'Request Submitted', description: 'Your onboarding request has been submitted for review' }); setShowNewRequest(false); }}>Submit Request</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Log Dialog */}
+      <Dialog open={!!showChangeLog} onOpenChange={open => !open && setShowChangeLog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><History className="w-5 h-5" />Change Log — {showChangeLog?.companyName}</DialogTitle>
+          </DialogHeader>
+          {showChangeLog && (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {showChangeLog.changeLog.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6">No changes recorded yet</p>
+              ) : (
+                showChangeLog.changeLog.map((cl, i) => (
+                  <div key={i} className="p-3 rounded-lg border bg-muted/30 text-sm">
+                    <div className="flex items-center justify-between mb-1">
+                      <Badge variant="outline" className="text-xs">{cl.field}</Badge>
+                      <span className="text-xs text-muted-foreground">{format(new Date(cl.time), 'dd MMM yyyy, HH:mm')}</span>
+                    </div>
+                    <p><span className="text-rose-600 line-through">{cl.oldValue}</span> → <span className="text-emerald-600 font-medium">{cl.newValue}</span></p>
+                    <p className="text-xs text-muted-foreground mt-1">Changed by: {cl.by}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
