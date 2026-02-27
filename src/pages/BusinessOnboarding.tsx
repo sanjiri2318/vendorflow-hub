@@ -170,12 +170,12 @@ export default function BusinessOnboarding() {
 
       <Tabs defaultValue="requests">
         <TabsList>
-          <TabsTrigger value="requests" className="gap-1.5"><ClipboardList className="w-4 h-4" />All Requests</TabsTrigger>
-          <TabsTrigger value="admin" className="gap-1.5"><Shield className="w-4 h-4" />Admin Panel</TabsTrigger>
+          <TabsTrigger value="requests" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"><ClipboardList className="w-4 h-4" />All Requests</TabsTrigger>
+          <TabsTrigger value="admin" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"><Shield className="w-4 h-4" />Admin Panel</TabsTrigger>
         </TabsList>
 
         <TabsContent value="requests" className="mt-4 space-y-4">
-          {/* Filters */}
+          {/* Filters & Sorting */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -193,6 +193,15 @@ export default function BusinessOnboarding() {
               <SelectContent>
                 <SelectItem value="all">All Subscriptions</SelectItem>
                 {Object.entries(subStatusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select defaultValue="date_desc">
+              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Sort By" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_desc">Newest First</SelectItem>
+                <SelectItem value="date_asc">Oldest First</SelectItem>
+                <SelectItem value="company_asc">Company A-Z</SelectItem>
+                <SelectItem value="expiry_asc">Expiry Soonest</SelectItem>
               </SelectContent>
             </Select>
           </div>
