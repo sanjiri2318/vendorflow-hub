@@ -4,10 +4,12 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Settings, Cog, Upload, Download, FileSpreadsheet, Eye, Pencil, ToggleLeft, Blocks, Clock, Zap, Users, Lock, IndianRupee, CheckCircle2, AlertTriangle, SlidersHorizontal, History, LogIn, Edit3 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Shield, Settings, Cog, Upload, Download, FileSpreadsheet, Eye, Pencil, ToggleLeft, Blocks, Clock, Zap, Users, Lock, IndianRupee, CheckCircle2, AlertTriangle, SlidersHorizontal, History, LogIn, Edit3, Globe, Mail, Image, Palette } from 'lucide-react';
 import { getReconciliationSettings, setReconciliationSettings, subscribeReconciliationSettings } from '@/services/reconciliationSettings';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -61,11 +63,12 @@ const initialFeatures: FeatureToggle[] = [
 // TAB 3 — Services
 interface ServiceItem {
   name: string;
-  status: 'active' | 'coming' | 'planned' | 'future';
+  status: string;
   lastUpdated: string;
+  customLabel?: string;
 }
 
-const services: ServiceItem[] = [
+const initialServices: ServiceItem[] = [
   { name: 'API Integration', status: 'coming', lastUpdated: '2025-01-15' },
   { name: 'Data Sync Engine', status: 'planned', lastUpdated: '2025-01-10' },
   { name: 'Automation Engine', status: 'future', lastUpdated: '2025-01-01' },
@@ -75,7 +78,7 @@ const services: ServiceItem[] = [
   { name: 'Custom Report Builder', status: 'planned', lastUpdated: '2025-01-08' },
 ];
 
-const serviceStatusConfig: Record<string, { label: string; className: string }> = {
+const defaultServiceStatusConfig: Record<string, { label: string; className: string }> = {
   active: { label: 'Active', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
   coming: { label: 'Coming Phase', className: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
   planned: { label: 'Planned', className: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
@@ -138,6 +141,23 @@ export default function SystemSettings() {
   const [fields, setFields] = useState(initialFields);
   const [features, setFeatures] = useState(initialFeatures);
   const [permissions, setPermissions] = useState(permissionsData);
+  const [services, setServices] = useState(initialServices);
+
+  // Editable service status
+  const [editingService, setEditingService] = useState<number | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+
+  // Social Media & Email Config
+  const [socialKeys, setSocialKeys] = useState({
+    facebook: '', instagram: '', twitter: '', youtube: '',
+  });
+  const [emailConfig, setEmailConfig] = useState({
+    smtpHost: '', smtpPort: '587', smtpUser: '', smtpPass: '', senderEmail: '', senderName: '',
+  });
+
+  // Platform branding
+  const [platformName, setPlatformName] = useState('VendorFlow');
+  const [logoUrl, setLogoUrl] = useState('');
 
   // Financial Controls — tolerance threshold
   const reconSettings = useSyncExternalStore(
@@ -158,6 +178,12 @@ export default function SystemSettings() {
   const togglePermission = (index: number, role: 'admin' | 'vendor' | 'operations') => {
     if (role === 'admin') return;
     setPermissions(prev => prev.map((p, i) => i === index ? { ...p, [role]: !p[role] } : p));
+  };
+
+  const handleSaveServiceLabel = (index: number) => {
+    setServices(prev => prev.map((s, i) => i === index ? { ...s, customLabel: editLabel || undefined } : s));
+    setEditingService(null);
+    toast({ title: 'Status Updated', description: 'Service status label has been updated.' });
   };
 
   const categories = [...new Set(permissions.map(p => p.category))];
@@ -182,14 +208,15 @@ export default function SystemSettings() {
       </div>
 
       <Tabs defaultValue="fields" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="fields" className="text-xs sm:text-sm">Field Config</TabsTrigger>
-          <TabsTrigger value="features" className="text-xs sm:text-sm">Features</TabsTrigger>
-          <TabsTrigger value="financial" className="text-xs sm:text-sm">Financial Controls</TabsTrigger>
-          <TabsTrigger value="services" className="text-xs sm:text-sm">Services</TabsTrigger>
-          <TabsTrigger value="import-export" className="text-xs sm:text-sm">Import / Export</TabsTrigger>
-          <TabsTrigger value="permissions" className="text-xs sm:text-sm">Permissions</TabsTrigger>
-          <TabsTrigger value="audit" className="text-xs sm:text-sm">Activity Log</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="fields" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Field Config</TabsTrigger>
+          <TabsTrigger value="features" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Features</TabsTrigger>
+          <TabsTrigger value="financial" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Financial</TabsTrigger>
+          <TabsTrigger value="services" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Services</TabsTrigger>
+          <TabsTrigger value="import-export" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Import / Export</TabsTrigger>
+          <TabsTrigger value="permissions" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Permissions</TabsTrigger>
+          <TabsTrigger value="integrations" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Integrations</TabsTrigger>
+          <TabsTrigger value="audit" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Activity Log</TabsTrigger>
         </TabsList>
 
         {/* TAB 1 — FIELD CONFIGURATION */}
@@ -288,7 +315,6 @@ export default function SystemSettings() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Tolerance Threshold Setting */}
               <div className="p-5 rounded-lg border bg-card">
                 <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-warning" />
@@ -356,7 +382,6 @@ export default function SystemSettings() {
                 </Button>
               </div>
 
-              {/* Preview */}
               <div className="p-4 rounded-lg border bg-muted/30">
                 <h4 className="text-sm font-semibold mb-3">How Tolerance Works</h4>
                 <div className="space-y-2 text-sm">
@@ -381,7 +406,6 @@ export default function SystemSettings() {
                 </div>
               </div>
 
-              {/* Current Setting Display */}
               <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
                 <div className="flex items-center gap-2">
                   <IndianRupee className="w-4 h-4 text-primary" />
@@ -396,7 +420,7 @@ export default function SystemSettings() {
           </Card>
         </TabsContent>
 
-        {/* TAB 3 — SERVICES MANAGEMENT */}
+        {/* TAB 3 — SERVICES MANAGEMENT (Editable Status Badges) */}
         <TabsContent value="services">
           <Card>
             <CardHeader>
@@ -417,16 +441,38 @@ export default function SystemSettings() {
                     <TableHead className="font-semibold">Service Name</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="font-semibold">Last Updated</TableHead>
+                    <TableHead className="font-semibold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {services.map((svc) => {
-                    const cfg = serviceStatusConfig[svc.status];
+                  {services.map((svc, idx) => {
+                    const cfg = defaultServiceStatusConfig[svc.status] || defaultServiceStatusConfig.future;
+                    const displayLabel = svc.customLabel || cfg.label;
                     return (
                       <TableRow key={svc.name}>
                         <TableCell className="font-medium">{svc.name}</TableCell>
-                        <TableCell><Badge variant="outline" className={cfg.className}>{cfg.label}</Badge></TableCell>
+                        <TableCell>
+                          {editingService === idx ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editLabel}
+                                onChange={e => setEditLabel(e.target.value)}
+                                className="h-8 w-40 text-sm"
+                                placeholder="Custom label..."
+                              />
+                              <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleSaveServiceLabel(idx)}>Save</Button>
+                              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingService(null)}>Cancel</Button>
+                            </div>
+                          ) : (
+                            <Badge variant="outline" className={cfg.className}>{displayLabel}</Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{new Date(svc.lastUpdated).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
+                        <TableCell className="text-center">
+                          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => { setEditingService(idx); setEditLabel(svc.customLabel || cfg.label); }}>
+                            <Pencil className="w-3 h-3" /> Edit Label
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -535,6 +581,108 @@ export default function SystemSettings() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* TAB — INTEGRATIONS (Social Media + Email + Branding) */}
+        <TabsContent value="integrations">
+          <div className="space-y-6">
+            {/* Platform Branding */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Palette className="w-5 h-5" />Platform Branding</CardTitle>
+                <CardDescription>Customize your platform name and logo</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Platform Name</Label>
+                    <Input value={platformName} onChange={e => setPlatformName(e.target.value)} placeholder="Enter platform name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Logo URL</Label>
+                    <div className="flex gap-2">
+                      <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://... or upload" className="flex-1" />
+                      <Button variant="outline" size="icon" onClick={() => toast({ title: 'Upload', description: 'Logo upload initiated.' })}><Image className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                </div>
+                <Button onClick={() => toast({ title: 'Branding Saved', description: `Platform name set to "${platformName}"` })} className="gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> Save Branding
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Social Media Connections */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Globe className="w-5 h-5" />Social Media Connections</CardTitle>
+                <CardDescription>Connect social media accounts via API keys</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'facebook' as const, label: 'Facebook Page Token' },
+                    { key: 'instagram' as const, label: 'Instagram API Key' },
+                    { key: 'twitter' as const, label: 'Twitter / X API Key' },
+                    { key: 'youtube' as const, label: 'YouTube API Key' },
+                  ].map(item => (
+                    <div key={item.key} className="space-y-2">
+                      <Label className="text-sm">{item.label}</Label>
+                      <Input
+                        type="password"
+                        value={socialKeys[item.key]}
+                        onChange={e => setSocialKeys(prev => ({ ...prev, [item.key]: e.target.value }))}
+                        placeholder={`Enter ${item.label}`}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <Button className="mt-4 gap-1.5" onClick={() => toast({ title: 'Social Keys Saved', description: 'Social media API keys updated.' })}>
+                  <CheckCircle2 className="w-4 h-4" /> Save Social Keys
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Email / SMTP Configuration */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Mail className="w-5 h-5" />Email Configuration</CardTitle>
+                <CardDescription>Configure SMTP settings for transactional and notification emails</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>SMTP Host</Label>
+                    <Input value={emailConfig.smtpHost} onChange={e => setEmailConfig(p => ({ ...p, smtpHost: e.target.value }))} placeholder="smtp.example.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>SMTP Port</Label>
+                    <Input value={emailConfig.smtpPort} onChange={e => setEmailConfig(p => ({ ...p, smtpPort: e.target.value }))} placeholder="587" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>SMTP Username</Label>
+                    <Input value={emailConfig.smtpUser} onChange={e => setEmailConfig(p => ({ ...p, smtpUser: e.target.value }))} placeholder="user@example.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>SMTP Password</Label>
+                    <Input type="password" value={emailConfig.smtpPass} onChange={e => setEmailConfig(p => ({ ...p, smtpPass: e.target.value }))} placeholder="••••••••" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sender Email</Label>
+                    <Input value={emailConfig.senderEmail} onChange={e => setEmailConfig(p => ({ ...p, senderEmail: e.target.value }))} placeholder="noreply@example.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sender Name</Label>
+                    <Input value={emailConfig.senderName} onChange={e => setEmailConfig(p => ({ ...p, senderName: e.target.value }))} placeholder="VendorFlow" />
+                  </div>
+                </div>
+                <Button className="mt-4 gap-1.5" onClick={() => toast({ title: 'Email Config Saved', description: 'SMTP settings updated successfully.' })}>
+                  <CheckCircle2 className="w-4 h-4" /> Save Email Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* TAB — ACTIVITY LOG */}

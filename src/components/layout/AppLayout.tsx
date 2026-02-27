@@ -97,16 +97,16 @@ export function AppLayout({ children }: AppLayoutProps) {
         <SidebarInset className="flex-1 flex flex-col">
           {/* Top Header */}
           <header className="h-14 border-b border-border bg-card px-4 flex items-center justify-between sticky top-0 z-10">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
               
-              {/* Search */}
-              <div className="hidden md:flex items-center">
-                <div className="relative">
+              {/* Search — centered */}
+              <div className="hidden md:flex items-center flex-1 justify-center">
+                <div className="relative w-full max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search orders, products, vendors..." 
-                    className="w-80 pl-9 bg-background"
+                    className="w-full pl-9 bg-background"
                   />
                 </div>
               </div>

@@ -244,10 +244,10 @@ export default function Products() {
                       </div>
                     </div>
 
-                    {/* Pricing */}
+                    {/* Pricing & Size */}
                     <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pricing & Tax</h3>
-                      <div className="grid grid-cols-3 gap-4">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pricing, Size & Tax</h3>
+                      <div className="grid grid-cols-4 gap-4">
                         <div className="space-y-2">
                           <Label>MRP (₹) *</Label>
                           <Input type="number" placeholder="0.00" value={formData.mrp} onChange={e => setFormData(f => ({ ...f, mrp: e.target.value }))} className={formErrors.mrp ? 'border-destructive' : ''} />
@@ -270,7 +270,43 @@ export default function Products() {
                           </Select>
                           {formErrors.gst && <p className="text-xs text-destructive">{formErrors.gst}</p>}
                         </div>
+                        <div className="space-y-2">
+                          <Label>Size</Label>
+                          <Select defaultValue="free">
+                            <SelectTrigger><SelectValue placeholder="Select Size" /></SelectTrigger>
+                            <SelectContent>
+                              {['M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', 'Free Size'].map(s => (
+                                <SelectItem key={s} value={s.toLowerCase().replace(' ', '_')}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
+
+                      {/* GST Split Preview */}
+                      {formData.basePrice && formData.gst && (
+                        <div className="p-3 rounded-lg border bg-muted/30">
+                          <h4 className="text-xs font-semibold text-muted-foreground mb-2">GST Split Preview (Same State)</h4>
+                          <div className="grid grid-cols-4 gap-3 text-sm">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Taxable Value</p>
+                              <p className="font-medium">₹{(parseFloat(formData.basePrice) / (1 + parseFloat(formData.gst) / 100)).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">CGST ({parseFloat(formData.gst) / 2}%)</p>
+                              <p className="font-medium">₹{((parseFloat(formData.basePrice) / (1 + parseFloat(formData.gst) / 100)) * (parseFloat(formData.gst) / 200)).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">SGST ({parseFloat(formData.gst) / 2}%)</p>
+                              <p className="font-medium">₹{((parseFloat(formData.basePrice) / (1 + parseFloat(formData.gst) / 100)) * (parseFloat(formData.gst) / 200)).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Total</p>
+                              <p className="font-medium">₹{parseFloat(formData.basePrice).toFixed(2)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Portal Prices */}
