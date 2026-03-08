@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,23 +7,22 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockSKUMappings } from '@/services/mockData';
-import { MasterSKUMapping } from '@/types';
-import { Plus, Edit2, Link, Unlink, Search, AlertCircle } from 'lucide-react';
+import { skuMappingsDb } from '@/services/database';
+import { Plus, Edit2, Link, Unlink, Search, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type MappingStatus = 'mapped' | 'partially_mapped' | 'unmapped';
 
-function getMappingStatus(mapping: MasterSKUMapping): MappingStatus {
-  const fields = [mapping.amazonSku, mapping.flipkartSku, mapping.meeshoSku, mapping.firstcrySku, mapping.blinkitSku, mapping.ownWebsiteSku];
+function getMappingStatus(m: any): MappingStatus {
+  const fields = [m.amazon_sku, m.flipkart_sku, m.meesho_sku, m.firstcry_sku, m.blinkit_sku, m.own_website_sku];
   const filled = fields.filter(Boolean).length;
   if (filled === 0) return 'unmapped';
   if (filled >= 4) return 'mapped';
   return 'partially_mapped';
 }
 
-function getMappedCount(mapping: MasterSKUMapping): number {
-  return [mapping.amazonSku, mapping.flipkartSku, mapping.meeshoSku, mapping.firstcrySku, mapping.blinkitSku, mapping.ownWebsiteSku].filter(Boolean).length;
+function getMappedCount(m: any): number {
+  return [m.amazon_sku, m.flipkart_sku, m.meesho_sku, m.firstcry_sku, m.blinkit_sku, m.own_website_sku].filter(Boolean).length;
 }
 
 const statusBadge = (status: MappingStatus) => {
@@ -38,48 +37,73 @@ const statusBadge = (status: MappingStatus) => {
 };
 
 export default function SKUMapping() {
-  const [mappings] = useState<MasterSKUMapping[]>(mockSKUMappings);
+  const [mappings, setMappings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<MappingStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingMapping, setEditingMapping] = useState<MasterSKUMapping | null>(null);
+  const [editingMapping, setEditingMapping] = useState<any | null>(null);
+  const [formData, setFormData] = useState({ master_sku_id: '', product_name: '', brand: '', amazon_sku: '', flipkart_sku: '', meesho_sku: '', firstcry_sku: '', blinkit_sku: '', own_website_sku: '' });
   const { toast } = useToast();
 
-  const filteredMappings = mappings.filter((m) => {
-    const status = getMappingStatus(m);
-    if (filterStatus !== 'all' && status !== filterStatus) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!m.masterSkuId.toLowerCase().includes(q) && !m.productName.toLowerCase().includes(q)) return false;
+  const fetchMappings = async () => {
+    try {
+      setLoading(true);
+      const data = await skuMappingsDb.getAll(searchQuery || undefined);
+      setMappings(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-    return true;
-  });
-
-  const handleAddMapping = () => {
-    toast({ title: 'Mapping Added', description: 'New SKU mapping has been created successfully.' });
-    setIsAddDialogOpen(false);
   };
 
-  const handleEditMapping = () => {
-    toast({ title: 'Mapping Updated', description: 'SKU mapping has been updated successfully.' });
-    setEditingMapping(null);
+  useEffect(() => { fetchMappings(); }, [searchQuery]);
+
+  const filteredMappings = useMemo(() => mappings.filter(m => {
+    const status = getMappingStatus(m);
+    if (filterStatus !== 'all' && status !== filterStatus) return false;
+    return true;
+  }), [mappings, filterStatus]);
+
+  const handleAddMapping = async () => {
+    try {
+      await skuMappingsDb.create(formData);
+      toast({ title: 'Mapping Added', description: 'New SKU mapping has been created successfully.' });
+      setIsAddDialogOpen(false);
+      setFormData({ master_sku_id: '', product_name: '', brand: '', amazon_sku: '', flipkart_sku: '', meesho_sku: '', firstcry_sku: '', blinkit_sku: '', own_website_sku: '' });
+      fetchMappings();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const handleEditMapping = async () => {
+    if (!editingMapping) return;
+    try {
+      await skuMappingsDb.update(editingMapping.id, formData);
+      toast({ title: 'Mapping Updated', description: 'SKU mapping has been updated successfully.' });
+      setEditingMapping(null);
+      fetchMappings();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
   };
 
   const mappedCount = mappings.filter(m => getMappingStatus(m) === 'mapped').length;
   const partialCount = mappings.filter(m => getMappingStatus(m) === 'partially_mapped').length;
   const unmappedCount = mappings.filter(m => getMappingStatus(m) === 'unmapped').length;
-  const coveragePercent = Math.round(((mappedCount * 6 + partialCount * 3) / (mappings.length * 6)) * 100);
+  const coveragePercent = mappings.length > 0 ? Math.round(((mappedCount * 6 + partialCount * 3) / (mappings.length * 6)) * 100) : 0;
 
-  const skuField = (label: string, icon: string, placeholder: string, defaultValue?: string, disabled?: boolean) => (
+  const skuField = (label: string, icon: string, placeholder: string, field: string, disabled?: boolean) => (
     <div className="space-y-2">
       <Label>{icon} {label}</Label>
-      <Input defaultValue={defaultValue || ''} placeholder={placeholder} disabled={disabled} />
+      <Input value={(formData as any)[field] || ''} onChange={e => setFormData(prev => ({ ...prev, [field]: e.target.value }))} placeholder={placeholder} disabled={disabled} />
     </div>
   );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">SKU Mapping Center</h1>
@@ -91,9 +115,7 @@ export default function SKUMapping() {
             <Input placeholder="Search SKUs..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-[180px] pl-9" />
           </div>
           <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as MappingStatus | 'all')}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Filter Status" />
-            </SelectTrigger>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Filter Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="mapped">Mapped</SelectItem>
@@ -102,9 +124,7 @@ export default function SKUMapping() {
             </SelectContent>
           </Select>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2"><Plus className="w-4 h-4" />Add Mapping</Button>
-            </DialogTrigger>
+            <DialogTrigger asChild><Button className="gap-2"><Plus className="w-4 h-4" />Add Mapping</Button></DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Add SKU Mapping</DialogTitle>
@@ -112,20 +132,20 @@ export default function SKUMapping() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
-                  {skuField('Master SKU ID', '🔑', 'MSK-XXX')}
-                  {skuField('Product Name', '📋', 'Product name')}
+                  {skuField('Master SKU ID', '🔑', 'MSK-XXX', 'master_sku_id')}
+                  {skuField('Product Name', '📋', 'Product name', 'product_name')}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {skuField('Amazon SKU', '🛒', 'SKU-AMZ-XXX')}
-                  {skuField('Flipkart SKU', '🛍️', 'SKU-FLK-XXX')}
+                  {skuField('Amazon SKU', '🛒', 'SKU-AMZ-XXX', 'amazon_sku')}
+                  {skuField('Flipkart SKU', '🛍️', 'SKU-FLK-XXX', 'flipkart_sku')}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {skuField('Meesho SKU', '📦', 'SKU-MSH-XXX')}
-                  {skuField('FirstCry SKU', '👶', 'SKU-FCY-XXX')}
+                  {skuField('Meesho SKU', '📦', 'SKU-MSH-XXX', 'meesho_sku')}
+                  {skuField('FirstCry SKU', '👶', 'SKU-FCY-XXX', 'firstcry_sku')}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {skuField('Blinkit SKU', '⚡', 'SKU-BLK-XXX')}
-                  {skuField('Own Website SKU', '🌐', 'SKU-OWN-XXX')}
+                  {skuField('Blinkit SKU', '⚡', 'SKU-BLK-XXX', 'blinkit_sku')}
+                  {skuField('Own Website SKU', '🌐', 'SKU-OWN-XXX', 'own_website_sku')}
                 </div>
               </div>
               <DialogFooter>
@@ -137,171 +157,131 @@ export default function SKUMapping() {
         </div>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10"><Link className="w-5 h-5 text-primary" /></div>
-              <div>
-                <p className="text-2xl font-bold">{mappings.length}</p>
-                <p className="text-sm text-muted-foreground">Total SKUs</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10"><Link className="w-5 h-5 text-emerald-600" /></div>
-              <div>
-                <p className="text-2xl font-bold">{mappedCount}</p>
-                <p className="text-sm text-muted-foreground">Fully Mapped</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10"><AlertCircle className="w-5 h-5 text-amber-600" /></div>
-              <div>
-                <p className="text-2xl font-bold">{partialCount}</p>
-                <p className="text-sm text-muted-foreground">Partial</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-rose-500/10"><Unlink className="w-5 h-5 text-rose-600" /></div>
-              <div>
-                <p className="text-2xl font-bold">{unmappedCount}</p>
-                <p className="text-sm text-muted-foreground">Unmapped</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{coveragePercent}%</p>
-              <p className="text-sm text-muted-foreground">Coverage</p>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Link className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{mappings.length}</p><p className="text-sm text-muted-foreground">Total SKUs</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-emerald-500/10"><Link className="w-5 h-5 text-emerald-600" /></div><div><p className="text-2xl font-bold">{mappedCount}</p><p className="text-sm text-muted-foreground">Fully Mapped</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-amber-500/10"><AlertCircle className="w-5 h-5 text-amber-600" /></div><div><p className="text-2xl font-bold">{partialCount}</p><p className="text-sm text-muted-foreground">Partial</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-rose-500/10"><Unlink className="w-5 h-5 text-rose-600" /></div><div><p className="text-2xl font-bold">{unmappedCount}</p><p className="text-sm text-muted-foreground">Unmapped</p></div></div></CardContent></Card>
+        <Card className="bg-primary/5 border-primary/20"><CardContent className="pt-6"><div className="text-center"><p className="text-3xl font-bold text-primary">{coveragePercent}%</p><p className="text-sm text-muted-foreground">Coverage</p></div></CardContent></Card>
       </div>
 
-      {/* Mapping Table */}
       <Card>
         <CardHeader>
           <CardTitle>SKU Mapping List</CardTitle>
           <CardDescription>View and manage portal SKU mappings • {filteredMappings.length} items</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">Master SKU</TableHead>
-                  <TableHead className="font-semibold">Product Name</TableHead>
-                  <TableHead className="font-semibold">Brand</TableHead>
-                  <TableHead className="text-center font-semibold">🛒 Amazon</TableHead>
-                  <TableHead className="text-center font-semibold">🛍️ Flipkart</TableHead>
-                  <TableHead className="text-center font-semibold">📦 Meesho</TableHead>
-                  <TableHead className="text-center font-semibold">👶 FirstCry</TableHead>
-                  <TableHead className="text-center font-semibold">⚡ Blinkit</TableHead>
-                  <TableHead className="text-center font-semibold">🌐 Own Web</TableHead>
-                  <TableHead className="font-semibold">Coverage</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMappings.map((mapping) => {
-                  const count = getMappedCount(mapping);
-                  const status = getMappingStatus(mapping);
-                  const skuCell = (sku?: string) => (
-                    <TableCell className="text-center">
-                      {sku ? (
-                        <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{sku}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                  );
-                  return (
-                    <TableRow key={mapping.masterSkuId}>
-                      <TableCell className="font-mono text-sm font-medium">{mapping.masterSkuId}</TableCell>
-                      <TableCell className="max-w-[200px] truncate font-medium">{mapping.productName}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs">{mapping.brand}</Badge>
+          {loading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">Master SKU</TableHead>
+                    <TableHead className="font-semibold">Product Name</TableHead>
+                    <TableHead className="font-semibold">Brand</TableHead>
+                    <TableHead className="text-center font-semibold">🛒 Amazon</TableHead>
+                    <TableHead className="text-center font-semibold">🛍️ Flipkart</TableHead>
+                    <TableHead className="text-center font-semibold">📦 Meesho</TableHead>
+                    <TableHead className="text-center font-semibold">👶 FirstCry</TableHead>
+                    <TableHead className="text-center font-semibold">⚡ Blinkit</TableHead>
+                    <TableHead className="text-center font-semibold">🌐 Own Web</TableHead>
+                    <TableHead className="font-semibold">Coverage</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredMappings.map((mapping) => {
+                    const count = getMappedCount(mapping);
+                    const status = getMappingStatus(mapping);
+                    const skuCell = (sku?: string) => (
+                      <TableCell className="text-center">
+                        {sku ? <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{sku}</span> : <span className="text-muted-foreground">-</span>}
                       </TableCell>
-                      {skuCell(mapping.amazonSku)}
-                      {skuCell(mapping.flipkartSku)}
-                      {skuCell(mapping.meeshoSku)}
-                      {skuCell(mapping.firstcrySku)}
-                      {skuCell(mapping.blinkitSku)}
-                      {skuCell(mapping.ownWebsiteSku)}
-                      <TableCell>
-                        <span className="text-sm font-medium">{count}/6</span>
-                      </TableCell>
-                      <TableCell>{statusBadge(status)}</TableCell>
-                      <TableCell>
-                        <Dialog open={editingMapping?.masterSkuId === mapping.masterSkuId} onOpenChange={(open) => !open && setEditingMapping(null)}>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => setEditingMapping(mapping)}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Edit SKU Mapping</DialogTitle>
-                              <DialogDescription>Update portal-specific SKUs for {mapping.productName}</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                {skuField('Master SKU ID', '🔑', '', mapping.masterSkuId, true)}
-                                {skuField('Product Name', '📋', '', mapping.productName)}
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                {skuField('Amazon SKU', '🛒', 'SKU-AMZ-XXX', mapping.amazonSku)}
-                                {skuField('Flipkart SKU', '🛍️', 'SKU-FLK-XXX', mapping.flipkartSku)}
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                {skuField('Meesho SKU', '📦', 'SKU-MSH-XXX', mapping.meeshoSku)}
-                                {skuField('FirstCry SKU', '👶', 'SKU-FCY-XXX', mapping.firstcrySku)}
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                {skuField('Blinkit SKU', '⚡', 'SKU-BLK-XXX', mapping.blinkitSku)}
-                                {skuField('Own Website SKU', '🌐', 'SKU-OWN-XXX', mapping.ownWebsiteSku)}
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setEditingMapping(null)}>Cancel</Button>
-                              <Button onClick={handleEditMapping}>Save Changes</Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                    );
+                    return (
+                      <TableRow key={mapping.id}>
+                        <TableCell className="font-mono text-sm font-medium">{mapping.master_sku_id}</TableCell>
+                        <TableCell className="max-w-[200px] truncate font-medium">{mapping.product_name}</TableCell>
+                        <TableCell><Badge variant="secondary" className="text-xs">{mapping.brand || '—'}</Badge></TableCell>
+                        {skuCell(mapping.amazon_sku)}
+                        {skuCell(mapping.flipkart_sku)}
+                        {skuCell(mapping.meesho_sku)}
+                        {skuCell(mapping.firstcry_sku)}
+                        {skuCell(mapping.blinkit_sku)}
+                        {skuCell(mapping.own_website_sku)}
+                        <TableCell><span className="text-sm font-medium">{count}/6</span></TableCell>
+                        <TableCell>{statusBadge(status)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => {
+                            setEditingMapping(mapping);
+                            setFormData({
+                              master_sku_id: mapping.master_sku_id,
+                              product_name: mapping.product_name,
+                              brand: mapping.brand || '',
+                              amazon_sku: mapping.amazon_sku || '',
+                              flipkart_sku: mapping.flipkart_sku || '',
+                              meesho_sku: mapping.meesho_sku || '',
+                              firstcry_sku: mapping.firstcry_sku || '',
+                              blinkit_sku: mapping.blinkit_sku || '',
+                              own_website_sku: mapping.own_website_sku || '',
+                            });
+                          }}>
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredMappings.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
+                        <Unlink className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">No mappings found</p>
+                        <p className="text-sm">Try adjusting your filters or add a new mapping</p>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {filteredMappings.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
-                      <Unlink className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                      <p className="font-medium">No mappings found</p>
-                      <p className="text-sm">Try adjusting your filters</p>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingMapping} onOpenChange={(open) => !open && setEditingMapping(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit SKU Mapping</DialogTitle>
+            <DialogDescription>Update portal-specific SKUs for {editingMapping?.product_name}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              {skuField('Master SKU ID', '🔑', '', 'master_sku_id', true)}
+              {skuField('Product Name', '📋', '', 'product_name')}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {skuField('Amazon SKU', '🛒', 'SKU-AMZ-XXX', 'amazon_sku')}
+              {skuField('Flipkart SKU', '🛍️', 'SKU-FLK-XXX', 'flipkart_sku')}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {skuField('Meesho SKU', '📦', 'SKU-MSH-XXX', 'meesho_sku')}
+              {skuField('FirstCry SKU', '👶', 'SKU-FCY-XXX', 'firstcry_sku')}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {skuField('Blinkit SKU', '⚡', 'SKU-BLK-XXX', 'blinkit_sku')}
+              {skuField('Own Website SKU', '🌐', 'SKU-OWN-XXX', 'own_website_sku')}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMapping(null)}>Cancel</Button>
+            <Button onClick={handleEditMapping}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

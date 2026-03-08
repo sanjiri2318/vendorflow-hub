@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -8,51 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Plus, UserPlus, Users, Phone, Mail, Globe, TrendingUp, Clock, CheckCircle2,
-  XCircle, AlertCircle, Search, Filter, Download, Eye, Edit, Building2,
-  Upload, FileSpreadsheet, FileDown,
-} from 'lucide-react';
+import { Plus, UserPlus, Users, Phone, Mail, TrendingUp, Clock, CheckCircle2, XCircle, AlertCircle, Search, Download, Eye, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { leadsDb } from '@/services/database';
 
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'negotiation' | 'won' | 'lost';
 type LeadSource = 'indiamart' | 'justdial' | 'tradeindia' | 'website' | 'referral' | 'whatsapp' | 'social_media';
-type LeadPriority = 'low' | 'medium' | 'high';
 
-interface Lead {
-  id: string;
-  companyName: string;
-  contactPerson: string;
-  phone: string;
-  email: string;
-  source: LeadSource;
-  status: LeadStatus;
-  priority: LeadPriority;
-  assignedTo: string;
-  value: number;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-  activities: { action: string; by: string; time: string }[];
-}
-
-const daysAgo = (d: number) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString(); };
-
-const mockLeads: Lead[] = [
-  { id: 'LEAD-001', companyName: 'FastTrack Retail Pvt Ltd', contactPerson: 'Vikram Patel', phone: '+91 98765 43210', email: 'vikram@fasttrack.in', source: 'indiamart', status: 'new', priority: 'high', assignedTo: '', value: 250000, notes: 'Interested in bulk electronics order', createdAt: daysAgo(0), updatedAt: daysAgo(0), activities: [{ action: 'Lead created from Indiamart inquiry', by: 'System', time: daysAgo(0) }] },
-  { id: 'LEAD-002', companyName: 'GreenLeaf Organics', contactPerson: 'Meena Sharma', phone: '+91 87654 32109', email: 'meena@greenleaf.com', source: 'justdial', status: 'contacted', priority: 'medium', assignedTo: 'Rahul Singh', value: 180000, notes: 'Looking for organic product sourcing', createdAt: daysAgo(2), updatedAt: daysAgo(1), activities: [{ action: 'Lead created', by: 'System', time: daysAgo(2) }, { action: 'First call made, interested', by: 'Rahul Singh', time: daysAgo(1) }] },
-  { id: 'LEAD-003', companyName: 'TechZone Solutions', contactPerson: 'Amit Kumar', phone: '+91 76543 21098', email: 'amit@techzone.in', source: 'website', status: 'qualified', priority: 'high', assignedTo: 'Priya Mehta', value: 450000, notes: 'Enterprise client, needs customized VMS', createdAt: daysAgo(5), updatedAt: daysAgo(1), activities: [{ action: 'Lead created from website form', by: 'System', time: daysAgo(5) }, { action: 'Demo scheduled', by: 'Priya Mehta', time: daysAgo(3) }, { action: 'Demo completed, positive feedback', by: 'Priya Mehta', time: daysAgo(1) }] },
-  { id: 'LEAD-004', companyName: 'HomeStyle Decor', contactPerson: 'Sneha Reddy', phone: '+91 65432 10987', email: 'sneha@homestyle.in', source: 'tradeindia', status: 'negotiation', priority: 'high', assignedTo: 'Rahul Singh', value: 320000, notes: 'Price negotiation ongoing for home decor catalog', createdAt: daysAgo(10), updatedAt: daysAgo(0), activities: [{ action: 'Lead created', by: 'System', time: daysAgo(10) }, { action: 'Proposal sent', by: 'Rahul Singh', time: daysAgo(7) }, { action: 'Counter offer received', by: 'Rahul Singh', time: daysAgo(2) }, { action: 'Final pricing discussed', by: 'Rahul Singh', time: daysAgo(0) }] },
-  { id: 'LEAD-005', companyName: 'QuickMart Online', contactPerson: 'Ravi Joshi', phone: '+91 54321 09876', email: 'ravi@quickmart.com', source: 'referral', status: 'won', priority: 'medium', assignedTo: 'Priya Mehta', value: 520000, notes: 'Contract signed for 1 year', createdAt: daysAgo(20), updatedAt: daysAgo(3), activities: [{ action: 'Lead created via referral', by: 'System', time: daysAgo(20) }, { action: 'Contract signed', by: 'Priya Mehta', time: daysAgo(3) }] },
-  { id: 'LEAD-006', companyName: 'CityWear Fashion', contactPerson: 'Kavita Nair', phone: '+91 43210 98765', email: 'kavita@citywear.in', source: 'whatsapp', status: 'lost', priority: 'low', assignedTo: 'Rahul Singh', value: 95000, notes: 'Went with competitor', createdAt: daysAgo(15), updatedAt: daysAgo(5), activities: [{ action: 'Lead from WhatsApp inquiry', by: 'System', time: daysAgo(15) }, { action: 'Lost to competitor on pricing', by: 'Rahul Singh', time: daysAgo(5) }] },
-  { id: 'LEAD-007', companyName: 'BabyBliss Store', contactPerson: 'Nandini Gupta', phone: '+91 32109 87654', email: 'nandini@babybliss.in', source: 'social_media', status: 'contacted', priority: 'medium', assignedTo: '', value: 150000, notes: 'Inquired via Instagram about baby products', createdAt: daysAgo(1), updatedAt: daysAgo(0), activities: [{ action: 'Lead from Instagram DM', by: 'System', time: daysAgo(1) }, { action: 'Introductory message sent', by: 'System', time: daysAgo(0) }] },
-];
-
-const executives = ['Rahul Singh', 'Priya Mehta', 'Arjun Kapoor', 'Neha Verma'];
-
-const sourceConfig: Record<LeadSource, { label: string; icon: string; color: string }> = {
+const sourceConfig: Record<string, { label: string; icon: string; color: string }> = {
   indiamart: { label: 'IndiaMART', icon: '🏭', color: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
   justdial: { label: 'JustDial', icon: '📞', color: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
   tradeindia: { label: 'TradeIndia', icon: '🌐', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
@@ -62,7 +26,7 @@ const sourceConfig: Record<LeadSource, { label: string; icon: string; color: str
   social_media: { label: 'Social Media', icon: '📱', color: 'bg-purple-500/10 text-purple-600 border-purple-500/30' },
 };
 
-const statusConfig: Record<LeadStatus, { label: string; color: string; icon: React.ElementType }> = {
+const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   new: { label: 'New', color: 'bg-blue-500/15 text-blue-600 border-blue-500/30', icon: AlertCircle },
   contacted: { label: 'Contacted', color: 'bg-amber-500/15 text-amber-600 border-amber-500/30', icon: Phone },
   qualified: { label: 'Qualified', color: 'bg-violet-500/15 text-violet-600 border-violet-500/30', icon: CheckCircle2 },
@@ -75,74 +39,72 @@ const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 
 export default function LeadManagement() {
   const { toast } = useToast();
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [showNewLead, setShowNewLead] = useState(false);
-  const [assignDialog, setAssignDialog] = useState<Lead | null>(null);
-  const [showImport, setShowImport] = useState(false);
-  const [importFile, setImportFile] = useState<string | null>(null);
-  const [importMapping, setImportMapping] = useState(false);
+  const [newLead, setNewLead] = useState({ company_name: '', contact_person: '', phone: '', email: '', source: 'website', status: 'new' as LeadStatus, priority: 'medium' as any, value: 0, notes: '' });
 
-  const handleSampleDownload = () => {
-    const headers = ['Company Name', 'Contact Person', 'Phone', 'Email', 'Source', 'Priority', 'Estimated Value', 'Notes'];
-    const sample = [
-      ['Sample Corp', 'John Doe', '+91 98765 00000', 'john@sample.com', 'website', 'high', '100000', 'Sample lead'],
-    ];
-    const csv = [headers.join(','), ...sample.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'lead_import_template.csv'; a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: 'Template Downloaded', description: 'Fill the CSV template and import' });
+  const fetchLeads = async () => {
+    try {
+      setLoading(true);
+      const data = await leadsDb.getAll({
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        source: sourceFilter !== 'all' ? sourceFilter : undefined,
+        search: searchQuery || undefined,
+      });
+      setLeads(data);
+    } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImportFile(file.name);
-      setTimeout(() => {
-        setImportMapping(true);
-        toast({ title: 'File Parsed', description: `${file.name} — 15 rows detected. Fields auto-mapped.` });
-      }, 1000);
+  useEffect(() => { fetchLeads(); }, [searchQuery, statusFilter, sourceFilter]);
+
+  const handleCreateLead = async () => {
+    try {
+      await leadsDb.create(newLead);
+      toast({ title: 'Lead Created', description: `${newLead.company_name} added to pipeline` });
+      setShowNewLead(false);
+      setNewLead({ company_name: '', contact_person: '', phone: '', email: '', source: 'website', status: 'new', priority: 'medium', value: 0, notes: '' });
+      fetchLeads();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
     }
   };
 
-  const handleImportConfirm = () => {
-    toast({ title: 'Import Complete', description: '15 leads imported successfully' });
-    setShowImport(false);
-    setImportFile(null);
-    setImportMapping(false);
+  const handleUpdateStatus = async (id: string, status: LeadStatus) => {
+    try {
+      await leadsDb.update(id, { status });
+      toast({ title: 'Status Updated' });
+      fetchLeads();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
   };
 
-  const filtered = useMemo(() => mockLeads.filter(l => {
-    const matchSearch = l.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.contactPerson.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = statusFilter === 'all' || l.status === statusFilter;
-    const matchSource = sourceFilter === 'all' || l.source === sourceFilter;
-    return matchSearch && matchStatus && matchSource;
-  }), [searchQuery, statusFilter, sourceFilter]);
-
   const stats = useMemo(() => ({
-    total: mockLeads.length,
-    new: mockLeads.filter(l => l.status === 'new').length,
-    active: mockLeads.filter(l => ['contacted', 'qualified', 'negotiation'].includes(l.status)).length,
-    won: mockLeads.filter(l => l.status === 'won').length,
-    lost: mockLeads.filter(l => l.status === 'lost').length,
-    totalValue: mockLeads.filter(l => l.status !== 'lost').reduce((s, l) => s + l.value, 0),
-    unassigned: mockLeads.filter(l => !l.assignedTo).length,
-  }), []);
+    total: leads.length,
+    new: leads.filter(l => l.status === 'new').length,
+    active: leads.filter(l => ['contacted', 'qualified', 'negotiation'].includes(l.status)).length,
+    won: leads.filter(l => l.status === 'won').length,
+    lost: leads.filter(l => l.status === 'lost').length,
+    totalValue: leads.filter(l => l.status !== 'lost').reduce((s, l) => s + (l.value || 0), 0),
+    unassigned: leads.filter(l => !l.assigned_to).length,
+  }), [leads]);
 
   const pipelineData = useMemo(() => {
     const stages: LeadStatus[] = ['new', 'contacted', 'qualified', 'negotiation', 'won', 'lost'];
     return stages.map(s => ({
       status: s,
-      ...statusConfig[s],
-      count: mockLeads.filter(l => l.status === s).length,
-      value: mockLeads.filter(l => l.status === s).reduce((sum, l) => sum + l.value, 0),
+      ...(statusConfig[s] || { label: s, color: '', icon: AlertCircle }),
+      count: leads.filter(l => l.status === s).length,
+      value: leads.filter(l => l.status === s).reduce((sum, l) => sum + (l.value || 0), 0),
     }));
-  }, []);
+  }, [leads]);
+
+  if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-6">
@@ -152,19 +114,11 @@ export default function LeadManagement() {
           <p className="text-muted-foreground">Track and manage business leads from all sources</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
-            <Upload className="w-4 h-4" />Import
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={() => toast({ title: 'Exported', description: 'Leads exported to Excel' })}>
-            <Download className="w-4 h-4" />Export
-          </Button>
-          <Button className="gap-2" onClick={() => setShowNewLead(true)}>
-            <Plus className="w-4 h-4" />Add Lead
-          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => toast({ title: 'Exported' })}><Download className="w-4 h-4" />Export</Button>
+          <Button className="gap-2" onClick={() => setShowNewLead(true)}><Plus className="w-4 h-4" />Add Lead</Button>
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <Card><CardContent className="pt-5 pb-4"><p className="text-xl font-bold">{stats.total}</p><p className="text-xs text-muted-foreground">Total Leads</p></CardContent></Card>
         <Card><CardContent className="pt-5 pb-4"><p className="text-xl font-bold text-blue-600">{stats.new}</p><p className="text-xs text-muted-foreground">New</p></CardContent></Card>
@@ -175,7 +129,6 @@ export default function LeadManagement() {
         <Card><CardContent className="pt-5 pb-4"><p className="text-xl font-bold text-orange-600">{stats.unassigned}</p><p className="text-xs text-muted-foreground">Unassigned</p></CardContent></Card>
       </div>
 
-      {/* Pipeline Visual */}
       <Card>
         <CardHeader><CardTitle>Sales Pipeline</CardTitle></CardHeader>
         <CardContent>
@@ -191,7 +144,6 @@ export default function LeadManagement() {
         </CardContent>
       </Card>
 
-      {/* Filters + Table */}
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-3">
@@ -224,183 +176,85 @@ export default function LeadManagement() {
                 <TableHead className="font-semibold">Source</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Priority</TableHead>
-                <TableHead className="font-semibold">Assigned To</TableHead>
                 <TableHead className="font-semibold text-right">Value</TableHead>
                 <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(lead => {
-                const src = sourceConfig[lead.source];
-                const st = statusConfig[lead.status];
+              {leads.map(lead => {
+                const src = sourceConfig[lead.source] || { label: lead.source, icon: '📋', color: '' };
+                const st = statusConfig[lead.status] || { label: lead.status, color: '', icon: AlertCircle };
+                const StIcon = st.icon;
                 return (
                   <TableRow key={lead.id}>
-                    <TableCell>
-                      <div><p className="font-medium">{lead.companyName}</p><p className="text-xs text-muted-foreground font-mono">{lead.id}</p></div>
-                    </TableCell>
-                    <TableCell>
-                      <div><p className="text-sm">{lead.contactPerson}</p><p className="text-xs text-muted-foreground">{lead.phone}</p></div>
-                    </TableCell>
+                    <TableCell><div><p className="font-medium">{lead.company_name}</p><p className="text-xs text-muted-foreground">{lead.contact_person}</p></div></TableCell>
+                    <TableCell><div><p className="text-sm">{lead.phone || '—'}</p><p className="text-xs text-muted-foreground">{lead.email || '—'}</p></div></TableCell>
                     <TableCell><Badge variant="outline" className={src.color}>{src.icon} {src.label}</Badge></TableCell>
-                    <TableCell><Badge variant="outline" className={st.color}><st.icon className="w-3 h-3 mr-1" />{st.label}</Badge></TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={
-                        lead.priority === 'high' ? 'bg-rose-500/10 text-rose-600 border-rose-500/30' :
-                        lead.priority === 'medium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' :
-                        'bg-muted text-muted-foreground'
-                      }>{lead.priority}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {lead.assignedTo ? (
-                        <span className="text-sm">{lead.assignedTo}</span>
-                      ) : (
-                        <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setAssignDialog(lead)}>
-                          <UserPlus className="w-3 h-3" />Assign
-                        </Button>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">{fmt(lead.value)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedLead(lead)}><Eye className="w-4 h-4" /></Button>
-                    </TableCell>
+                    <TableCell><Badge variant="outline" className={st.color}><StIcon className="w-3 h-3 mr-1" />{st.label}</Badge></TableCell>
+                    <TableCell><Badge variant="outline" className={lead.priority === 'high' ? 'bg-rose-500/10 text-rose-600 border-rose-500/30' : lead.priority === 'medium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : 'bg-muted text-muted-foreground'}>{lead.priority}</Badge></TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(lead.value || 0)}</TableCell>
+                    <TableCell><Button variant="ghost" size="sm" onClick={() => setSelectedLead(lead)}><Eye className="w-4 h-4" /></Button></TableCell>
                   </TableRow>
                 );
               })}
+              {leads.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No leads found. Add your first lead above.</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Lead Detail Dialog */}
+      {/* Lead Detail */}
       <Dialog open={!!selectedLead} onOpenChange={open => !open && setSelectedLead(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{selectedLead?.companyName}</DialogTitle>
-            <DialogDescription>{selectedLead?.id} • {sourceConfig[selectedLead?.source || 'website'].label}</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{selectedLead?.company_name}</DialogTitle></DialogHeader>
           {selectedLead && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><p className="text-muted-foreground">Contact</p><p className="font-medium">{selectedLead.contactPerson}</p></div>
-                <div><p className="text-muted-foreground">Phone</p><p className="font-medium">{selectedLead.phone}</p></div>
-                <div><p className="text-muted-foreground">Email</p><p className="font-medium">{selectedLead.email}</p></div>
-                <div><p className="text-muted-foreground">Value</p><p className="font-medium">{fmt(selectedLead.value)}</p></div>
-                <div><p className="text-muted-foreground">Assigned To</p><p className="font-medium">{selectedLead.assignedTo || 'Unassigned'}</p></div>
-                <div><p className="text-muted-foreground">Created</p><p className="font-medium">{format(new Date(selectedLead.createdAt), 'dd MMM yyyy')}</p></div>
+                <div><p className="text-muted-foreground">Contact</p><p className="font-medium">{selectedLead.contact_person}</p></div>
+                <div><p className="text-muted-foreground">Phone</p><p>{selectedLead.phone || '—'}</p></div>
+                <div><p className="text-muted-foreground">Email</p><p>{selectedLead.email || '—'}</p></div>
+                <div><p className="text-muted-foreground">Value</p><p className="font-bold">{fmt(selectedLead.value || 0)}</p></div>
               </div>
-              <div><p className="text-muted-foreground text-sm">Notes</p><p className="text-sm mt-1">{selectedLead.notes}</p></div>
-              <div>
-                <h4 className="text-sm font-semibold mb-3">Activity Timeline</h4>
-                <div className="space-y-3">
-                  {selectedLead.activities.map((a, i) => (
-                    <div key={i} className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${i === 0 ? 'bg-primary' : 'bg-muted-foreground/30'}`} />
-                        {i < selectedLead.activities.length - 1 && <div className="w-px flex-1 bg-muted-foreground/20" />}
-                      </div>
-                      <div className="pb-3">
-                        <p className="text-sm">{a.action}</p>
-                        <p className="text-xs text-muted-foreground">{a.by} • {format(new Date(a.time), 'dd MMM, HH:mm')}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {selectedLead.notes && <div><p className="text-sm text-muted-foreground">Notes</p><p className="text-sm">{selectedLead.notes}</p></div>}
+              <div className="flex gap-2 flex-wrap">
+                {(['new', 'contacted', 'qualified', 'negotiation', 'won', 'lost'] as LeadStatus[]).map(s => (
+                  <Button key={s} variant={selectedLead.status === s ? 'default' : 'outline'} size="sm" onClick={() => { handleUpdateStatus(selectedLead.id, s); setSelectedLead({ ...selectedLead, status: s }); }}>
+                    {statusConfig[s]?.label || s}
+                  </Button>
+                ))}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Assign Dialog */}
-      <Dialog open={!!assignDialog} onOpenChange={open => !open && setAssignDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Assign Lead</DialogTitle><DialogDescription>Assign {assignDialog?.companyName} to an executive</DialogDescription></DialogHeader>
-          <div className="space-y-3 py-4">
-            {executives.map(exec => (
-              <Button key={exec} variant="outline" className="w-full justify-start gap-2" onClick={() => {
-                toast({ title: 'Lead Assigned', description: `${assignDialog?.companyName} assigned to ${exec}` });
-                setAssignDialog(null);
-              }}>
-                <Users className="w-4 h-4" />{exec}
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* New Lead Dialog */}
+      {/* New Lead */}
       <Dialog open={showNewLead} onOpenChange={setShowNewLead}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Add New Lead</DialogTitle></DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Company Name</Label><Input placeholder="Company name" /></div>
-              <div className="space-y-2"><Label>Contact Person</Label><Input placeholder="Full name" /></div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Company Name *</Label><Input value={newLead.company_name} onChange={e => setNewLead(p => ({ ...p, company_name: e.target.value }))} /></div>
+              <div><Label>Contact Person *</Label><Input value={newLead.contact_person} onChange={e => setNewLead(p => ({ ...p, contact_person: e.target.value }))} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Phone</Label><Input placeholder="+91" /></div>
-              <div className="space-y-2"><Label>Email</Label><Input placeholder="email@company.com" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Phone</Label><Input value={newLead.phone} onChange={e => setNewLead(p => ({ ...p, phone: e.target.value }))} /></div>
+              <div><Label>Email</Label><Input value={newLead.email} onChange={e => setNewLead(p => ({ ...p, email: e.target.value }))} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Source</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Source</Label>
+                <Select value={newLead.source} onValueChange={v => setNewLead(p => ({ ...p, source: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{Object.entries(sourceConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Priority" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div><Label>Value (₹)</Label><Input type="number" value={newLead.value} onChange={e => setNewLead(p => ({ ...p, value: Number(e.target.value) }))} /></div>
             </div>
-            <div className="space-y-2"><Label>Estimated Value (₹)</Label><Input type="number" placeholder="0" /></div>
-            <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Additional details..." rows={3} /></div>
+            <div><Label>Notes</Label><Textarea value={newLead.notes} onChange={e => setNewLead(p => ({ ...p, notes: e.target.value }))} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewLead(false)}>Cancel</Button>
-            <Button onClick={() => { toast({ title: 'Lead Created', description: 'New lead added successfully' }); setShowNewLead(false); }}>Create Lead</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Import Dialog */}
-      <Dialog open={showImport} onOpenChange={v => { setShowImport(v); if (!v) { setImportFile(null); setImportMapping(false); } }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Import Leads</DialogTitle><DialogDescription>Upload Excel or CSV file to bulk import leads</DialogDescription></DialogHeader>
-          <div className="space-y-4 py-4">
-            <Button variant="outline" className="w-full gap-2" onClick={handleSampleDownload}>
-              <FileDown className="w-4 h-4" />Download Sample Template
-            </Button>
-            <div className="border-2 border-dashed rounded-lg p-6 text-center">
-              <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground mb-2">Upload CSV or Excel file</p>
-              <Input type="file" accept=".csv,.xlsx,.xls" className="max-w-[200px] mx-auto" onChange={handleImportFile} />
-            </div>
-            {importFile && (
-              <div className="p-3 rounded-lg bg-muted/50 border">
-                <p className="text-sm font-medium flex items-center gap-2"><FileSpreadsheet className="w-4 h-4" />{importFile}</p>
-                {importMapping && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs font-semibold text-muted-foreground">Auto-Mapped Fields:</p>
-                    {['Company Name → companyName', 'Contact Person → contactPerson', 'Phone → phone', 'Email → email', 'Source → source', 'Priority → priority', 'Value → value'].map(m => (
-                      <div key={m} className="flex items-center gap-2 text-xs">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />{m}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowImport(false)}>Cancel</Button>
-            <Button disabled={!importMapping} onClick={handleImportConfirm}>Import 15 Leads</Button>
+            <Button onClick={handleCreateLead}>Create Lead</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
