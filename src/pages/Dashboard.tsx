@@ -223,7 +223,7 @@ export default function Dashboard() {
   }, []);
 
   const inventoryStatusData = useMemo(() => {
-    const items = selectedPortal === 'all' ? mockInventory : mockInventory.filter(i => i.portal === selectedPortal);
+    const items = selectedPortal === 'all' ? inventoryItems : inventoryItems.filter(i => i.portal === selectedPortal);
     return [
       { name: 'Healthy', value: items.filter(i => i.availableQuantity > i.lowStockThreshold).length, color: CHART_COLORS.success },
       { name: 'Low Stock', value: items.filter(i => i.availableQuantity <= i.lowStockThreshold && i.availableQuantity > 0).length, color: CHART_COLORS.warning },
