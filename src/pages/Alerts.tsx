@@ -40,18 +40,31 @@ const typeIcons: Record<AlertType, React.ElementType> = {
 };
 
 export default function Alerts() {
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true);
+      const data = await alertsDb.getAll();
+      setAlerts(data);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchAlerts(); }, []);
+
   const filteredAlerts = useMemo(() => {
-    return mockAlerts.filter(alert => {
+    return alerts.filter((alert: any) => {
       const matchesSeverity = severityFilter === 'all' || alert.severity === severityFilter;
       const matchesType = typeFilter === 'all' || alert.type === typeFilter;
       const matchesRead = !showUnreadOnly || !alert.read;
       return matchesSeverity && matchesType && matchesRead;
     });
-  }, [severityFilter, typeFilter, showUnreadOnly]);
+  }, [alerts, severityFilter, typeFilter, showUnreadOnly]);
 
   const stats = useMemo(() => ({
     total: mockAlerts.length,
