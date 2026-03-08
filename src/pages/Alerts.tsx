@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { mockAlerts, portalConfigs } from '@/services/mockData';
+import { useState, useEffect, useMemo } from 'react';
+import { alertsDb } from '@/services/database';
+import { portalConfigs } from '@/services/mockData';
 import { AlertSeverity, AlertType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
