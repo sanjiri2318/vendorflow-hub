@@ -67,11 +67,18 @@ export default function Alerts() {
   }, [alerts, severityFilter, typeFilter, showUnreadOnly]);
 
   const stats = useMemo(() => ({
-    total: mockAlerts.length,
-    unread: mockAlerts.filter(a => !a.read).length,
-    critical: mockAlerts.filter(a => a.severity === 'critical').length,
-    warning: mockAlerts.filter(a => a.severity === 'warning').length,
-  }), []);
+    total: alerts.length,
+    unread: alerts.filter((a: any) => !a.read).length,
+    critical: alerts.filter((a: any) => a.severity === 'critical').length,
+    warning: alerts.filter((a: any) => a.severity === 'warning').length,
+  }), [alerts]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await alertsDb.markAllAsRead();
+      fetchAlerts();
+    } catch (err) { console.error(err); }
+  };
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
