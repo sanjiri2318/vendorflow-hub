@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { mockProducts } from '@/services/mockData';
+import { useState, useEffect, useMemo } from 'react';
+import { productsDb } from '@/services/database';
 import { Product } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

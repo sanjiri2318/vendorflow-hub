@@ -1,10 +1,11 @@
-import { useState, useMemo, useSyncExternalStore } from 'react';
+import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { portalConfigs } from '@/services/mockData';
+import { reconciliationDb } from '@/services/database';
 import { Portal } from '@/types';
 import { CheckCircle2, AlertTriangle, TrendingUp, TrendingDown, Activity, Target, XCircle, SlidersHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
