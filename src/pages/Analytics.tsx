@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { portalConfigs } from '@/services/mockData';
 import { ordersDb, inventoryDb, returnsDb, settlementsDb } from '@/services/database';
-import { BarChart3, ShoppingCart, Package, RotateCcw, TrendingUp, TrendingDown, AlertTriangle, IndianRupee, Facebook, Target, Trophy, Star, ArrowUpRight, ArrowDownRight, Users, Shield, FileCheck, Bot, Zap, ClipboardCheck, Lock, Eye, Crown, UserCheck, Settings, Loader2 } from 'lucide-react';
+import { BarChart3, ShoppingCart, Package, RotateCcw, TrendingUp, TrendingDown, AlertTriangle, IndianRupee, Facebook, Target, Trophy, Star, ArrowUpRight, ArrowDownRight, Users, Shield, FileCheck, Bot, Zap, ClipboardCheck, Lock, Eye, Crown, UserCheck, Settings, Loader2, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area } from 'recharts';
 import { GlobalDateFilter, type DateRange } from '@/components/GlobalDateFilter';
 import { Skeleton } from '@/components/ui/skeleton';
