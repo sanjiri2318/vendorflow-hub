@@ -135,10 +135,10 @@ export default function Settlements() {
   const orderRowSelection = useRowSelection(filteredOrderSettlements.map(s => s.orderId));
 
   const stats = useMemo(() => {
-    const settlements = selectedPortal === 'all' ? mockSettlements : mockSettlements.filter(s => s.portal === selectedPortal);
-    const totalAmount = settlements.reduce((sum, s) => sum + s.amount, 0);
-    const totalNet = settlements.reduce((sum, s) => sum + s.netAmount, 0);
-    const totalCommission = settlements.reduce((sum, s) => sum + s.commission, 0);
+    const slist = selectedPortal === 'all' ? allSettlements : allSettlements.filter(s => s.portal === selectedPortal);
+    const totalAmount = slist.reduce((sum, s) => sum + (s.amount || 0), 0);
+    const totalNet = slist.reduce((sum, s) => sum + (s.netAmount || 0), 0);
+    const totalCommission = slist.reduce((sum, s) => sum + (s.commission || 0), 0);
     return {
       totalAmount, totalNet, totalCommission,
       pending: settlements.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.netAmount, 0),
