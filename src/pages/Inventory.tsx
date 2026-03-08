@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { mockInventory, mockOrders, portalConfigs } from '@/services/mockData';
+import { useState, useEffect, useMemo } from 'react';
+import { portalConfigs } from '@/services/mockData';
+import { inventoryDb } from '@/services/database';
 import { Portal } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { InventorySyncLog, type SyncLogEntry } from '@/components/inventory/InventorySyncLog';
