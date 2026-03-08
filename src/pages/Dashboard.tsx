@@ -234,7 +234,7 @@ export default function Dashboard() {
   const portalRevenueData = useMemo(() =>
     portalConfigs.map(portal => ({
       portal: portal.name,
-      revenue: mockSalesData.filter(d => d.portal === portal.id).reduce((s, d) => s + d.revenue, 0),
+      revenue: salesData.filter(d => d.portal === portal.id).reduce((s, d) => s + (d.revenue || 0), 0),
     })).sort((a, b) => b.revenue - a.revenue),
   []);
 
