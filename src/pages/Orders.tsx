@@ -191,7 +191,7 @@ export default function Orders() {
   const isHighValue = (customerId: string) => (customerProfiles[customerId]?.totalSpend ?? 0) >= 7000;
 
   const filteredOrders = useMemo(() => {
-    return mockOrders.filter(order => {
+    return allOrders.filter(order => {
       const matchesPortal = selectedPortal === 'all' || order.portal === selectedPortal;
       const matchesSearch = order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
