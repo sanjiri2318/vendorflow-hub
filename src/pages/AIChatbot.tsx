@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { MessageSquare, Brain, Workflow, Lock, Sparkles, FolderOpen, Zap, BarChart3, Package, RotateCcw, CreditCard, Users, Bell, Star, ThumbsDown, Search, Bot, Save } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import ReactMarkdown from 'react-markdown';
+import { MessageSquare, Brain, Workflow, Lock, Sparkles, FolderOpen, Zap, BarChart3, Package, RotateCcw, CreditCard, Users, Bell, Star, ThumbsDown, Search, Bot, Save, Send, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AutomationFeature {
   id: string;
@@ -26,8 +29,8 @@ const initialFeatures: AutomationFeature[] = [
   { id: 'return-analysis', name: 'Return Pattern Analysis', description: 'Identify return-prone products and suggest preventive actions', icon: RotateCcw, enabled: true, status: 'active' },
   { id: 'settlement-tracker', name: 'Settlement Discrepancy Detector', description: 'Automatically flag settlement mismatches and delayed payments', icon: CreditCard, enabled: true, status: 'active' },
   { id: 'vendor-scoring', name: 'Vendor Performance Scoring', description: 'AI-generated vendor performance scores and recommendations', icon: Users, enabled: false, status: 'beta' },
-  { id: 'demand-forecast', name: 'Demand Forecasting', description: 'Predict SKU-level demand using historical data and trends', icon: BarChart3, enabled: false, status: 'coming' },
-  { id: 'anomaly-detection', name: 'Anomaly Detection', description: 'Detect unusual patterns in orders, returns, and settlements', icon: Bell, enabled: false, status: 'coming' },
+  { id: 'demand-forecast', name: 'Demand Forecasting', description: 'Predict SKU-level demand using historical data and trends', icon: BarChart3, enabled: true, status: 'active' },
+  { id: 'anomaly-detection', name: 'Anomaly Detection', description: 'Detect unusual patterns in orders, returns, and settlements', icon: Bell, enabled: false, status: 'beta' },
 ];
 
 const mockReviews = [
@@ -53,10 +56,159 @@ const mockKeywords = [
   { keyword: 'comfortable', count: 89, sentiment: 'positive' },
 ];
 
+type ChatMessage = { role: 'user' | 'assistant'; content: string };
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+
+async function streamChat({ messages, onDelta, onDone, onError }: {
+  messages: ChatMessage[];
+  onDelta: (text: string) => void;
+  onDone: () => void;
+  onError: (err: string) => void;
+}) {
+  const resp = await fetch(CHAT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({ messages }),
+  });
+
+  if (!resp.ok) {
+    const errData = await resp.json().catch(() => ({}));
+    onError(errData.error || `Error ${resp.status}`);
+    return;
+  }
+
+  if (!resp.body) { onError("No response body"); return; }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let textBuffer = "";
+  let streamDone = false;
+
+  while (!streamDone) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    textBuffer += decoder.decode(value, { stream: true });
+
+    let newlineIndex: number;
+    while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+      let line = textBuffer.slice(0, newlineIndex);
+      textBuffer = textBuffer.slice(newlineIndex + 1);
+      if (line.endsWith("\r")) line = line.slice(0, -1);
+      if (line.startsWith(":") || line.trim() === "") continue;
+      if (!line.startsWith("data: ")) continue;
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === "[DONE]") { streamDone = true; break; }
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (content) onDelta(content);
+      } catch {
+        textBuffer = line + "\n" + textBuffer;
+        break;
+      }
+    }
+  }
+
+  // Final flush
+  if (textBuffer.trim()) {
+    for (let raw of textBuffer.split("\n")) {
+      if (!raw) continue;
+      if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+      if (raw.startsWith(":") || raw.trim() === "") continue;
+      if (!raw.startsWith("data: ")) continue;
+      const jsonStr = raw.slice(6).trim();
+      if (jsonStr === "[DONE]") continue;
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (content) onDelta(content);
+      } catch { /* ignore */ }
+    }
+  }
+  onDone();
+}
+
 export default function AIChatbot() {
   const { toast } = useToast();
   const [features, setFeatures] = useState(initialFeatures);
   const [chatbotConfig, setChatbotConfig] = useState({ name: 'VendorFlow Assistant', greeting: 'Hello! How can I help you today?', responseDelay: '1', maxHistory: '50' });
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // AI Insights state
+  const [insightLoading, setInsightLoading] = useState<string | null>(null);
+  const [insightResults, setInsightResults] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const sendMessage = async () => {
+    if (!chatInput.trim() || isStreaming) return;
+    const userMsg: ChatMessage = { role: 'user', content: chatInput.trim() };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setIsStreaming(true);
+
+    let assistantSoFar = "";
+    const upsertAssistant = (chunk: string) => {
+      assistantSoFar += chunk;
+      setChatMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === 'assistant') {
+          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+        }
+        return [...prev, { role: 'assistant', content: assistantSoFar }];
+      });
+    };
+
+    try {
+      await streamChat({
+        messages: [...chatMessages, userMsg],
+        onDelta: upsertAssistant,
+        onDone: () => setIsStreaming(false),
+        onError: (err) => {
+          toast({ title: 'AI Error', description: err, variant: 'destructive' });
+          setIsStreaming(false);
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      setIsStreaming(false);
+    }
+  };
+
+  const runInsight = async (type: string) => {
+    setInsightLoading(type);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-insights', {
+        body: {
+          type,
+          data: type === 'smart-pricing'
+            ? { products: ['Wireless Earbuds Pro - ₹2499 on Amazon, ₹2299 on Flipkart', 'Cotton T-Shirt - ₹749 on Meesho, ₹899 on Myntra'], portals: ['Amazon', 'Flipkart', 'Meesho', 'Myntra'] }
+            : type === 'demand-forecast'
+            ? { topSKUs: ['SKU-EAR-001 - 120 units/month', 'SKU-TSH-042 - 85 units/month'], season: 'March 2026', inventoryLevels: 'Low on earbuds, adequate on apparel' }
+            : { returns: ['25% return rate on electronics', '8% on apparel', 'Top reason: size mismatch (34%), damaged (22%)'] },
+        },
+      });
+      if (error) throw error;
+      setInsightResults(prev => ({ ...prev, [type]: data.insight }));
+    } catch (e: any) {
+      toast({ title: 'Insight Error', description: e.message || 'Failed to generate insight', variant: 'destructive' });
+    } finally {
+      setInsightLoading(null);
+    }
+  };
 
   const toggleFeature = (id: string) => {
     const feature = features.find(f => f.id === id);
@@ -73,6 +225,13 @@ export default function AIChatbot() {
 
   const activeCount = features.filter(f => f.enabled).length;
 
+  const quickQuestions = [
+    "What are my top-selling products?",
+    "How to reduce return rates?",
+    "Explain settlement reconciliation",
+    "Tips for multi-portal pricing",
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -83,86 +242,137 @@ export default function AIChatbot() {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">{activeCount} Active</Badge>
           <Badge variant="outline" className="gap-1"><Lock className="w-3 h-3" />Admin Only</Badge>
-          <Badge variant="outline">✔ Updated</Badge>
+          <Badge variant="outline" className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">✔ AI Live</Badge>
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="chat" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="chat" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">💬 Chat</TabsTrigger>
+          <TabsTrigger value="insights" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">🧠 Insights</TabsTrigger>
           <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Overview</TabsTrigger>
           <TabsTrigger value="reviews" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Reviews</TabsTrigger>
           <TabsTrigger value="feedback" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Feedback</TabsTrigger>
           <TabsTrigger value="keywords" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Keywords</TabsTrigger>
-          <TabsTrigger value="chatbot" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Chatbot</TabsTrigger>
         </TabsList>
+
+        {/* AI Chat Tab */}
+        <TabsContent value="chat" className="space-y-0">
+          <Card className="flex flex-col h-[600px]">
+            <CardHeader className="pb-3 border-b">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary/10"><Bot className="w-5 h-5 text-primary" /></div>
+                <div>
+                  <CardTitle className="text-base">VendorFlow AI Assistant</CardTitle>
+                  <CardDescription className="text-xs">Powered by AI • Ask anything about your business</CardDescription>
+                </div>
+                <Badge variant="outline" className="ml-auto bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs">Online</Badge>
+              </div>
+            </CardHeader>
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <div className="space-y-4">
+                {chatMessages.length === 0 && (
+                  <div className="text-center py-12 space-y-4">
+                    <Sparkles className="w-12 h-12 text-primary/30 mx-auto" />
+                    <div>
+                      <p className="font-medium text-foreground">Welcome to VendorFlow AI</p>
+                      <p className="text-sm text-muted-foreground mt-1">Ask me anything about your orders, inventory, returns, or pricing strategy.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto">
+                      {quickQuestions.map((q, i) => (
+                        <Button key={i} variant="outline" size="sm" className="text-xs" onClick={() => { setChatInput(q); }}>
+                          {q}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.role === 'assistant' && (
+                      <div className="p-1.5 rounded-lg bg-primary/10 h-fit shrink-0"><Bot className="w-4 h-4 text-primary" /></div>
+                    )}
+                    <div className={`max-w-[80%] rounded-xl px-4 py-3 ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50 border'}`}>
+                      {msg.role === 'assistant' ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm">{msg.content}</p>
+                      )}
+                    </div>
+                    {msg.role === 'user' && (
+                      <div className="p-1.5 rounded-lg bg-primary h-fit shrink-0"><User className="w-4 h-4 text-primary-foreground" /></div>
+                    )}
+                  </div>
+                ))}
+                {isStreaming && chatMessages[chatMessages.length - 1]?.role !== 'assistant' && (
+                  <div className="flex gap-3">
+                    <div className="p-1.5 rounded-lg bg-primary/10 h-fit"><Bot className="w-4 h-4 text-primary" /></div>
+                    <div className="bg-muted/50 border rounded-xl px-4 py-3">
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+              <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="flex gap-2">
+                <Input
+                  placeholder="Ask about orders, inventory, pricing..."
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  disabled={isStreaming}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={isStreaming || !chatInput.trim()} size="icon">
+                  {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </form>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* AI Insights Tab */}
+        <TabsContent value="insights" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { type: 'smart-pricing', title: 'Smart Pricing', desc: 'Get AI-driven pricing recommendations', icon: Zap, color: 'text-amber-600' },
+              { type: 'demand-forecast', title: 'Demand Forecast', desc: 'Predict SKU-level demand trends', icon: BarChart3, color: 'text-blue-600' },
+              { type: 'return-analysis', title: 'Return Analysis', desc: 'Analyze return patterns & causes', icon: RotateCcw, color: 'text-rose-600' },
+            ].map(item => (
+              <Card key={item.type}>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <item.icon className={`w-5 h-5 ${item.color}`} />
+                    <CardTitle className="text-base">{item.title}</CardTitle>
+                  </div>
+                  <CardDescription>{item.desc}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    onClick={() => runInsight(item.type)}
+                    disabled={insightLoading === item.type}
+                    className="w-full gap-2"
+                    variant="outline"
+                  >
+                    {insightLoading === item.type ? <><Loader2 className="w-4 h-4 animate-spin" />Analyzing...</> : <><Sparkles className="w-4 h-4" />Generate Insight</>}
+                  </Button>
+                  {insightResults[item.type] && (
+                    <div className="p-3 rounded-lg bg-muted/50 border max-h-64 overflow-y-auto">
+                      <div className="prose prose-sm dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        <ReactMarkdown>{insightResults[item.type]}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* AI Modules */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-dashed border-2">
-              <CardHeader className="text-center">
-                <div className="mx-auto p-4 rounded-2xl bg-primary/10 w-fit mb-3"><MessageSquare className="w-8 h-8 text-primary" /></div>
-                <CardTitle className="text-lg">System AI Chatbot</CardTitle>
-                <CardDescription>Conversational AI assistant for VMS queries</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="p-6 bg-muted/30 rounded-xl">
-                  <Sparkles className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">AI chat interface will be available here</p>
-                </div>
-                <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30"><Lock className="w-3 h-3 mr-1" />Coming in Advanced Phase</Badge>
-              </CardContent>
-            </Card>
-            <Card className="border-dashed border-2">
-              <CardHeader className="text-center">
-                <div className="mx-auto p-4 rounded-2xl bg-blue-500/10 w-fit mb-3"><FolderOpen className="w-8 h-8 text-blue-600" /></div>
-                <CardTitle className="text-lg">AI Knowledge Base</CardTitle>
-                <CardDescription>Centralized knowledge for AI training</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="p-6 bg-muted/30 rounded-xl space-y-2">
-                  <Brain className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Upload documents, SOPs, and catalogs</p>
-                </div>
-                <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30"><Lock className="w-3 h-3 mr-1" />Coming in Advanced Phase</Badge>
-              </CardContent>
-            </Card>
-            <Card className="border-dashed border-2">
-              <CardHeader className="text-center">
-                <div className="mx-auto p-4 rounded-2xl bg-purple-500/10 w-fit mb-3"><Workflow className="w-8 h-8 text-purple-600" /></div>
-                <CardTitle className="text-lg">Agentic AI & Workflows</CardTitle>
-                <CardDescription>Automated workflows for operations</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="p-6 bg-muted/30 rounded-xl space-y-2">
-                  <Workflow className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Auto-restock, smart alerts, order routing</p>
-                </div>
-                <Badge variant="outline" className="bg-amber-500/15 text-amber-600 border-amber-500/30"><Lock className="w-3 h-3 mr-1" />Coming in Advanced Phase</Badge>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* AI Suggestion Placeholder */}
-          <Card className="border-dashed border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />AI Suggestions</CardTitle>
-              <CardDescription>AI-powered recommendations based on your data patterns</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {['Optimize pricing for SKU-001 based on competitor data', 'Restock Wireless Earbuds — stock drops below threshold in 3 days', 'Review return rate spike on Flipkart channel this week'].map((suggestion, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-                    <Sparkles className="w-4 h-4 text-primary mb-2" />
-                    <p className="text-sm text-foreground">{suggestion}</p>
-                    <Badge variant="outline" className="mt-2 text-xs">AI Generated</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Feature Toggle Panel */}
           <Card>
             <CardHeader>
@@ -282,32 +492,6 @@ export default function AIChatbot() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Chatbot Config Tab */}
-        <TabsContent value="chatbot" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Bot className="w-5 h-5 text-primary" />Chatbot Configuration</CardTitle>
-              <CardDescription>Configure AI chatbot behavior and appearance (UI only)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Bot Name</Label><Input value={chatbotConfig.name} onChange={e => setChatbotConfig(p => ({ ...p, name: e.target.value }))} /></div>
-                <div className="space-y-2"><Label>Response Delay (seconds)</Label><Input type="number" value={chatbotConfig.responseDelay} onChange={e => setChatbotConfig(p => ({ ...p, responseDelay: e.target.value }))} /></div>
-                <div className="space-y-2 md:col-span-2"><Label>Greeting Message</Label><Input value={chatbotConfig.greeting} onChange={e => setChatbotConfig(p => ({ ...p, greeting: e.target.value }))} /></div>
-                <div className="space-y-2"><Label>Max Conversation History</Label><Input type="number" value={chatbotConfig.maxHistory} onChange={e => setChatbotConfig(p => ({ ...p, maxHistory: e.target.value }))} /></div>
-              </div>
-              <div className="p-4 rounded-lg border border-dashed bg-muted/20">
-                <h4 className="font-medium text-sm mb-2">Preview</h4>
-                <div className="bg-card rounded-lg p-4 shadow-sm space-y-3 max-w-sm">
-                  <div className="flex items-center gap-2"><Bot className="w-5 h-5 text-primary" /><span className="font-semibold text-sm">{chatbotConfig.name}</span><Badge variant="outline" className="text-[10px]">Online</Badge></div>
-                  <div className="bg-primary/5 rounded-lg p-3"><p className="text-sm">{chatbotConfig.greeting}</p></div>
-                </div>
-              </div>
-              <Button onClick={() => toast({ title: 'Chatbot Config Saved', description: 'Configuration updated (UI only).' })} className="bg-primary hover:bg-primary/90"><Save className="w-4 h-4 mr-1.5" />Save Configuration</Button>
             </CardContent>
           </Card>
         </TabsContent>
