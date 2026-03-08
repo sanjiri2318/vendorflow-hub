@@ -141,8 +141,8 @@ export default function Settlements() {
     const totalCommission = slist.reduce((sum, s) => sum + (s.commission || 0), 0);
     return {
       totalAmount, totalNet, totalCommission,
-      pending: settlements.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.netAmount, 0),
-      delayed: settlements.filter(s => s.status === 'delayed').length,
+      pending: slist.filter(s => s.status === 'pending').reduce((sum, s) => sum + (s.netAmount || 0), 0),
+      delayed: slist.filter(s => s.status === 'delayed').length,
     };
   }, [selectedPortal]);
 
