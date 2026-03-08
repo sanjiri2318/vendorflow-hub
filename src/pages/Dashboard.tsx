@@ -634,9 +634,9 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { icon: UserPlus, color: 'emerald', label: 'New Customers', value: Object.keys((() => { const m: Record<string, number> = {}; mockOrders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); return m; })()).length - duplicateCustomerCount },
+              { icon: UserPlus, color: 'emerald', label: 'New Customers', value: Object.keys((() => { const m: Record<string, number> = {}; orders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); return m; })()).length - duplicateCustomerCount },
               { icon: UserCheck, color: 'blue', label: 'Repeat Customers', value: duplicateCustomerCount },
-              { icon: Percent, color: 'primary', label: 'Repeat Rate', value: (() => { const m: Record<string, number> = {}; mockOrders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); const t = Object.keys(m).length; return t > 0 ? Math.round((Object.values(m).filter(c => c > 1).length / t) * 100) : 0; })() + '%' },
+              { icon: Percent, color: 'primary', label: 'Repeat Rate', value: (() => { const m: Record<string, number> = {}; orders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); const t = Object.keys(m).length; return t > 0 ? Math.round((Object.values(m).filter(c => c > 1).length / t) * 100) : 0; })() + '%' },
             ].map(item => (
               <div key={item.label} className="p-4 rounded-lg bg-muted/30 text-center">
                 <div className="flex items-center justify-center mb-2">

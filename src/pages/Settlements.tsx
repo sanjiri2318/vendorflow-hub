@@ -147,9 +147,9 @@ export default function Settlements() {
   }, [selectedPortal]);
 
   const paymentBatches = useMemo(() => {
-    const upcoming = mockSettlements.filter(s => s.status === 'pending');
-    const settled = mockSettlements.filter(s => s.status === 'completed');
-    const pendingS = mockSettlements.filter(s => s.status === 'delayed');
+    const upcoming = allSettlements.filter(s => s.status === 'pending');
+    const settled = allSettlements.filter(s => s.status === 'completed');
+    const pendingS = allSettlements.filter(s => s.status === 'delayed');
     return {
       upcoming: { count: upcoming.length, value: upcoming.reduce((s, i) => s + i.netAmount, 0) },
       settled: { count: settled.length, value: settled.reduce((s, i) => s + i.netAmount, 0) },

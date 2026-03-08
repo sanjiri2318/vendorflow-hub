@@ -274,7 +274,7 @@ export default function Orders() {
       });
       return updated;
     });
-    toast({ title: 'Video Cleanup Simulation', description: `Checked ${mockOrders.length} orders. Return policy: ${returnPolicyDays}d, Retention: ${videoRetentionDays}d` });
+    toast({ title: 'Video Cleanup Simulation', description: `Checked ${allOrders.length} orders. Return policy: ${returnPolicyDays}d, Retention: ${videoRetentionDays}d` });
   };
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString()}`;
