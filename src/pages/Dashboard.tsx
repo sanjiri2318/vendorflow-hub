@@ -31,9 +31,46 @@ export default function Dashboard() {
   const [sortMode, setSortMode] = useState<'revenue' | 'units' | 'returns'>('revenue');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
 
+  const [orders, setOrders] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [settlements, setSettlements] = useState<any[]>([]);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      try {
+        const [ordersData, returnsData, inventoryData, settlementsData] = await Promise.all([
+          ordersDb.getAll(),
+          returnsDb.getAll(),
+          inventoryDb.getAll(),
+          settlementsDb.getAll(),
+        ]);
+        setOrders(ordersData.map((o: any) => ({
+          ...o, orderId: o.order_number, orderDate: o.order_date, totalAmount: o.total_amount,
+          customerName: o.customer_name, customerId: o.id, customerEmail: o.customer_email,
+          customerPhone: o.customer_phone, customerPinCode: o.customer_pincode,
+          customerCity: o.customer_city, customerState: o.customer_state,
+          shippingAddress: o.customer_address, deliveryDate: o.delivered_date,
+          portalOrderId: o.order_number, items: [],
+        })));
+        setReturns(returnsData.map((r: any) => ({
+          ...r, orderId: r.order_number, requestDate: r.requested_at, items: [],
+          claimEligible: false,
+        })));
+        setInventoryItems(inventoryData.map((i: any) => ({
+          ...i, skuId: i.sku_id, productName: i.product_name,
+          availableQuantity: i.available_quantity ?? 0,
+          lowStockThreshold: i.low_stock_threshold ?? 10,
+        })));
+        setSettlements(settlementsData.map((s: any) => ({
+          ...s, settlementId: s.settlement_id, netAmount: s.net_amount,
+          settlementDate: s.settlement_date,
+        })));
+      } catch (e) { console.error(e); }
+      setIsLoading(false);
+    };
+    fetchData();
   }, []);
 
   const formatCurrency = (value: number) => {
