@@ -31,8 +31,6 @@ interface InventoryChangeLog {
   timestamp: string;
 }
 
-const allBrands = Array.from(new Set(mockInventory.map(i => i.brand))).sort();
-
 export default function Inventory() {
   const { toast } = useToast();
   const [selectedPortal, setSelectedPortal] = useState<Portal | 'all'>('all');
