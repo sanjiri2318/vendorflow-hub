@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { videosDb } from '@/services/database';
+import { supabase } from '@/integrations/supabase/client';
 import {
-  Video, Camera, FileImage, Search, FileSpreadsheet, FileDown, Eye,
+  Video, Camera, FileImage, Search, FileSpreadsheet, FileDown, Eye, Upload,
   AlertTriangle, CheckCircle2, Clock, XCircle, ArrowUpDown, Settings2,
   ShieldCheck, HardDrive, Timer, Loader2,
 } from 'lucide-react';
@@ -39,6 +40,8 @@ export default function VideoManagement() {
   const [alertEnabled, setAlertEnabled] = useState(true);
   const [sortField, setSortField] = useState<'order_id' | 'captured_at' | 'video_status'>('order_id');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
     try {
@@ -79,6 +82,39 @@ export default function VideoManagement() {
 
   const alertOrders = records.filter(r => r.video_status === 'not_captured' && r.internal_status !== 'Processing');
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      toast({ title: 'Invalid File', description: 'Please select a video file.', variant: 'destructive' });
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: 'File Too Large', description: 'Video must be under 50MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('order-videos')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      toast({ title: 'Video Uploaded', description: `${file.name} uploaded successfully to cloud storage.` });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: 'Upload Failed', description: err.message || 'Could not upload video.', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleExport = (fmt: 'excel' | 'pdf') => {
     toast({ title: `Export ${fmt.toUpperCase()}`, description: 'Preparing video log export...' });
   };
@@ -91,6 +127,11 @@ export default function VideoManagement() {
           <p className="text-muted-foreground mt-1">Track order videos, invoice images, and verification status</p>
         </div>
         <div className="flex gap-2">
+          <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleFileUpload} />
+          <Button variant="default" size="sm" className="gap-1.5" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {uploading ? 'Uploading...' : 'Upload Video'}
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('excel')}><FileSpreadsheet className="w-4 h-4" />Excel</Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('pdf')}><FileDown className="w-4 h-4" />PDF</Button>
         </div>
