@@ -153,12 +153,36 @@ export default function Orders() {
   const [activeTab, setActiveTab] = useState('orders');
   const [globalDateRange, setGlobalDateRange] = useState<DateRange>({ from: undefined, to: undefined });
 
+  // DB-backed orders state
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await ordersDb.getAll();
+        setAllOrders(data.map((o: any) => ({
+          ...o, orderId: o.order_number, orderDate: o.order_date, totalAmount: o.total_amount,
+          customerName: o.customer_name, customerId: o.id, customerEmail: o.customer_email,
+          customerPhone: o.customer_phone || '', shippingAddress: o.customer_address || '',
+          customerPinCode: o.customer_pincode || '', customerCity: o.customer_city || '',
+          customerState: o.customer_state || '', deliveryDate: o.delivered_date,
+          portalOrderId: o.order_number, items: [],
+        })));
+      } catch (e) { console.error(e); }
+    };
+    fetchOrders();
+  }, []);
+
   // Video reconciliation state
-  const [videoRecords, setVideoRecords] = useState<Record<string, VideoRecord>>(() => generateVideoRecords(mockOrders));
+  const [videoRecords, setVideoRecords] = useState<Record<string, VideoRecord>>({});
   const [returnPolicyDays] = useState(15);
   const [videoRetentionDays] = useState(100);
 
-  const customerProfiles = useMemo(() => computeCustomerProfiles(mockOrders), []);
+  useEffect(() => {
+    if (allOrders.length > 0) setVideoRecords(generateVideoRecords(allOrders));
+  }, [allOrders]);
+
+  const customerProfiles = useMemo(() => computeCustomerProfiles(allOrders), [allOrders]);
 
   const getCustomerType = (customerId: string): 'new' | 'repeat' => {
     return (customerProfiles[customerId]?.orderCount ?? 0) > 1 ? 'repeat' : 'new';
@@ -167,7 +191,7 @@ export default function Orders() {
   const isHighValue = (customerId: string) => (customerProfiles[customerId]?.totalSpend ?? 0) >= 7000;
 
   const filteredOrders = useMemo(() => {
-    return mockOrders.filter(order => {
+    return allOrders.filter(order => {
       const matchesPortal = selectedPortal === 'all' || order.portal === selectedPortal;
       const matchesSearch = order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -186,7 +210,7 @@ export default function Orders() {
   const rowSelection = useRowSelection(filteredOrders.map(o => o.orderId));
 
   const processingStats = useMemo(() => {
-    const orders = selectedPortal === 'all' ? mockOrders : mockOrders.filter(o => o.portal === selectedPortal);
+    const orders = selectedPortal === 'all' ? allOrders : allOrders.filter(o => o.portal === selectedPortal);
     const withinCutoff = orders.filter(o => ['pending', 'confirmed'].includes(o.status) && getOrderCutoffStatus(o) === 'within').length;
     const missedCutoff = orders.filter(o => ['pending', 'confirmed'].includes(o.status) && getOrderCutoffStatus(o) === 'missed').length;
     const pendingDispatch = orders.filter(o => ['confirmed', 'packed'].includes(o.status)).length;
@@ -237,7 +261,7 @@ export default function Orders() {
   const runVideoCleanup = () => {
     setVideoRecords(prev => {
       const updated = { ...prev };
-      mockOrders.forEach(o => {
+      allOrders.forEach(o => {
         const daysSince = Math.floor((Date.now() - new Date(o.orderDate).getTime()) / (1000 * 60 * 60 * 24));
         const isReturn = ['returned', 'rto', 'customer_return', 'courier_return'].includes(o.status);
         const rec = updated[o.orderId];
@@ -250,7 +274,7 @@ export default function Orders() {
       });
       return updated;
     });
-    toast({ title: 'Video Cleanup Simulation', description: `Checked ${mockOrders.length} orders. Return policy: ${returnPolicyDays}d, Retention: ${videoRetentionDays}d` });
+    toast({ title: 'Video Cleanup Simulation', description: `Checked ${allOrders.length} orders. Return policy: ${returnPolicyDays}d, Retention: ${videoRetentionDays}d` });
   };
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString()}`;

@@ -45,24 +45,41 @@ export default function Products() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({ name: '', masterSku: '', brand: '', category: '', hsn: '', mrp: '', basePrice: '', gst: '' });
 
-  const categories = useMemo(() => {
-    const unique = new Set(mockProducts.map(p => p.category));
-    return Array.from(unique);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const data = await productsDb.getAll();
+        setAllProducts(data.map((p: any) => ({
+          ...p, productId: p.id, masterSkuId: p.sku, name: p.name,
+          brand: p.brand || '', category: p.category || '', hsnCode: p.hsn_code || '',
+          mrp: p.mrp ?? 0, basePrice: p.base_price ?? 0, gstPercent: p.gst_percent ?? 0,
+          status: p.status || 'active', createdAt: p.created_at,
+        })));
+      } catch (e) { console.error(e); }
+    };
+    fetchProducts();
   }, []);
+
+  const categories = useMemo(() => {
+    const unique = new Set(allProducts.map((p: any) => p.category as string).filter(Boolean));
+    return Array.from(unique);
+  }, [allProducts]);
 
   // Duplicate detection
   const duplicateSkus = useMemo(() => {
     const skuCount: Record<string, number> = {};
-    mockProducts.forEach(p => {
+    allProducts.forEach((p: any) => {
       skuCount[p.masterSkuId] = (skuCount[p.masterSkuId] || 0) + 1;
     });
     return Object.entries(skuCount).filter(([, c]) => c > 1).map(([sku]) => sku);
-  }, []);
+  }, [allProducts]);
 
-  const getMargin = (p: Product) => ((p.mrp - p.basePrice) / p.mrp) * 100;
+  const getMargin = (p: any) => p.mrp > 0 ? ((p.mrp - p.basePrice) / p.mrp) * 100 : 0;
 
   const filteredProducts = useMemo(() => {
-    let results = mockProducts.filter(product => {
+    let results = allProducts.filter((product: any) => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            product.productId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            product.masterSkuId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -88,11 +105,11 @@ export default function Products() {
   }, [searchQuery, categoryFilter, statusFilter, sortField, sortDir]);
 
   const stats = useMemo(() => ({
-    total: mockProducts.length,
-    active: mockProducts.filter(p => p.status === 'active').length,
-    inactive: mockProducts.filter(p => p.status === 'inactive').length,
+    total: allProducts.length,
+    active: allProducts.filter((p: any) => p.status === 'active').length,
+    inactive: allProducts.filter((p: any) => p.status === 'inactive').length,
     duplicates: duplicateSkus.length,
-  }), [duplicateSkus]);
+  }), [allProducts, duplicateSkus]);
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString()}`;
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-IN', {
@@ -229,7 +246,7 @@ export default function Products() {
                           <Select value={formData.category} onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
                             <SelectTrigger className={formErrors.category ? 'border-destructive' : ''}><SelectValue placeholder="Select category" /></SelectTrigger>
                             <SelectContent>
-                              {categories.map(cat => (
+                              {categories.map((cat: string) => (
                                 <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                               ))}
                             </SelectContent>
@@ -413,7 +430,7 @@ export default function Products() {
               <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
+                {categories.map((cat: string) => (<SelectItem key={cat} value={cat}>{cat}</SelectItem>))}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

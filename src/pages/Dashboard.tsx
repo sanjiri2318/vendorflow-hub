@@ -31,9 +31,46 @@ export default function Dashboard() {
   const [sortMode, setSortMode] = useState<'revenue' | 'units' | 'returns'>('revenue');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
 
+  const [orders, setOrders] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [settlements, setSettlements] = useState<any[]>([]);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      try {
+        const [ordersData, returnsData, inventoryData, settlementsData] = await Promise.all([
+          ordersDb.getAll(),
+          returnsDb.getAll(),
+          inventoryDb.getAll(),
+          settlementsDb.getAll(),
+        ]);
+        setOrders(ordersData.map((o: any) => ({
+          ...o, orderId: o.order_number, orderDate: o.order_date, totalAmount: o.total_amount,
+          customerName: o.customer_name, customerId: o.id, customerEmail: o.customer_email,
+          customerPhone: o.customer_phone, customerPinCode: o.customer_pincode,
+          customerCity: o.customer_city, customerState: o.customer_state,
+          shippingAddress: o.customer_address, deliveryDate: o.delivered_date,
+          portalOrderId: o.order_number, items: [],
+        })));
+        setReturns(returnsData.map((r: any) => ({
+          ...r, orderId: r.order_number, requestDate: r.requested_at, items: [],
+          claimEligible: false,
+        })));
+        setInventoryItems(inventoryData.map((i: any) => ({
+          ...i, skuId: i.sku_id, productName: i.product_name,
+          availableQuantity: i.available_quantity ?? 0,
+          lowStockThreshold: i.low_stock_threshold ?? 10,
+        })));
+        setSettlements(settlementsData.map((s: any) => ({
+          ...s, settlementId: s.settlement_id, netAmount: s.net_amount,
+          settlementDate: s.settlement_date,
+        })));
+      } catch (e) { console.error(e); }
+      setIsLoading(false);
+    };
+    fetchData();
   }, []);
 
   const formatCurrency = (value: number) => {
@@ -45,7 +82,7 @@ export default function Dashboard() {
 
   // Filtered orders by portal & date
   const filteredOrders = useMemo(() => {
-    return mockOrders.filter(o => {
+    return orders.filter(o => {
       if (selectedPortal !== 'all' && o.portal !== selectedPortal) return false;
       if (dateRange.from && new Date(o.orderDate) < dateRange.from) return false;
       if (dateRange.to && new Date(o.orderDate) > dateRange.to) return false;
@@ -54,7 +91,7 @@ export default function Dashboard() {
   }, [selectedPortal, dateRange]);
 
   const filteredReturns = useMemo(() => {
-    return mockReturns.filter(r => {
+    return returns.filter(r => {
       if (selectedPortal !== 'all' && r.portal !== selectedPortal) return false;
       if (dateRange.from && new Date(r.requestDate) < dateRange.from) return false;
       if (dateRange.to && new Date(r.requestDate) > dateRange.to) return false;
@@ -66,8 +103,8 @@ export default function Dashboard() {
   const dailySummary = useMemo(() => {
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
-    const todayOrders = mockOrders.filter(o => new Date(o.orderDate).toDateString() === today && (selectedPortal === 'all' || o.portal === selectedPortal));
-    const yesterdayOrders = mockOrders.filter(o => new Date(o.orderDate).toDateString() === yesterday && (selectedPortal === 'all' || o.portal === selectedPortal));
+    const todayOrders = orders.filter(o => new Date(o.orderDate).toDateString() === today && (selectedPortal === 'all' || o.portal === selectedPortal));
+    const yesterdayOrders = orders.filter(o => new Date(o.orderDate).toDateString() === yesterday && (selectedPortal === 'all' || o.portal === selectedPortal));
     const todayRevenue = todayOrders.reduce((s, o) => s + o.totalAmount, 0);
     const yesterdayRevenue = yesterdayOrders.reduce((s, o) => s + o.totalAmount, 0);
     const revenueGrowth = yesterdayRevenue > 0 ? +((todayRevenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : 0;
@@ -164,7 +201,7 @@ export default function Dashboard() {
   // ─── SALES CHART ───
   const salesChartData = useMemo(() => {
     const grouped: Record<string, { date: string; revenue: number; orders: number }> = {};
-    mockSalesData
+    salesData
       .filter(d => selectedPortal === 'all' || d.portal === selectedPortal)
       .forEach(d => {
         const dateKey = new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -176,17 +213,17 @@ export default function Dashboard() {
   }, [selectedPortal]);
 
   const totalUnitsSold = useMemo(() =>
-    mockSalesData.filter(d => selectedPortal === 'all' || d.portal === selectedPortal).reduce((s, d) => s + d.orders, 0),
+    salesData.filter(d => selectedPortal === 'all' || d.portal === selectedPortal).reduce((s, d) => s + (d.orders || 0), 0),
   [selectedPortal]);
 
   const duplicateCustomerCount = useMemo(() => {
     const m: Record<string, number> = {};
-    mockOrders.forEach(o => { m[o.customerEmail || o.customerId] = (m[o.customerEmail || o.customerId] || 0) + 1; });
+    orders.forEach(o => { m[o.customerEmail || o.customerId] = (m[o.customerEmail || o.customerId] || 0) + 1; });
     return Object.values(m).filter(c => c > 1).length;
   }, []);
 
   const inventoryStatusData = useMemo(() => {
-    const items = selectedPortal === 'all' ? mockInventory : mockInventory.filter(i => i.portal === selectedPortal);
+    const items = selectedPortal === 'all' ? inventoryItems : inventoryItems.filter(i => i.portal === selectedPortal);
     return [
       { name: 'Healthy', value: items.filter(i => i.availableQuantity > i.lowStockThreshold).length, color: CHART_COLORS.success },
       { name: 'Low Stock', value: items.filter(i => i.availableQuantity <= i.lowStockThreshold && i.availableQuantity > 0).length, color: CHART_COLORS.warning },
@@ -197,16 +234,17 @@ export default function Dashboard() {
   const portalRevenueData = useMemo(() =>
     portalConfigs.map(portal => ({
       portal: portal.name,
-      revenue: mockSalesData.filter(d => d.portal === portal.id).reduce((s, d) => s + d.revenue, 0),
+      revenue: salesData.filter(d => d.portal === portal.id).reduce((s, d) => s + (d.revenue || 0), 0),
     })).sort((a, b) => b.revenue - a.revenue),
   []);
 
   const kpiData = useMemo(() => {
-    if (selectedPortal === 'all') return mockKPIData;
-    const po = mockOrders.filter(o => o.portal === selectedPortal);
-    const pi = mockInventory.filter(i => i.portal === selectedPortal);
-    const pr = mockReturns.filter(r => r.portal === selectedPortal);
-    const ps = mockSettlements.filter(s => s.portal === selectedPortal);
+    const defaultKpi = { totalSales: orders.reduce((s, o) => s + (o.totalAmount || 0), 0), ordersToday: orders.filter(o => new Date(o.orderDate).toDateString() === new Date().toDateString()).length, inventoryValue: inventoryItems.reduce((s, i) => s + (i.availableQuantity * 500), 0), lowStockItems: inventoryItems.filter(i => i.availableQuantity <= i.lowStockThreshold).length, pendingReturns: returns.filter(r => r.status === 'requested' || r.status === 'pending').length, pendingSettlements: settlements.filter(s => s.status === 'pending').length, salesGrowth: 0, ordersGrowth: 0 };
+    if (selectedPortal === 'all') return defaultKpi;
+    const po = orders.filter(o => o.portal === selectedPortal);
+    const pi = inventoryItems.filter(i => i.portal === selectedPortal);
+    const pr = returns.filter(r => r.portal === selectedPortal);
+    const ps = settlements.filter(s => s.portal === selectedPortal);
     return {
       totalSales: po.reduce((s, o) => s + o.totalAmount, 0),
       ordersToday: po.filter(o => new Date(o.orderDate).toDateString() === new Date().toDateString()).length,
@@ -596,9 +634,9 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { icon: UserPlus, color: 'emerald', label: 'New Customers', value: Object.keys((() => { const m: Record<string, number> = {}; mockOrders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); return m; })()).length - duplicateCustomerCount },
+              { icon: UserPlus, color: 'emerald', label: 'New Customers', value: Object.keys((() => { const m: Record<string, number> = {}; orders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); return m; })()).length - duplicateCustomerCount },
               { icon: UserCheck, color: 'blue', label: 'Repeat Customers', value: duplicateCustomerCount },
-              { icon: Percent, color: 'primary', label: 'Repeat Rate', value: (() => { const m: Record<string, number> = {}; mockOrders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); const t = Object.keys(m).length; return t > 0 ? Math.round((Object.values(m).filter(c => c > 1).length / t) * 100) : 0; })() + '%' },
+              { icon: Percent, color: 'primary', label: 'Repeat Rate', value: (() => { const m: Record<string, number> = {}; orders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); const t = Object.keys(m).length; return t > 0 ? Math.round((Object.values(m).filter(c => c > 1).length / t) * 100) : 0; })() + '%' },
             ].map(item => (
               <div key={item.label} className="p-4 rounded-lg bg-muted/30 text-center">
                 <div className="flex items-center justify-center mb-2">

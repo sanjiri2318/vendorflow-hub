@@ -117,6 +117,11 @@ export default function Inventory() {
     return Array.from(unique);
   }, [inventoryState]);
 
+  const allBrands = useMemo(() => {
+    const unique = new Set(inventoryState.map((i: any) => i.brand as string).filter(Boolean));
+    return Array.from(unique);
+  }, [inventoryState]);
+
   const filteredInventory = useMemo(() => {
     return inventoryState.filter(item => {
       const matchesPortal = selectedPortal === 'all' || item.portal === selectedPortal;
@@ -273,7 +278,7 @@ export default function Inventory() {
                            <TableCell><Badge variant="outline" className="gap-1">{portal?.icon} {portal?.name}</Badge></TableCell>
                            <TableCell className="text-center font-medium">{item.masterQuantity}</TableCell>
                            <TableCell className="text-center"><span className={`font-semibold ${item.availableQuantity <= item.lowStockThreshold ? 'text-amber-600' : ''}`}>{item.availableQuantity}</span></TableCell>
-                           <TableCell className="text-center text-muted-foreground">{Object.values(item.channelAllocations).reduce((a, b) => a + b, 0)}</TableCell>
+                           <TableCell className="text-center text-muted-foreground">{String(Object.values(item.channelAllocations || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0))}</TableCell>
                            <TableCell className="text-center text-muted-foreground">{item.reservedQuantity}</TableCell>
                            <TableCell>{item.warehouse}</TableCell>
                            <TableCell><Badge variant="secondary" className={status.color}>{status.label}</Badge></TableCell>

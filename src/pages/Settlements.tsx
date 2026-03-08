@@ -99,8 +99,24 @@ export default function Settlements() {
   const [trendView, setTrendView] = useState<'weekly' | 'monthly'>('weekly');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
 
+  const [allSettlements, setAllSettlements] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchSettlements = async () => {
+      try {
+        const data = await settlementsDb.getAll();
+        setAllSettlements(data.map((s: any) => ({
+          ...s, settlementId: s.settlement_id, netAmount: s.net_amount,
+          settlementDate: s.settlement_date, amount: s.amount ?? 0,
+          commission: s.commission ?? 0,
+        })));
+      } catch (e) { console.error(e); }
+    };
+    fetchSettlements();
+  }, []);
+
   const filteredSettlements = useMemo(() => {
-    return mockSettlements.filter(settlement => {
+    return allSettlements.filter(settlement => {
       const matchesPortal = selectedPortal === 'all' || settlement.portal === selectedPortal;
       const matchesStatus = statusFilter === 'all' || settlement.status === statusFilter;
       return matchesPortal && matchesStatus;
@@ -119,21 +135,21 @@ export default function Settlements() {
   const orderRowSelection = useRowSelection(filteredOrderSettlements.map(s => s.orderId));
 
   const stats = useMemo(() => {
-    const settlements = selectedPortal === 'all' ? mockSettlements : mockSettlements.filter(s => s.portal === selectedPortal);
-    const totalAmount = settlements.reduce((sum, s) => sum + s.amount, 0);
-    const totalNet = settlements.reduce((sum, s) => sum + s.netAmount, 0);
-    const totalCommission = settlements.reduce((sum, s) => sum + s.commission, 0);
+    const slist = selectedPortal === 'all' ? allSettlements : allSettlements.filter(s => s.portal === selectedPortal);
+    const totalAmount = slist.reduce((sum, s) => sum + (s.amount || 0), 0);
+    const totalNet = slist.reduce((sum, s) => sum + (s.netAmount || 0), 0);
+    const totalCommission = slist.reduce((sum, s) => sum + (s.commission || 0), 0);
     return {
       totalAmount, totalNet, totalCommission,
-      pending: settlements.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.netAmount, 0),
-      delayed: settlements.filter(s => s.status === 'delayed').length,
+      pending: slist.filter(s => s.status === 'pending').reduce((sum, s) => sum + (s.netAmount || 0), 0),
+      delayed: slist.filter(s => s.status === 'delayed').length,
     };
   }, [selectedPortal]);
 
   const paymentBatches = useMemo(() => {
-    const upcoming = mockSettlements.filter(s => s.status === 'pending');
-    const settled = mockSettlements.filter(s => s.status === 'completed');
-    const pendingS = mockSettlements.filter(s => s.status === 'delayed');
+    const upcoming = allSettlements.filter(s => s.status === 'pending');
+    const settled = allSettlements.filter(s => s.status === 'completed');
+    const pendingS = allSettlements.filter(s => s.status === 'delayed');
     return {
       upcoming: { count: upcoming.length, value: upcoming.reduce((s, i) => s + i.netAmount, 0) },
       settled: { count: settled.length, value: settled.reduce((s, i) => s + i.netAmount, 0) },
