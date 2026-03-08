@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { mockSettlements, mockOrders, portalConfigs } from '@/services/mockData';
+import { useState, useEffect, useMemo } from 'react';
+import { portalConfigs } from '@/services/mockData';
+import { settlementsDb } from '@/services/database';
 import { Portal, SettlementStatus } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

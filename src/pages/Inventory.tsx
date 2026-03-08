@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
-import { mockInventory, mockOrders, portalConfigs } from '@/services/mockData';
+import { useState, useEffect, useMemo } from 'react';
+import { portalConfigs } from '@/services/mockData';
+import { inventoryDb } from '@/services/database';
 import { Portal } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { InventorySyncLog, type SyncLogEntry } from '@/components/inventory/InventorySyncLog';
@@ -29,8 +30,6 @@ interface InventoryChangeLog {
   user: string;
   timestamp: string;
 }
-
-const allBrands = Array.from(new Set(mockInventory.map(i => i.brand))).sort();
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -86,10 +85,32 @@ export default function Inventory() {
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
 
-  // Mutable inventory state
-  const [inventoryState, setInventoryState] = useState(() =>
-    mockInventory.map(i => ({ ...i }))
-  );
+  const [inventoryState, setInventoryState] = useState<any[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
+
+  const fetchInventory = async () => {
+    try {
+      setInventoryLoading(true);
+      const data = await inventoryDb.getAll({
+        portal: selectedPortal !== 'all' ? selectedPortal : undefined,
+        warehouse: warehouseFilter !== 'all' ? warehouseFilter : undefined,
+        search: searchQuery || undefined,
+      });
+      setInventoryState(data.map((i: any) => ({
+        ...i,
+        skuId: i.sku_id,
+        productName: i.product_name,
+        availableQuantity: i.available_quantity ?? 0,
+        masterQuantity: i.master_quantity ?? 0,
+        reservedQuantity: i.reserved_quantity ?? 0,
+        lowStockThreshold: i.low_stock_threshold ?? 10,
+        channelAllocations: i.channel_allocations ?? {},
+        agingDays: i.aging_days ?? 0,
+      })));
+    } catch (e) { console.error(e); } finally { setInventoryLoading(false); }
+  };
+
+  useEffect(() => { fetchInventory(); }, [selectedPortal, warehouseFilter, searchQuery]);
 
   const warehouses = useMemo(() => {
     const unique = new Set(inventoryState.map(i => i.warehouse));

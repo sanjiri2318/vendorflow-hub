@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Portal } from '@/types';
-import { mockKPIData, mockSalesData, mockInventory, mockOrders, mockReturns, mockSettlements, mockConsolidatedOrders, portalConfigs } from '@/services/mockData';
+import { portalConfigs } from '@/services/mockData';
+import { ordersDb, inventoryDb, returnsDb, settlementsDb } from '@/services/database';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { InventoryChart, PortalSalesChart, CHART_COLORS } from '@/components/dashboard/Charts';
 import { GlobalDateFilter, DateRange } from '@/components/GlobalDateFilter';

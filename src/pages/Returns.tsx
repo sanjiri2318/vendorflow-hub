@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { mockReturns, portalConfigs } from '@/services/mockData';
+import { portalConfigs } from '@/services/mockData';
+import { returnsDb } from '@/services/database';
 import { Portal, ReturnReason } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { Card, CardContent } from '@/components/ui/card';
