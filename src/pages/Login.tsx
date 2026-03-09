@@ -27,6 +27,15 @@ export default function Login() {
   const { login, signup } = useAuth();
   const navigate = useNavigate();
 
+  const { user: authUser } = useAuth();
+
+  // Navigate to dashboard once auth state is confirmed
+  useEffect(() => {
+    if (authUser) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authUser, navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -58,8 +67,7 @@ export default function Login() {
           return;
         }
       }
-
-      navigate('/dashboard');
+      // Navigation handled by useEffect above once authUser is set
     } catch (err: any) {
       setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
