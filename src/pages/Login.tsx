@@ -50,6 +50,9 @@ export default function Login() {
     try {
       await login(email, password);
 
+      // Small delay to let auth state change process
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Validate selected role matches database role
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -67,10 +70,9 @@ export default function Login() {
           return;
         }
       }
-      // Navigation handled by useEffect above once authUser is set
+      // Navigation handled by useEffect once authUser is set
     } catch (err: any) {
       setError(err.message || 'Invalid credentials. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
