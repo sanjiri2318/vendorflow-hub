@@ -3,16 +3,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Portal } from '@/types';
 import { portalConfigs } from '@/services/mockData';
 import { ordersDb, inventoryDb, returnsDb, settlementsDb } from '@/services/database';
+import { supabase } from '@/integrations/supabase/client';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { InventoryChart, PortalSalesChart, CHART_COLORS } from '@/components/dashboard/Charts';
 import { GlobalDateFilter, DateRange } from '@/components/GlobalDateFilter';
+import { EmptyState } from '@/components/EmptyState';
+import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { Progress } from '@/components/ui/progress';
 import {
   DollarSign, ShoppingCart, Package, AlertTriangle, RotateCcw, CreditCard,
   TrendingUp, TrendingDown, Star, Users, UserPlus, UserCheck, Percent,
   Plus, ShieldCheck, ShieldAlert, Hash, UserX, CheckCircle2, BarChart3,
   ArrowUpRight, ArrowDownRight, Clock, ShieldX, PackageCheck, PackageX,
-  CalendarClock, Truck,
+  CalendarClock, Truck, Rocket, Upload,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
