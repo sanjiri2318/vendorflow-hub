@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Portal } from '@/types';
 import { portalConfigs } from '@/services/mockData';
-import { ordersDb, inventoryDb, returnsDb, settlementsDb } from '@/services/database';
+import { ordersDb, inventoryDb, returnsDb, settlementsDb, expensesDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { InventoryChart, PortalSalesChart, CHART_COLORS } from '@/components/dashboard/Charts';
+import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
 import { GlobalDateFilter, DateRange } from '@/components/GlobalDateFilter';
 import { EmptyState } from '@/components/EmptyState';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
@@ -39,15 +40,19 @@ export default function Dashboard() {
   const [salesData, setSalesData] = useState<any[]>([]);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [settlements, setSettlements] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersData, returnsData, inventoryData, settlementsData] = await Promise.all([
+        const [ordersData, returnsData, inventoryData, settlementsData, expensesData, invoicesData] = await Promise.all([
           ordersDb.getAll(),
           returnsDb.getAll(),
           inventoryDb.getAll(),
           settlementsDb.getAll(),
+          expensesDb.getAll(),
+          supabase.from('invoices').select('*').then(r => r.data || []),
         ]);
         setOrders(ordersData.map((o: any) => ({
           ...o, orderId: o.order_number, orderDate: o.order_date, totalAmount: o.total_amount,
@@ -70,6 +75,8 @@ export default function Dashboard() {
           ...s, settlementId: s.settlement_id, netAmount: s.net_amount,
           settlementDate: s.settlement_date,
         })));
+        setExpenses(expensesData);
+        setInvoices(invoicesData);
       } catch (e) { console.error(e); }
       setIsLoading(false);
     };
@@ -569,6 +576,11 @@ export default function Dashboard() {
         <InventoryChart data={inventoryStatusData} />
         <PortalSalesChart data={portalRevenueData} />
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+           BLOCK: FINANCIAL OVERVIEW
+         ═══════════════════════════════════════════════════════════════ */}
+      <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />
 
       {/* ═══════════════════════════════════════════════════════════════
            BLOCK 3: RETURN INSIGHTS
