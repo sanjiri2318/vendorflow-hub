@@ -75,6 +75,8 @@ export default function Dashboard() {
           ...s, settlementId: s.settlement_id, netAmount: s.net_amount,
           settlementDate: s.settlement_date,
         })));
+        setExpenses(expensesData);
+        setInvoices(invoicesData);
       } catch (e) { console.error(e); }
       setIsLoading(false);
     };
