@@ -57,6 +57,8 @@ import {
   Megaphone,
   Wallet,
   Scissors,
+  Calculator,
+  ArrowUpDown,
 } from 'lucide-react';
 
 interface NavItem {
