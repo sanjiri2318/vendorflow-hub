@@ -216,7 +216,8 @@ export default function SystemSettings() {
       </div>
 
       <Tabs defaultValue="fields" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
+          <TabsTrigger value="channels" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Channels</TabsTrigger>
           <TabsTrigger value="fields" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Field Config</TabsTrigger>
           <TabsTrigger value="features" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Features</TabsTrigger>
           <TabsTrigger value="financial" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Financial</TabsTrigger>
@@ -227,7 +228,141 @@ export default function SystemSettings() {
           <TabsTrigger value="audit" className="text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Activity Log</TabsTrigger>
         </TabsList>
 
-        {/* TAB 1 — FIELD CONFIGURATION */}
+        {/* TAB — CHANNEL MANAGEMENT */}
+        <TabsContent value="channels">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2"><Store className="w-5 h-5" />Channel Management</CardTitle>
+                  <CardDescription>Add, edit, reorder, and customize your sales channels / portals</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => { resetChannels(); toast({ title: 'Channels Reset', description: 'All channels restored to defaults.' }); }}>
+                    Reset Defaults
+                  </Button>
+                  <Button size="sm" onClick={() => { setChannelForm({ name: '', icon: '🏪', color: 'hsl(33, 100%, 50%)' }); setAddingChannel(true); }}>
+                    <Plus className="w-4 h-4 mr-1" />Add Channel
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {channels.map((ch) => (
+                  <div key={ch.id} className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg text-xl" style={{ backgroundColor: ch.color + '20' }}>
+                      {ch.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">{ch.name}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{ch.id}</div>
+                    </div>
+                    <div className="w-6 h-6 rounded-full border-2 border-background shadow-sm" style={{ backgroundColor: ch.color }} />
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingChannel(ch); setChannelForm({ name: ch.name, icon: ch.icon, color: ch.color }); }}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => {
+                      removeChannel(ch.id as string);
+                      toast({ title: 'Channel Removed', description: `${ch.name} has been removed.` });
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {channels.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No channels configured. Click "Add Channel" or "Reset Defaults" to get started.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Add / Edit Channel Dialog */}
+          <Dialog open={addingChannel || !!editingChannel} onOpenChange={(open) => { if (!open) { setAddingChannel(false); setEditingChannel(null); } }}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingChannel ? 'Edit Channel' : 'Add New Channel'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Channel Name</Label>
+                  <Input value={channelForm.name} onChange={e => setChannelForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Shopify, Snapdeal" />
+                </div>
+
+                <div>
+                  <Label>Icon</Label>
+                  <div className="grid grid-cols-9 gap-1.5 mt-2 p-3 rounded-lg border bg-muted/30 max-h-40 overflow-y-auto">
+                    {AVAILABLE_ICONS.map(icon => (
+                      <button
+                        key={icon}
+                        onClick={() => setChannelForm(f => ({ ...f, icon }))}
+                        className={`w-9 h-9 rounded-md flex items-center justify-center text-lg transition-all ${
+                          channelForm.icon === icon ? 'bg-primary text-primary-foreground ring-2 ring-primary scale-110' : 'hover:bg-muted'
+                        }`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-2">
+                    <Label className="text-xs text-muted-foreground">Or type a custom emoji / text icon:</Label>
+                    <Input value={channelForm.icon} onChange={e => setChannelForm(f => ({ ...f, icon: e.target.value }))} className="mt-1" maxLength={4} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Brand Color</Label>
+                  <div className="grid grid-cols-8 gap-2 mt-2">
+                    {AVAILABLE_COLORS.map(color => (
+                      <button
+                        key={color}
+                        onClick={() => setChannelForm(f => ({ ...f, color }))}
+                        className={`w-8 h-8 rounded-full transition-all ${
+                          channelForm.color === color ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : 'hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live Preview */}
+                <div className="p-3 rounded-lg border bg-muted/20">
+                  <Label className="text-xs text-muted-foreground mb-2 block">Preview</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{channelForm.icon}</span>
+                    <span className="font-medium text-foreground">{channelForm.name || 'Channel Name'}</span>
+                    <div className="w-4 h-4 rounded-full ml-auto" style={{ backgroundColor: channelForm.color }} />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setAddingChannel(false); setEditingChannel(null); }}>Cancel</Button>
+                <Button disabled={!channelForm.name.trim()} onClick={() => {
+                  if (editingChannel) {
+                    updateChannel(editingChannel.id as string, { name: channelForm.name, icon: channelForm.icon, color: channelForm.color });
+                    toast({ title: 'Channel Updated', description: `${channelForm.name} has been updated.` });
+                    setEditingChannel(null);
+                  } else {
+                    const id = generateChannelId(channelForm.name);
+                    if (channels.find(c => c.id === id)) {
+                      toast({ title: 'Duplicate ID', description: `A channel with ID "${id}" already exists.`, variant: 'destructive' });
+                      return;
+                    }
+                    addChannel({ id: id as any, name: channelForm.name, icon: channelForm.icon, color: channelForm.color });
+                    toast({ title: 'Channel Added', description: `${channelForm.name} has been added.` });
+                    setAddingChannel(false);
+                  }
+                }}>
+                  {editingChannel ? 'Save Changes' : 'Add Channel'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
         <TabsContent value="fields">
           <Card>
             <CardHeader>
