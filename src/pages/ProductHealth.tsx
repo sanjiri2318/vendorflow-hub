@@ -1,14 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { productHealthDb } from '@/services/database';
+import { supabase } from '@/integrations/supabase/client';
 import { portalConfigs } from '@/services/mockData';
 import { ProductHealthStatus, Portal } from '@/types';
-import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2 } from 'lucide-react';
+import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2, RefreshCw, Clock } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 const statusConfig: Record<ProductHealthStatus, { label: string; icon: React.ElementType; className: string }> = {
   live: { label: 'Live', icon: CheckCircle2, className: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
@@ -31,6 +35,8 @@ export default function ProductHealth() {
   const [selectedStatus, setSelectedStatus] = useState<ProductHealthStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('30days');
+  const [checkingHealth, setCheckingHealth] = useState(false);
+  const { toast } = useToast();
 
   const fetchData = async () => {
     try {
@@ -45,6 +51,23 @@ export default function ProductHealth() {
   };
 
   useEffect(() => { fetchData(); }, [searchQuery]);
+
+  const triggerHealthCheck = async () => {
+    setCheckingHealth(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('product-health-check', { body: {} });
+      if (error) throw error;
+      toast({
+        title: '✅ Health Check Complete',
+        description: `Checked ${data.checked} products. ${data.statusChanges} changes detected.`,
+      });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: 'Health Check Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setCheckingHealth(false);
+    }
+  };
 
   const filteredProducts = useMemo(() => products.filter(product => {
     const ps = (product.portal_status || {}) as Record<string, string>;
@@ -79,9 +102,19 @@ export default function ProductHealth() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Product Health Check</h1>
-          <p className="text-muted-foreground">Monitor product visibility status across all portals</p>
+          <p className="text-muted-foreground">Monitor product visibility via automated URL checks every 8 hours</p>
+          {products.some(p => p.last_checked_at) && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <Clock className="w-3 h-3" />
+              Last checked: {format(new Date(products.find(p => p.last_checked_at)?.last_checked_at), 'dd MMM yyyy, hh:mm a')}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="gap-1.5" onClick={triggerHealthCheck} disabled={checkingHealth}>
+            {checkingHealth ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            Check Now
+          </Button>
           <DateFilter value={dateFilter} onChange={setDateFilter} />
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

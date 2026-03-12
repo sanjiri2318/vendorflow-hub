@@ -937,27 +937,33 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_checked_at: string | null
           portal_status: Json
           product_id: string | null
           product_name: string
+          sku_mapping_id: string | null
           updated_at: string
           vendor_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          last_checked_at?: string | null
           portal_status?: Json
           product_id?: string | null
           product_name: string
+          sku_mapping_id?: string | null
           updated_at?: string
           vendor_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          last_checked_at?: string | null
           portal_status?: Json
           product_id?: string | null
           product_name?: string
+          sku_mapping_id?: string | null
           updated_at?: string
           vendor_id?: string | null
         }
@@ -967,6 +973,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_health_sku_mapping_id_fkey"
+            columns: ["sku_mapping_id"]
+            isOneToOne: false
+            referencedRelation: "sku_mappings"
             referencedColumns: ["id"]
           },
         ]
@@ -1249,45 +1262,63 @@ export type Database = {
       sku_mappings: {
         Row: {
           amazon_sku: string | null
+          amazon_url: string | null
           blinkit_sku: string | null
+          blinkit_url: string | null
           brand: string | null
           created_at: string
           firstcry_sku: string | null
+          firstcry_url: string | null
           flipkart_sku: string | null
+          flipkart_url: string | null
           id: string
           master_sku_id: string
           meesho_sku: string | null
+          meesho_url: string | null
           own_website_sku: string | null
+          own_website_url: string | null
           product_name: string
           updated_at: string
           vendor_id: string | null
         }
         Insert: {
           amazon_sku?: string | null
+          amazon_url?: string | null
           blinkit_sku?: string | null
+          blinkit_url?: string | null
           brand?: string | null
           created_at?: string
           firstcry_sku?: string | null
+          firstcry_url?: string | null
           flipkart_sku?: string | null
+          flipkart_url?: string | null
           id?: string
           master_sku_id: string
           meesho_sku?: string | null
+          meesho_url?: string | null
           own_website_sku?: string | null
+          own_website_url?: string | null
           product_name: string
           updated_at?: string
           vendor_id?: string | null
         }
         Update: {
           amazon_sku?: string | null
+          amazon_url?: string | null
           blinkit_sku?: string | null
+          blinkit_url?: string | null
           brand?: string | null
           created_at?: string
           firstcry_sku?: string | null
+          firstcry_url?: string | null
           flipkart_sku?: string | null
+          flipkart_url?: string | null
           id?: string
           master_sku_id?: string
           meesho_sku?: string | null
+          meesho_url?: string | null
           own_website_sku?: string | null
+          own_website_url?: string | null
           product_name?: string
           updated_at?: string
           vendor_id?: string | null
