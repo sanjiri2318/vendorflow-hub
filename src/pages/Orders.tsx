@@ -24,7 +24,7 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Search, Download, ShoppingCart, Package, Truck, CheckCircle, Clock,
   X, Eye, Users, UserPlus, UserCheck, Star, Layers, RotateCcw, AlertTriangle,
-  MapPin, Timer, ArrowDownToLine, Ban, Video, Trash2, Shield,
+  MapPin, Timer, ArrowDownToLine, Ban, Video, Trash2, Shield, Printer,
 } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 import { GlobalDateFilter, type DateRange } from '@/components/GlobalDateFilter';
