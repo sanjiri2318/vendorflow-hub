@@ -81,9 +81,16 @@ export default function PricePayout() {
 
   // Payout data
   const filteredData = useMemo(() => {
-    if (selectedChannel === 'All Channels') return mockPriceData;
-    return mockPriceData.filter(p => p.channel === selectedChannel);
-  }, [selectedChannel]);
+    let data = selectedChannel === 'All Channels' ? [...mockPriceData] : mockPriceData.filter(p => p.channel === selectedChannel);
+    if (sortField !== 'default') {
+      data.sort((a, b) => {
+        const aVal = sortField === 'margin' ? (a.netPayout / a.marketplacePrice) : sortField === 'commission' ? a.commissionPct : sortField === 'payout' ? a.netPayout : a.marketplacePrice;
+        const bVal = sortField === 'margin' ? (b.netPayout / b.marketplacePrice) : sortField === 'commission' ? b.commissionPct : sortField === 'payout' ? b.netPayout : b.marketplacePrice;
+        return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+      });
+    }
+    return data;
+  }, [selectedChannel, sortField, sortDir]);
 
   const avgMargin = filteredData.length > 0
     ? Math.round(filteredData.reduce((s, p) => s + (p.netPayout / p.marketplacePrice * 100), 0) / filteredData.length)
