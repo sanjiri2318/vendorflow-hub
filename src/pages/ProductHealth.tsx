@@ -102,7 +102,13 @@ export default function ProductHealth() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Product Health Check</h1>
-          <p className="text-muted-foreground">Monitor product visibility status across all portals</p>
+          <p className="text-muted-foreground">Monitor product visibility via automated URL checks every 8 hours</p>
+          {products.some(p => p.last_checked_at) && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <Clock className="w-3 h-3" />
+              Last checked: {format(new Date(products.find(p => p.last_checked_at)?.last_checked_at), 'dd MMM yyyy, hh:mm a')}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <DateFilter value={dateFilter} onChange={setDateFilter} />
