@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { socialMessagesDb, alertsDb, customersDb } from '@/services/database';
+import { socialMessagesDb, alertsDb, customersDb, tasksDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 
 type Channel = 'all' | 'instagram' | 'facebook' | 'whatsapp' | 'email' | 'marketplace';
