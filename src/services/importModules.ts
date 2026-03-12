@@ -199,8 +199,15 @@ export function validateRows(rows: Record<string, any>[], moduleId: string): {
     const warnings: { field: string; message: string }[] = [];
 
     mod.fields.forEach(field => {
-      const val = row[field.key];
+      let val = row[field.key];
       const isEmpty = val === undefined || val === null || val === '';
+
+      // Apply default value for missing fields
+      if (isEmpty && field.defaultValue !== undefined) {
+        row[field.key] = field.defaultValue;
+        val = field.defaultValue;
+        return; // skip required check — default applied
+      }
 
       if (field.required && isEmpty) {
         errors.push({ field: field.key, message: `${field.label} is required` });
