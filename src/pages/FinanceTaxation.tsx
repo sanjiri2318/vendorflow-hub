@@ -159,6 +159,9 @@ export default function FinanceTaxation() {
   const [quotationCustomer, setQuotationCustomer] = useState('');
   const [quotationItems, setQuotationItems] = useState<LineItem[]>([createEmptyLineItem()]);
 
+  // GSTR-1 guide
+  const [gstr1GuideOpen, setGstr1GuideOpen] = useState(false);
+
   // Determine if same state based on GSTIN
   const isSameState = (gstin: string) => {
     if (gstin.length >= 2) {
