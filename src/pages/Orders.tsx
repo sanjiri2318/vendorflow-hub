@@ -775,15 +775,23 @@ export default function Orders() {
         <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                Order Details - {selectedOrder?.orderId}
-                {selectedOrder && selectedOrder.items.length > 1 && (
-                  <Badge variant="secondary" className="gap-1 bg-purple-500/10 text-purple-600">
-                    <Layers className="w-3 h-3" />
-                    Multi-SKU ({selectedOrder.items.length})
-                  </Badge>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-2">
+                  Order Details - {selectedOrder?.orderId}
+                  {selectedOrder && selectedOrder.items.length > 1 && (
+                    <Badge variant="secondary" className="gap-1 bg-purple-500/10 text-purple-600">
+                      <Layers className="w-3 h-3" />
+                      Multi-SKU ({selectedOrder.items.length})
+                    </Badge>
+                  )}
+                </DialogTitle>
+                {selectedOrder && (
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => printOrderInvoice(selectedOrder)}>
+                    <Printer className="w-4 h-4" />
+                    Print Invoice
+                  </Button>
                 )}
-              </DialogTitle>
+              </div>
             </DialogHeader>
             
             {selectedOrder && (
