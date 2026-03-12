@@ -143,17 +143,91 @@ export default function LeadManagement() {
         <Card><CardContent className="pt-5 pb-4"><p className="text-xl font-bold text-primary">{stats.imported}</p><p className="text-xs text-muted-foreground">Imported</p></CardContent></Card>
       </div>
 
+      {/* Sales Funnel Visualization */}
       <Card>
-        <CardHeader><CardTitle>Sales Pipeline</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Sales Funnel
+          </CardTitle>
+        </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {pipelineData.map(stage => (
-              <div key={stage.status} className="text-center p-3 rounded-lg bg-muted/30 border">
-                <Badge variant="outline" className={stage.color}>{stage.label}</Badge>
-                <p className="text-2xl font-bold mt-2">{stage.count}</p>
-                <p className="text-xs text-muted-foreground">{fmt(stage.value)}</p>
-              </div>
-            ))}
+          <div className="space-y-2">
+            {pipelineData.map((stage, i) => {
+              const maxCount = Math.max(...pipelineData.map(s => s.count), 1);
+              const widthPercent = Math.max(((pipelineData.length - i) / pipelineData.length) * 100, 30);
+              const fillPercent = stage.count > 0 ? (stage.count / maxCount) * 100 : 0;
+              const StIcon = stage.icon;
+              const conversionRate = i > 0 && pipelineData[i - 1].count > 0
+                ? Math.round((stage.count / pipelineData[i - 1].count) * 100)
+                : null;
+              return (
+                <div key={stage.status} className="flex items-center gap-3">
+                  {/* Conversion arrow */}
+                  <div className="w-12 text-right shrink-0">
+                    {conversionRate !== null && (
+                      <span className={`text-xs font-semibold ${conversionRate >= 50 ? 'text-emerald-600' : conversionRate >= 25 ? 'text-amber-600' : 'text-rose-600'}`}>
+                        {conversionRate}%
+                      </span>
+                    )}
+                  </div>
+                  {/* Funnel bar */}
+                  <div className="flex-1 flex justify-center">
+                    <div
+                      className="relative rounded-lg overflow-hidden h-12 transition-all duration-500 cursor-pointer hover:opacity-90"
+                      style={{ width: `${widthPercent}%` }}
+                      onClick={() => setStatusFilter(statusFilter === stage.status ? 'all' : stage.status)}
+                    >
+                      <div className="absolute inset-0 bg-muted/40 border border-border rounded-lg" />
+                      <div
+                        className={`absolute inset-y-0 left-0 rounded-lg transition-all duration-700 ${
+                          stage.status === 'won' ? 'bg-emerald-500/30' :
+                          stage.status === 'lost' ? 'bg-rose-500/20' :
+                          'bg-primary/20'
+                        }`}
+                        style={{ width: `${fillPercent}%` }}
+                      />
+                      <div className="relative flex items-center justify-between px-4 h-full">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`${stage.color} text-xs`}>
+                            <StIcon className="w-3 h-3 mr-1" />{stage.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-lg font-bold">{stage.count}</span>
+                          <span className="text-xs text-muted-foreground">{fmt(stage.value)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Funnel summary */}
+          <div className="flex items-center justify-center gap-8 mt-4 pt-4 border-t border-border">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Win Rate</p>
+              <p className="text-lg font-bold text-emerald-600">
+                {stats.total > 0 ? Math.round((stats.won / stats.total) * 100) : 0}%
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Loss Rate</p>
+              <p className="text-lg font-bold text-rose-600">
+                {stats.total > 0 ? Math.round((stats.lost / stats.total) * 100) : 0}%
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Active Conversion</p>
+              <p className="text-lg font-bold text-primary">
+                {stats.new > 0 ? Math.round((stats.active / (stats.new + stats.active)) * 100) : 0}%
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">Pipeline Value</p>
+              <p className="text-lg font-bold">{fmt(stats.totalValue)}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
