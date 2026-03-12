@@ -10,7 +10,7 @@ import { productHealthDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 import { portalConfigs } from '@/services/mockData';
 import { ProductHealthStatus, Portal } from '@/types';
-import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2, RefreshCw, Clock } from 'lucide-react';
+import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2, RefreshCw, Clock, Star, MessageSquare } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
