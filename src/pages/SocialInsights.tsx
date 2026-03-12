@@ -592,7 +592,33 @@ export default function SocialInsights() {
                             <Bell className="w-3 h-3" />Escalate
                           </Button>
                         )}
-                        {selectedMessage.sender_phone && !selectedMessage.saved_to_contacts && (
+                        {selectedMessage.channel === 'whatsapp' && selectedMessage.sender_phone && !selectedMessage.saved_to_contacts && (
+                          <Button size="sm" variant="outline" className="gap-1" onClick={async () => {
+                            try {
+                              // Check if customer with this phone already exists
+                              const existing = await customersDb.getAll({ search: selectedMessage.sender_phone });
+                              const alreadyExists = (existing || []).some((c: any) => c.phone === selectedMessage.sender_phone);
+                              if (!alreadyExists) {
+                                await customersDb.create({
+                                  name: selectedMessage.sender || 'WhatsApp Contact',
+                                  phone: selectedMessage.sender_phone,
+                                  channels: ['whatsapp'],
+                                  source: 'whatsapp_inbox',
+                                });
+                              }
+                              await socialMessagesDb.update(selectedMessage.id, { saved_to_contacts: true });
+                              setSelectedMessage((prev: any) => prev ? { ...prev, saved_to_contacts: true } : prev);
+                              toast({ title: alreadyExists ? 'Contact already exists' : '✅ Saved to Customer List', description: `${selectedMessage.sender_phone} added as WhatsApp contact` });
+                              fetchMessages();
+                            } catch (err: any) {
+                              console.error('Save contact error:', err);
+                              toast({ title: 'Failed to save contact', description: err.message, variant: 'destructive' });
+                            }
+                          }}>
+                            <Phone className="w-3 h-3" />Save to Customers
+                          </Button>
+                        )}
+                        {selectedMessage.sender_phone && !selectedMessage.saved_to_contacts && selectedMessage.channel !== 'whatsapp' && (
                           <Button size="sm" variant="outline" className="gap-1" onClick={async () => {
                             await socialMessagesDb.update(selectedMessage.id, { saved_to_contacts: true });
                             toast({ title: 'Contact Saved' });
