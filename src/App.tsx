@@ -124,6 +124,7 @@ const App = () => (
             <Route path="/profit-calculator" element={<AppLayout><ProfitCalculator /></AppLayout>} />
             <Route path="/payout-comparison" element={<AppLayout><PayoutComparison /></AppLayout>} />
             <Route path="/integrations" element={<AppLayout><Integrations /></AppLayout>} />
+            <Route path="/purchase" element={<AppLayout><PurchaseManagement /></AppLayout>} />
             {/* Demo Routes */}
             <Route path="/demo" element={<DemoLayout><DemoDashboard /></DemoLayout>} />
             <Route path="/demo/sales" element={<DemoLayout><DemoSalesAnalysis /></DemoLayout>} />
