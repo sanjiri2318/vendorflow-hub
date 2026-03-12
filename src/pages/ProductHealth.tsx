@@ -35,6 +35,8 @@ export default function ProductHealth() {
   const [selectedStatus, setSelectedStatus] = useState<ProductHealthStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('30days');
+  const [checkingHealth, setCheckingHealth] = useState(false);
+  const { toast } = useToast();
 
   const fetchData = async () => {
     try {
