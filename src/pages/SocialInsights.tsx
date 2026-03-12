@@ -14,7 +14,7 @@ import {
   MessageCircle, Instagram, Facebook, Mail, Search, Send, Bot, Zap, UserPlus, AlertTriangle,
   ChevronRight, Phone, Users, CheckCircle, Clock, XCircle, Sparkles, Tag, Brain, RotateCcw, Ban, CalendarClock, Loader2,
   ShoppingCart, ArrowRight, Flame, ThermometerSun, Snowflake, Shield, Bell, Settings2, Play, GitBranch, User,
-  TrendingUp, AlertCircle, Smile, Frown, Meh, Angry,
+  TrendingUp, AlertCircle, Smile, Frown, Meh, Angry, ClipboardList, ListTodo,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
