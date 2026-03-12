@@ -190,9 +190,10 @@ export const IMPORT_MODULES: ImportModule[] = [
     ],
   },
 ];
+
+export function getModuleById(id: string): ImportModule | undefined {
   return IMPORT_MODULES.find(m => m.id === id);
 }
-
 export interface ValidationResult {
   rowIndex: number;
   row: Record<string, any>;
