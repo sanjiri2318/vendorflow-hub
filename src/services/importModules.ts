@@ -169,9 +169,27 @@ export const IMPORT_MODULES: ImportModule[] = [
       { name: 'FashionWare Ltd', email: 'info@fashionware.com', phone: '9123456780', gst_number: '07AABCF5678G2ZP', address: 'Delhi', subscription_plan: 'Enterprise', status: 'active' },
     ],
   },
+  {
+    id: 'returns',
+    label: 'Returns & Claims',
+    icon: 'RotateCcw',
+    dbTable: 'returns',
+    fields: [
+      { key: 'order_number', label: 'Order Number', required: true, type: 'text' },
+      { key: 'portal', label: 'Portal', required: false, type: 'select', options: ['Amazon', 'Flipkart', 'Meesho', 'Myntra', 'FirstCry', 'Blinkit'], defaultValue: 'FirstCry' },
+      { key: 'customer_name', label: 'Customer Name', required: false, type: 'text', defaultValue: 'N/A' },
+      { key: 'reason', label: 'Return Reason', required: false, type: 'text' },
+      { key: 'refund_amount', label: 'Refund Amount (₹)', required: false, type: 'number', defaultValue: 0 },
+      { key: 'status', label: 'Status', required: false, type: 'select', options: ['requested', 'approved', 'rejected', 'pickup_scheduled', 'picked_up', 'received', 'refund_initiated', 'closed'], defaultValue: 'requested' },
+      { key: 'requested_at', label: 'Return Date', required: false, type: 'date' },
+      { key: 'claim_status', label: 'Claim Status', required: false, type: 'select', options: ['pending', 'eligible', 'claimed', 'rejected'], defaultValue: 'pending' },
+    ],
+    sampleData: [
+      { order_number: 'ORD-2026-001', portal: 'FirstCry', customer_name: 'Rahul Sharma', reason: 'Defective', refund_amount: 2999, status: 'received', requested_at: '2026-03-05', claim_status: 'eligible' },
+      { order_number: 'ORD-2026-002', portal: 'FirstCry', customer_name: 'Priya Patel', reason: 'Not as described', refund_amount: 1599, status: 'refund_initiated', requested_at: '2026-03-06', claim_status: 'claimed' },
+    ],
+  },
 ];
-
-export function getModuleById(id: string): ImportModule | undefined {
   return IMPORT_MODULES.find(m => m.id === id);
 }
 
