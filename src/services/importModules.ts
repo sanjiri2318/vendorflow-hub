@@ -6,6 +6,7 @@ export interface ModuleField {
   required: boolean;
   type: 'text' | 'number' | 'date' | 'email' | 'select';
   options?: string[];
+  defaultValue?: any;
   validate?: (value: any) => string | null; // returns error message or null
 }
 
