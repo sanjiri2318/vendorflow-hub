@@ -52,6 +52,23 @@ export default function ProductHealth() {
 
   useEffect(() => { fetchData(); }, [searchQuery]);
 
+  const triggerHealthCheck = async () => {
+    setCheckingHealth(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('product-health-check', { body: {} });
+      if (error) throw error;
+      toast({
+        title: '✅ Health Check Complete',
+        description: `Checked ${data.checked} products. ${data.statusChanges} changes detected.`,
+      });
+      fetchData();
+    } catch (err: any) {
+      toast({ title: 'Health Check Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setCheckingHealth(false);
+    }
+  };
+
   const filteredProducts = useMemo(() => products.filter(product => {
     const ps = (product.portal_status || {}) as Record<string, string>;
     if (selectedPortal !== 'all' && selectedStatus !== 'all') return ps[selectedPortal] === selectedStatus;
