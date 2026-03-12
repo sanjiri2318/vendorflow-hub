@@ -53,6 +53,7 @@ import ProfitCalculator from "./pages/ProfitCalculator";
 import PayoutComparison from "./pages/PayoutComparison";
 import Integrations from "./pages/Integrations";
 import Broadcast from "./pages/Broadcast";
+import PurchaseManagement from "./pages/PurchaseManagement";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
@@ -123,6 +124,7 @@ const App = () => (
             <Route path="/profit-calculator" element={<AppLayout><ProfitCalculator /></AppLayout>} />
             <Route path="/payout-comparison" element={<AppLayout><PayoutComparison /></AppLayout>} />
             <Route path="/integrations" element={<AppLayout><Integrations /></AppLayout>} />
+            <Route path="/purchase" element={<AppLayout><PurchaseManagement /></AppLayout>} />
             {/* Demo Routes */}
             <Route path="/demo" element={<DemoLayout><DemoDashboard /></DemoLayout>} />
             <Route path="/demo/sales" element={<DemoLayout><DemoSalesAnalysis /></DemoLayout>} />
