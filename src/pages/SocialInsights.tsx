@@ -203,6 +203,23 @@ export default function SocialInsights() {
         updates.status = 'replied';
         updates.auto_reply_triggered = true;
 
+        // Auto-save WhatsApp contacts as customers when classified as new leads
+        if (msg.channel === 'whatsapp' && msg.sender_phone && category === 'new_lead' && !msg.saved_to_contacts) {
+          try {
+            const existing = await customersDb.getAll({ search: msg.sender_phone });
+            const alreadyExists = (existing || []).some((c: any) => c.phone === msg.sender_phone);
+            if (!alreadyExists) {
+              await customersDb.create({
+                name: msg.sender || 'WhatsApp Contact',
+                phone: msg.sender_phone,
+                channels: ['whatsapp'],
+                source: 'whatsapp_inbox',
+              });
+            }
+            updates.saved_to_contacts = true;
+          } catch (saveErr) { console.error('Auto-save contact failed:', saveErr); }
+        }
+
         // If trigger also wants escalation (like returns)
         if (trigger?.escalate) {
           updates.escalated_to = 'Review Queue';
