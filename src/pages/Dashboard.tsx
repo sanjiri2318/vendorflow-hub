@@ -584,6 +584,11 @@ export default function Dashboard() {
       <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />
 
       {/* ═══════════════════════════════════════════════════════════════
+           BLOCK: EXECUTIVE OVERVIEW
+         ═══════════════════════════════════════════════════════════════ */}
+      <ExecutiveWidgets orders={orders} formatCurrency={formatCurrency} />
+
+      {/* ═══════════════════════════════════════════════════════════════
            BLOCK 3: RETURN INSIGHTS
          ═══════════════════════════════════════════════════════════════ */}
       <div>
