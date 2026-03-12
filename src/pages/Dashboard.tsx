@@ -713,32 +713,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ═══ Customer Insights ═══ */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" />
-            Customer Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { icon: UserPlus, color: 'emerald', label: 'New Customers', value: Object.keys((() => { const m: Record<string, number> = {}; orders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); return m; })()).length - duplicateCustomerCount },
-              { icon: UserCheck, color: 'blue', label: 'Repeat Customers', value: duplicateCustomerCount },
-              { icon: Percent, color: 'primary', label: 'Repeat Rate', value: (() => { const m: Record<string, number> = {}; orders.forEach(o => { m[o.customerId] = (m[o.customerId] || 0) + 1; }); const t = Object.keys(m).length; return t > 0 ? Math.round((Object.values(m).filter(c => c > 1).length / t) * 100) : 0; })() + '%' },
-            ].map(item => (
-              <div key={item.label} className="p-4 rounded-lg bg-muted/30 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className={`p-2 rounded-lg bg-${item.color}-500/10`}><item.icon className={`w-5 h-5 text-${item.color}-600`} /></div>
-                </div>
-                <p className="text-2xl font-bold">{item.value}</p>
-                <p className="text-sm text-muted-foreground">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
