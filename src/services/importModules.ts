@@ -220,8 +220,14 @@ export function validateRows(rows: Record<string, any>[], moduleId: string): {
         errors.push({ field: field.key, message: `${field.label} is required` });
       }
 
-      if (!isEmpty && field.type === 'number' && isNaN(Number(val))) {
-        errors.push({ field: field.key, message: `${field.label} must be a number` });
+      if (!isEmpty && field.type === 'number') {
+        // Try to clean non-numeric chars (commas, currency symbols, spaces)
+        const cleaned = String(val).replace(/[₹$,\s]/g, '').trim();
+        if (cleaned === '' || isNaN(Number(cleaned))) {
+          row[field.key] = field.defaultValue !== undefined ? field.defaultValue : 0;
+        } else {
+          row[field.key] = Number(cleaned);
+        }
       }
 
       if (!isEmpty && field.validate) {
