@@ -193,7 +193,7 @@ export default function Inventory() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}><Upload className="w-4 h-4" />Import</Button>
-          <ExportButton label={`Export – ${dateLabel}`} selectedCount={rowSelection.count} />
+          <ExportButton label={`Export – ${dateLabel}`} selectedCount={rowSelection.count} data={filteredInventory} filename="inventory" />
         </div>
       </div>
 
