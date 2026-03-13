@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { productHealthDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 import { portalConfigs } from '@/services/mockData';
 import { ProductHealthStatus, Portal } from '@/types';
-import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2, RefreshCw, Clock, Star, MessageSquare } from 'lucide-react';
+import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2, RefreshCw, Clock, Star, MessageSquare, ExternalLink, Link2, Globe } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -19,6 +20,14 @@ const statusConfig: Record<ProductHealthStatus, { label: string; icon: React.Ele
   live: { label: 'Live', icon: CheckCircle2, className: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
   not_active: { label: 'Not Active', icon: XCircle, className: 'bg-amber-500/15 text-amber-600 border-amber-500/30' },
   out_of_stock: { label: 'Out of Stock', icon: Package, className: 'bg-rose-500/15 text-rose-600 border-rose-500/30' },
+};
+
+const channelIcons: Record<string, { emoji: string; color: string; bg: string }> = {
+  amazon: { emoji: '📦', color: 'text-orange-600', bg: 'bg-orange-500/10' },
+  flipkart: { emoji: '🛒', color: 'text-blue-600', bg: 'bg-blue-500/10' },
+  meesho: { emoji: '🛍️', color: 'text-pink-600', bg: 'bg-pink-500/10' },
+  firstcry: { emoji: '👶', color: 'text-teal-600', bg: 'bg-teal-500/10' },
+  blinkit: { emoji: '⚡', color: 'text-yellow-600', bg: 'bg-yellow-500/10' },
 };
 
 function getOverallStatus(portalStatus: Record<string, string>): ProductHealthStatus {
@@ -31,19 +40,25 @@ function getOverallStatus(portalStatus: Record<string, string>): ProductHealthSt
 
 export default function ProductHealth() {
   const [products, setProducts] = useState<any[]>([]);
+  const [skuMappings, setSkuMappings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPortal, setSelectedPortal] = useState<Portal | 'all'>('all');
   const [selectedStatus, setSelectedStatus] = useState<ProductHealthStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('30days');
   const [checkingHealth, setCheckingHealth] = useState(false);
+  const [activeTab, setActiveTab] = useState('health');
   const { toast } = useToast();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await productHealthDb.getAll(searchQuery ? { search: searchQuery } : undefined);
-      setProducts(data);
+      const [healthData, mappingsData] = await Promise.all([
+        productHealthDb.getAll(searchQuery ? { search: searchQuery } : undefined),
+        supabase.from('sku_mappings').select('*').then(r => r.data || []),
+      ]);
+      setProducts(healthData);
+      setSkuMappings(mappingsData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -58,13 +73,10 @@ export default function ProductHealth() {
     try {
       const { data, error } = await supabase.functions.invoke('product-health-check', { body: {} });
       if (error) throw error;
-      toast({
-        title: '✅ Health Check Complete',
-        description: `Checked ${data.checked} products. ${data.statusChanges} changes detected.`,
-      });
-      fetchData();
-    } catch (err: any) {
-      toast({ title: 'Health Check Failed', description: err.message, variant: 'destructive' });
+      toast({ title: 'Health Check Complete', description: data?.message || 'All products checked.' });
+      await fetchData();
+    } catch (e: any) {
+      toast({ title: 'Health Check Failed', description: e.message, variant: 'destructive' });
     } finally {
       setCheckingHealth(false);
     }
@@ -73,7 +85,8 @@ export default function ProductHealth() {
   const filteredProducts = useMemo(() => products.filter(product => {
     const ps = (product.portal_status || {}) as Record<string, string>;
     if (selectedPortal !== 'all' && selectedStatus !== 'all') return ps[selectedPortal] === selectedStatus;
-    if (selectedStatus !== 'all') return Object.values(ps).includes(selectedStatus);
+    if (selectedPortal !== 'all') return selectedPortal in ps;
+    if (selectedStatus !== 'all') return getOverallStatus(ps) === selectedStatus;
     return true;
   }), [products, selectedPortal, selectedStatus]);
 
@@ -98,12 +111,40 @@ export default function ProductHealth() {
     return sum + (vals.length > 0 ? live / vals.length : 0);
   }, 0) / products.length) * 100) : 100;
 
+  // Channel summary for the channel details tab
+  const channelSummary = useMemo(() => {
+    return portalConfigs.map(portal => {
+      const productsOnChannel = products.filter(p => {
+        const ps = (p.portal_status || {}) as Record<string, string>;
+        return portal.id in ps;
+      });
+      const liveOnChannel = productsOnChannel.filter(p => {
+        const ps = (p.portal_status || {}) as Record<string, string>;
+        return ps[portal.id] === 'live';
+      }).length;
+      const oosOnChannel = productsOnChannel.filter(p => {
+        const ps = (p.portal_status || {}) as Record<string, string>;
+        return ps[portal.id] === 'out_of_stock';
+      }).length;
+      const mappingsForChannel = skuMappings.filter(m => m[`${portal.id}_sku`]);
+      return {
+        ...portal,
+        totalProducts: productsOnChannel.length,
+        liveProducts: liveOnChannel,
+        oosProducts: oosOnChannel,
+        notActiveProducts: productsOnChannel.length - liveOnChannel - oosOnChannel,
+        mappedSkus: mappingsForChannel.length,
+        healthPct: productsOnChannel.length > 0 ? Math.round((liveOnChannel / productsOnChannel.length) * 100) : 0,
+      };
+    });
+  }, [products, skuMappings]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Product Health Check</h1>
-          <p className="text-muted-foreground">Monitor product visibility via automated URL checks every 8 hours</p>
+          <p className="text-muted-foreground">Monitor product visibility, URLs & ratings across all channels</p>
           {products.some(p => p.last_checked_at) && (
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <Clock className="w-3 h-3" />
@@ -128,16 +169,7 @@ export default function ProductHealth() {
               {portalConfigs.map(p => <SelectItem key={p.id} value={p.id}>{p.icon} {p.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={selectedStatus} onValueChange={v => setSelectedStatus(v as ProductHealthStatus | 'all')}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Select Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="live">🟢 Live</SelectItem>
-              <SelectItem value="not_active">🟡 Not Active</SelectItem>
-              <SelectItem value="out_of_stock">🔴 Out of Stock</SelectItem>
-            </SelectContent>
-          </Select>
-          <ExportButton label={rowSelection.count > 0 ? undefined : 'Export'} selectedCount={rowSelection.count} />
+          <ExportButton label={rowSelection.count > 0 ? undefined : 'Export'} selectedCount={rowSelection.count} data={filteredProducts} filename="product-health" />
         </div>
       </div>
 
@@ -149,82 +181,223 @@ export default function ProductHealth() {
         <Card className="bg-primary/5 border-primary/20"><CardContent className="pt-6"><div className="text-center"><p className="text-3xl font-bold text-primary">{healthScore}%</p><p className="text-sm text-muted-foreground">Health Score</p></div></CardContent></Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Product Portal Status</CardTitle>
-          <CardDescription>View product visibility across all marketplaces • {filteredProducts.length} products</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-          ) : (
-            <div className="overflow-x-auto">
-               <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="w-10"><SelectAllCheckbox checked={rowSelection.isAllSelected} onCheckedChange={rowSelection.toggleAll} /></TableHead>
-                    <TableHead className="font-semibold">Product Name</TableHead>
-                    <TableHead className="text-center font-semibold"><span className="flex items-center justify-center gap-1"><Star className="w-3.5 h-3.5 text-amber-500" />Rating</span></TableHead>
-                    <TableHead className="text-center font-semibold"><span className="flex items-center justify-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-primary" />Reviews</span></TableHead>
-                    {portalConfigs.map(p => (
-                      <TableHead key={p.id} className="text-center font-semibold">
-                        <span className="flex items-center justify-center gap-1">{p.icon} {p.name}</span>
-                      </TableHead>
-                    ))}
-                    <TableHead className="text-center font-semibold bg-primary/5">Overall</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.map(product => {
-                    const ps = (product.portal_status || {}) as Record<string, string>;
-                    const overall = getOverallStatus(ps);
-                    const rating = product.rating != null ? Number(product.rating) : null;
-                    const reviewCount = product.review_count ?? 0;
-                    return (
-                      <TableRow key={product.id} className={rowSelection.isSelected(product.id) ? 'bg-primary/5' : ''}>
-                        <TableCell><RowCheckbox checked={rowSelection.isSelected(product.id)} onCheckedChange={() => rowSelection.toggle(product.id)} /></TableCell>
-                        <TableCell className="font-medium">{product.product_name}</TableCell>
-                        <TableCell className="text-center">
-                          {rating !== null ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <span className={`inline-flex items-center gap-1 font-semibold text-sm ${rating >= 4 ? 'text-emerald-600' : rating >= 3 ? 'text-amber-600' : 'text-rose-600'}`}>
-                                    <Star className="w-3.5 h-3.5 fill-current" />{rating.toFixed(1)}
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>{rating >= 4 ? 'Excellent' : rating >= 3 ? 'Average' : 'Needs Attention'}</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="text-sm font-medium">{reviewCount > 0 ? reviewCount.toLocaleString('en-IN') : '—'}</span>
-                        </TableCell>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="health" className="gap-1.5"><Activity className="w-4 h-4" />Health Status</TabsTrigger>
+          <TabsTrigger value="urls" className="gap-1.5"><Link2 className="w-4 h-4" />Product URLs</TabsTrigger>
+          <TabsTrigger value="channels" className="gap-1.5"><Globe className="w-4 h-4" />Channel Details</TabsTrigger>
+        </TabsList>
+
+        {/* Tab 1: Health Status (existing) */}
+        <TabsContent value="health">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Portal Status</CardTitle>
+              <CardDescription>View product visibility across all marketplaces • {filteredProducts.length} products</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="w-10"><SelectAllCheckbox checked={rowSelection.isAllSelected} onCheckedChange={rowSelection.toggleAll} /></TableHead>
+                        <TableHead className="font-semibold">Product Name</TableHead>
+                        <TableHead className="text-center font-semibold"><span className="flex items-center justify-center gap-1"><Star className="w-3.5 h-3.5 text-amber-500" />Rating</span></TableHead>
+                        <TableHead className="text-center font-semibold"><span className="flex items-center justify-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-primary" />Reviews</span></TableHead>
                         {portalConfigs.map(p => (
-                          <TableCell key={p.id} className="text-center">{getStatusBadge((ps[p.id] || 'not_active') as ProductHealthStatus)}</TableCell>
+                          <TableHead key={p.id} className="text-center font-semibold">
+                            <span className="flex items-center justify-center gap-1">{p.icon} {p.name}</span>
+                          </TableHead>
                         ))}
-                        <TableCell className="text-center bg-primary/5">{getStatusBadge(overall)}</TableCell>
+                        <TableHead className="text-center font-semibold bg-primary/5">Overall</TableHead>
                       </TableRow>
-                    );
-                  })}
-                  {filteredProducts.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
-                        <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="font-medium">No products found</p>
-                        <p className="text-sm">Try adjusting your filters or add product health data</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredProducts.map(product => {
+                        const ps = (product.portal_status || {}) as Record<string, string>;
+                        const overall = getOverallStatus(ps);
+                        const rating = product.rating != null ? Number(product.rating) : null;
+                        const reviewCount = product.review_count ?? 0;
+                        return (
+                          <TableRow key={product.id} className={rowSelection.isSelected(product.id) ? 'bg-primary/5' : ''}>
+                            <TableCell><RowCheckbox checked={rowSelection.isSelected(product.id)} onCheckedChange={() => rowSelection.toggle(product.id)} /></TableCell>
+                            <TableCell className="font-medium">{product.product_name}</TableCell>
+                            <TableCell className="text-center">
+                              {rating !== null ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <span className={`inline-flex items-center gap-1 font-semibold text-sm ${rating >= 4 ? 'text-emerald-600' : rating >= 3 ? 'text-amber-600' : 'text-rose-600'}`}>
+                                        <Star className="w-3.5 h-3.5 fill-current" />{rating.toFixed(1)}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{rating >= 4 ? 'Excellent' : rating >= 3 ? 'Average' : 'Needs Attention'}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className="text-sm font-medium">{reviewCount > 0 ? reviewCount.toLocaleString('en-IN') : '—'}</span>
+                            </TableCell>
+                            {portalConfigs.map(p => (
+                              <TableCell key={p.id} className="text-center">{getStatusBadge((ps[p.id] || 'not_active') as ProductHealthStatus)}</TableCell>
+                            ))}
+                            <TableCell className="text-center bg-primary/5">{getStatusBadge(overall)}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {filteredProducts.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                            <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                            <p className="font-medium">No products found</p>
+                            <p className="text-sm">Try adjusting your filters or add product health data</p>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 2: Product URLs per Channel */}
+        <TabsContent value="urls">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Link2 className="w-5 h-5 text-primary" />Product URLs by Channel</CardTitle>
+              <CardDescription>View and manage product listing URLs across all ecommerce channels for health monitoring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+              ) : skuMappings.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Link2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No Product URLs Configured</p>
+                  <p className="text-sm mt-1">Go to <strong>SKU Mapping</strong> to add product URLs for each channel.</p>
+                  <Button variant="outline" className="mt-4 gap-2" onClick={() => window.location.href = '/sku-mapping'}>
+                    <ExternalLink className="w-4 h-4" />Go to SKU Mapping
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold">Product Name</TableHead>
+                        <TableHead className="font-semibold">Master SKU</TableHead>
+                        {portalConfigs.map(p => {
+                          const ch = channelIcons[p.id];
+                          return (
+                            <TableHead key={p.id} className="text-center font-semibold">
+                              <span className="flex items-center justify-center gap-1">
+                                {ch?.emoji} {p.name}
+                              </span>
+                            </TableHead>
+                          );
+                        })}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {skuMappings.map(mapping => (
+                        <TableRow key={mapping.id}>
+                          <TableCell className="font-medium max-w-[250px] truncate">{mapping.product_name}</TableCell>
+                          <TableCell className="font-mono text-sm">{mapping.master_sku_id}</TableCell>
+                          {portalConfigs.map(p => {
+                            const url = mapping[`${p.id}_url`];
+                            const sku = mapping[`${p.id}_sku`];
+                            return (
+                              <TableCell key={p.id} className="text-center">
+                                {url ? (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline text-sm">
+                                          <ExternalLink className="w-3.5 h-3.5" />
+                                          {sku || 'View'}
+                                        </a>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-[300px] break-all">{url}</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ) : sku ? (
+                                  <Badge variant="outline" className="text-xs">{sku}</Badge>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab 3: Channel Details with Icons */}
+        <TabsContent value="channels">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {channelSummary.map(channel => {
+              const ch = channelIcons[channel.id] || { emoji: '🏪', color: 'text-foreground', bg: 'bg-muted' };
+              return (
+                <Card key={channel.id} className="overflow-hidden">
+                  <CardHeader className={`${ch.bg} border-b`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`text-3xl`}>{ch.emoji}</div>
+                      <div>
+                        <CardTitle className={`text-lg ${ch.color}`}>{channel.name}</CardTitle>
+                        <CardDescription>Marketplace Overview</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <p className="text-xs text-muted-foreground">Total Products</p>
+                        <p className="text-xl font-bold">{channel.totalProducts}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-emerald-500/10">
+                        <p className="text-xs text-muted-foreground">Live</p>
+                        <p className="text-xl font-bold text-emerald-600">{channel.liveProducts}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-rose-500/10">
+                        <p className="text-xs text-muted-foreground">Out of Stock</p>
+                        <p className="text-xl font-bold text-rose-600">{channel.oosProducts}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-amber-500/10">
+                        <p className="text-xs text-muted-foreground">Not Active</p>
+                        <p className="text-xl font-bold text-amber-600">{channel.notActiveProducts}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="text-sm text-muted-foreground">SKUs Mapped</span>
+                      <Badge variant="outline">{channel.mappedSkus}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Health Score</span>
+                      <span className={`text-lg font-bold ${channel.healthPct >= 80 ? 'text-emerald-600' : channel.healthPct >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>
+                        {channel.healthPct}%
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
