@@ -475,7 +475,17 @@ export default function StaffManagement() {
             <CardHeader><CardTitle className="flex items-center gap-2"><Scissors className="w-5 h-5" />Piece Rate Work Log</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Employee</TableHead><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead>Received</TableHead><TableHead>Completed</TableHead><TableHead>Pending</TableHead><TableHead>Rate</TableHead><TableHead>Earned</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.employee_id')}>Employee<SortIcon col="tw.employee_id" /></TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.received')}>Received<SortIcon col="tw.received" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.completed')}>Completed<SortIcon col="tw.completed" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.pending')}>Pending<SortIcon col="tw.pending" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.rate_per_piece')}>Rate<SortIcon col="tw.rate_per_piece" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.total_earned')}>Earned<SortIcon col="tw.total_earned" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.work_date')}>Date<SortIcon col="tw.work_date" /></TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
                   {tailorWork.map(tw => (
                     <TableRow key={tw.id}>
