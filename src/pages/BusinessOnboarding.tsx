@@ -101,15 +101,45 @@ export default function BusinessOnboarding() {
   const [subFilter, setSubFilter] = useState('all');
   const [showChangeLog, setShowChangeLog] = useState<OnboardingRequest | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ id: string; action: 'approved' | 'rejected' } | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [sortKey, setSortKey] = useState<string>('submittedAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  const filtered = useMemo(() => requests.filter(r => {
-    const matchSearch = r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
-    const matchSub = subFilter === 'all' || r.subscriptionStatus === subFilter;
-    return matchSearch && matchStatus && matchSub;
-  }), [requests, searchQuery, statusFilter, subFilter]);
+  const toggleSort = (key: string) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 inline opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1 inline text-primary" /> : <ArrowDown className="w-3 h-3 ml-1 inline text-primary" />;
+  };
+
+  const filtered = useMemo(() => {
+    let data = requests.filter(r => {
+      const matchSearch = r.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+      const matchSub = subFilter === 'all' || r.subscriptionStatus === subFilter;
+      let matchDate = true;
+      if (dateRange.from && dateRange.to) {
+        const d = new Date(r.submittedAt);
+        matchDate = d >= dateRange.from && d <= dateRange.to;
+      }
+      return matchSearch && matchStatus && matchSub && matchDate;
+    });
+    data.sort((a, b) => {
+      const va = (a as any)[sortKey];
+      const vb = (b as any)[sortKey];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      const cmp = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+  }, [requests, searchQuery, statusFilter, subFilter, dateRange, sortKey, sortDir]);
 
   const stats = {
     total: requests.length,
