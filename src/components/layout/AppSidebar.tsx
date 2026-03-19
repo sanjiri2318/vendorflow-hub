@@ -282,6 +282,52 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
+      {/* Search Bar */}
+      {!isCollapsed && (
+        <div className="px-3 pb-2 pt-1 border-b border-sidebar-border">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search tabs..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="h-8 pl-8 pr-8 text-xs bg-accent/50 border-border/50 focus:bg-background"
+              onFocus={() => setIsSearchOpen(true)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); setIsSearchOpen(false); }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {searchQuery.trim() && searchResults.length > 0 && (
+            <div className="mt-1.5 bg-popover border border-border rounded-lg shadow-lg py-1 max-h-[240px] overflow-y-auto z-50">
+              {searchResults.map(item => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <button
+                    key={item.url}
+                    onClick={() => { navigate(item.url); setSearchQuery(''); setIsSearchOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                      isActive ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4 shrink-0" />
+                    <span>{item.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {searchQuery.trim() && searchResults.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-2">No tabs found</p>
+          )}
+        </div>
+      )}
+
       <SidebarContent className="px-2 py-2 scrollbar-thin">
         {filteredSections.map((section, sectionIndex) => (
           <div key={section.heading}>
