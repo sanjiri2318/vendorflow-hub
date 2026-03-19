@@ -226,15 +226,7 @@ export default function BusinessOnboarding() {
                 {Object.entries(subStatusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select defaultValue="date_desc">
-              <SelectTrigger className="w-[150px]"><SelectValue placeholder="Sort By" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date_desc">Newest First</SelectItem>
-                <SelectItem value="date_asc">Oldest First</SelectItem>
-                <SelectItem value="company_asc">Company A-Z</SelectItem>
-                <SelectItem value="expiry_asc">Expiry Soonest</SelectItem>
-              </SelectContent>
-            </Select>
+            <GlobalDateFilter value={dateRange} onChange={setDateRange} />
           </div>
 
           <Card>
@@ -242,12 +234,12 @@ export default function BusinessOnboarding() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold">ID</TableHead>
-                    <TableHead className="font-semibold">Company</TableHead>
-                    <TableHead className="font-semibold">Contact</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Subscription</TableHead>
-                    <TableHead className="font-semibold">Expiry</TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('id')}>ID<SortIcon col="id" /></TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('companyName')}>Company<SortIcon col="companyName" /></TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('contactPerson')}>Contact<SortIcon col="contactPerson" /></TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('status')}>Status<SortIcon col="status" /></TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('subscriptionStatus')}>Subscription<SortIcon col="subscriptionStatus" /></TableHead>
+                    <TableHead className="font-semibold cursor-pointer select-none" onClick={() => toggleSort('subscriptionExpiry')}>Expiry<SortIcon col="subscriptionExpiry" /></TableHead>
                     <TableHead className="font-semibold">Access</TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
