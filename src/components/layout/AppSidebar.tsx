@@ -33,6 +33,8 @@ import {
   Globe,
   MessageSquare,
   ChevronDown,
+  Search,
+  X,
   Warehouse,
   Settings,
   Activity,
