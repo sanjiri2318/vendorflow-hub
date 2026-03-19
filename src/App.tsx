@@ -127,6 +127,8 @@ const App = () => (
             <Route path="/payout-comparison" element={<AppLayout><PayoutComparison /></AppLayout>} />
             <Route path="/integrations" element={<AppLayout><Integrations /></AppLayout>} />
             <Route path="/purchase" element={<AppLayout><PurchaseManagement /></AppLayout>} />
+            <Route path="/review-analytics" element={<AppLayout><ReviewRatingAnalytics /></AppLayout>} />
+            <Route path="/data-intelligence" element={<AppLayout><GoogleMapsScraper /></AppLayout>} />
             {/* Demo Routes */}
             <Route path="/demo" element={<DemoLayout><DemoDashboard /></DemoLayout>} />
             <Route path="/demo/sales" element={<DemoLayout><DemoSalesAnalysis /></DemoLayout>} />

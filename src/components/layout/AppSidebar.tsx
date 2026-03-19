@@ -143,6 +143,8 @@ const navigationSections: NavSection[] = [
         items: [
           { title: 'Reports & History', url: '/reports', icon: FileText, roles: ['admin', 'vendor', 'operations'] },
           { title: 'Analytics', url: '/analytics', icon: BarChart3, roles: ['admin', 'vendor'] },
+          { title: 'Review Analytics', url: '/review-analytics', icon: StarIcon, roles: ['admin', 'vendor'] },
+          { title: 'Data Intelligence', url: '/data-intelligence', icon: MapPin, roles: ['admin'] },
         ],
       },
     ],
