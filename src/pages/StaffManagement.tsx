@@ -1,5 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GlobalDateFilter, DateRange } from '@/components/GlobalDateFilter';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,39 @@ export default function StaffManagement() {
   const [newLeave, setNewLeave] = useState({ employee_id: '', type: 'leave', leave_type: 'casual', start_date: '', end_date: '', reason: '', permission_from: '', permission_to: '' });
   const [manualAttendance, setManualAttendance] = useState({ employee_id: '', check_in: '', check_out: '', method: 'manual', status: 'present' });
   const [attendanceDateFilter, setAttendanceDateFilter] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
+
+  const toggleSort = (key: string) => {
+    setSortConfig(prev => {
+      if (prev?.key === key) return prev.dir === 'asc' ? { key, dir: 'desc' } : null;
+      return { key, dir: 'asc' };
+    });
+  };
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortConfig?.key !== col) return <ArrowUpDown className="w-3 h-3 ml-1 inline opacity-40" />;
+    return sortConfig.dir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1 inline text-primary" /> : <ArrowDown className="w-3 h-3 ml-1 inline text-primary" />;
+  };
+
+  const sortData = <T extends Record<string, any>>(data: T[], key?: string): T[] => {
+    if (!sortConfig || (key && sortConfig.key.split('.')[0] !== key)) return data;
+    const k = sortConfig.key.includes('.') ? sortConfig.key.split('.').pop()! : sortConfig.key;
+    return [...data].sort((a, b) => {
+      const va = a[k], vb = b[k];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      const cmp = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb));
+      return sortConfig.dir === 'asc' ? cmp : -cmp;
+    });
+  };
+
+  const inRange = (dateStr: string) => {
+    if (!dateRange.from || !dateRange.to) return true;
+    const d = new Date(dateStr);
+    return d >= dateRange.from && d <= dateRange.to;
+  };
 
   const fetchData = async () => {
     try {
@@ -163,7 +198,7 @@ export default function StaffManagement() {
     return map[status] || '';
   };
 
-  const filteredAttendance = networkOnly ? attendance.filter(a => a.network === 'office_wifi') : attendance;
+  const filteredAttendance = (networkOnly ? attendance.filter(a => a.network === 'office_wifi') : attendance).filter(a => inRange(a.attendance_date));
 
   if (loading) return <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
 
@@ -174,7 +209,8 @@ export default function StaffManagement() {
           <h1 className="text-2xl font-bold text-foreground">Staff & Salary Management</h1>
           <p className="text-muted-foreground">Attendance, leave management, piece-rate & salary calculation</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <GlobalDateFilter value={dateRange} onChange={setDateRange} />
           <Button variant="outline" size="sm" onClick={() => setShowApiConfig(true)}><Settings2 className="w-4 h-4 mr-2" />Biometric API</Button>
           <Button variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Export Payroll</Button>
           <Dialog open={showAddEmployee} onOpenChange={setShowAddEmployee}>
@@ -252,9 +288,18 @@ export default function StaffManagement() {
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Name</TableHead><TableHead>Role</TableHead><TableHead>Department</TableHead><TableHead>Type</TableHead><TableHead>Rate / Salary</TableHead><TableHead>Biometric ID</TableHead><TableHead>Leaves</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Name<SortIcon col="name" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('role')}>Role<SortIcon col="role" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('department')}>Department<SortIcon col="department" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('type')}>Type<SortIcon col="type" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('monthly_salary')}>Rate / Salary<SortIcon col="monthly_salary" /></TableHead>
+                  <TableHead>Biometric ID</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('leaves_used')}>Leaves<SortIcon col="leaves_used" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}>Status<SortIcon col="status" /></TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {employees.map(emp => (
+                  {sortData(employees, undefined).map(emp => (
                     <TableRow key={emp.id}>
                       <TableCell className="font-medium">{emp.name}<br /><span className="text-xs text-muted-foreground">{emp.phone}</span></TableCell>
                       <TableCell>{emp.role}</TableCell>
@@ -294,9 +339,18 @@ export default function StaffManagement() {
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Employee</TableHead><TableHead>Date</TableHead><TableHead>In Time</TableHead><TableHead>Out Time</TableHead><TableHead>Method</TableHead><TableHead>Network</TableHead><TableHead>Hours</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.employee_id')}>Employee<SortIcon col="att.employee_id" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.attendance_date')}>Date<SortIcon col="att.attendance_date" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.check_in')}>In Time<SortIcon col="att.check_in" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.check_out')}>Out Time<SortIcon col="att.check_out" /></TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Network</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.hours_worked')}>Hours<SortIcon col="att.hours_worked" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.status')}>Status<SortIcon col="att.status" /></TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {filteredAttendance.map(att => (
+                  {sortData(filteredAttendance, 'att').map(att => (
                     <TableRow key={att.id}>
                       <TableCell className="font-medium">{empMap[att.employee_id] || att.employee_id}</TableCell>
                       <TableCell>{att.attendance_date}</TableCell>
@@ -368,9 +422,19 @@ export default function StaffManagement() {
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Employee</TableHead><TableHead>Type</TableHead><TableHead>Leave Type</TableHead><TableHead>From</TableHead><TableHead>To</TableHead><TableHead>Time (Permission)</TableHead><TableHead>Reason</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('lr.employee_id')}>Employee<SortIcon col="lr.employee_id" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('lr.type')}>Type<SortIcon col="lr.type" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('lr.leave_type')}>Leave Type<SortIcon col="lr.leave_type" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('lr.start_date')}>From<SortIcon col="lr.start_date" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('lr.end_date')}>To<SortIcon col="lr.end_date" /></TableHead>
+                  <TableHead>Time (Permission)</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('lr.status')}>Status<SortIcon col="lr.status" /></TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {leaveRequests.map(lr => (
+                  {sortData(leaveRequests.filter(lr => inRange(lr.start_date)), 'lr').map(lr => (
                     <TableRow key={lr.id}>
                       <TableCell className="font-medium">{empMap[lr.employee_id] || lr.employee_id}</TableCell>
                       <TableCell>
@@ -411,9 +475,19 @@ export default function StaffManagement() {
             <CardHeader><CardTitle className="flex items-center gap-2"><Scissors className="w-5 h-5" />Piece Rate Work Log</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Employee</TableHead><TableHead>Product</TableHead><TableHead>SKU</TableHead><TableHead>Received</TableHead><TableHead>Completed</TableHead><TableHead>Pending</TableHead><TableHead>Rate</TableHead><TableHead>Earned</TableHead><TableHead>Date</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.employee_id')}>Employee<SortIcon col="tw.employee_id" /></TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.received')}>Received<SortIcon col="tw.received" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.completed')}>Completed<SortIcon col="tw.completed" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.pending')}>Pending<SortIcon col="tw.pending" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.rate_per_piece')}>Rate<SortIcon col="tw.rate_per_piece" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.total_earned')}>Earned<SortIcon col="tw.total_earned" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('tw.work_date')}>Date<SortIcon col="tw.work_date" /></TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {tailorWork.map(tw => (
+                  {sortData(tailorWork.filter(tw => inRange(tw.work_date)), 'tw').map(tw => (
                     <TableRow key={tw.id}>
                       <TableCell className="font-medium">{empMap[tw.employee_id] || tw.employee_id}</TableCell>
                       <TableCell>{tw.product_name}</TableCell>
@@ -439,9 +513,16 @@ export default function StaffManagement() {
             <CardHeader><CardTitle className="flex items-center gap-2"><IndianRupee className="w-5 h-5" />Salary Summary</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Employee</TableHead><TableHead>Type</TableHead><TableHead>Working Days</TableHead><TableHead>Base</TableHead><TableHead>Deductions</TableHead><TableHead>Calculated</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sal.name')}>Employee<SortIcon col="sal.name" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sal.type')}>Type<SortIcon col="sal.type" /></TableHead>
+                  <TableHead>Working Days</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('sal.monthly_salary')}>Base<SortIcon col="sal.monthly_salary" /></TableHead>
+                  <TableHead>Deductions</TableHead>
+                  <TableHead>Calculated</TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
-                  {employees.filter(e => e.status === 'active').map(emp => {
+                  {sortData(employees.filter(e => e.status === 'active'), 'sal').map(emp => {
                     const piecesEarned = tailorWork.filter(t => t.employee_id === emp.id).reduce((s, t) => s + (t.total_earned || 0), 0);
                     const wd = workingDaysMap[emp.id] || { present: 0, absent: 0, halfDay: 0, late: 0, totalHours: 0 };
                     const baseSalary = emp.type === 'fixed' ? (emp.monthly_salary || 0) : piecesEarned;
