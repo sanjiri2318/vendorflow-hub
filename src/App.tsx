@@ -56,6 +56,8 @@ import Broadcast from "./pages/Broadcast";
 import PurchaseManagement from "./pages/PurchaseManagement";
 import ReviewRatingAnalytics from "./pages/ReviewRatingAnalytics";
 import GoogleMapsScraper from "./pages/GoogleMapsScraper";
+import EmailSocialMarketing from "./pages/EmailSocialMarketing";
+import GoogleMeetIntegration from "./pages/GoogleMeetIntegration";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
