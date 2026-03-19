@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
-import { MessageSquare, Brain, Workflow, Lock, Sparkles, FolderOpen, Zap, BarChart3, Package, RotateCcw, CreditCard, Users, Bell, Star, ThumbsDown, Search, Bot, Send, Loader2, User, Plus, Trash2, History } from 'lucide-react';
+import { MessageSquare, Brain, Workflow, Lock, Sparkles, FolderOpen, Zap, BarChart3, Package, RotateCcw, CreditCard, Users, Bell, Star, ThumbsDown, Search, Bot, Send, Loader2, User, Plus, Trash2, History, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { chatConversationsDb, automationSettingsDb } from '@/services/database';
