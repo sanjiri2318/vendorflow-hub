@@ -299,7 +299,7 @@ export default function StaffManagement() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}>Status<SortIcon col="status" /></TableHead>
                 </TableRow></TableHeader>
                 <TableBody>
-                  {employees.map(emp => (
+                  {sortData(employees, undefined).map(emp => (
                     <TableRow key={emp.id}>
                       <TableCell className="font-medium">{emp.name}<br /><span className="text-xs text-muted-foreground">{emp.phone}</span></TableCell>
                       <TableCell>{emp.role}</TableCell>
