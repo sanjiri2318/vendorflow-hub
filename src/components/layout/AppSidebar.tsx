@@ -61,6 +61,8 @@ import {
   ArrowUpDown,
   MapPin,
   StarIcon,
+  Mail,
+  Video,
 } from 'lucide-react';
 
 interface NavItem {
