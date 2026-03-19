@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Building2, Plus, FileText, CheckCircle2, Clock, XCircle, Upload, Eye,
   AlertCircle, Shield, Users, ClipboardList, Download, FileSpreadsheet,
-  Search, Bell, History, ToggleLeft,
+  Search, Bell, History, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, differenceInDays } from 'date-fns';
