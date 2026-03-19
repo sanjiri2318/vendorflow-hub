@@ -339,7 +339,16 @@ export default function StaffManagement() {
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader><TableRow className="bg-muted/50"><TableHead>Employee</TableHead><TableHead>Date</TableHead><TableHead>In Time</TableHead><TableHead>Out Time</TableHead><TableHead>Method</TableHead><TableHead>Network</TableHead><TableHead>Hours</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.employee_id')}>Employee<SortIcon col="att.employee_id" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.attendance_date')}>Date<SortIcon col="att.attendance_date" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.check_in')}>In Time<SortIcon col="att.check_in" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.check_out')}>Out Time<SortIcon col="att.check_out" /></TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Network</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.hours_worked')}>Hours<SortIcon col="att.hours_worked" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('att.status')}>Status<SortIcon col="att.status" /></TableHead>
+                </TableRow></TableHeader>
                 <TableBody>
                   {filteredAttendance.map(att => (
                     <TableRow key={att.id}>
