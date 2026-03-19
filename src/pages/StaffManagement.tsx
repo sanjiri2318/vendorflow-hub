@@ -209,7 +209,8 @@ export default function StaffManagement() {
           <h1 className="text-2xl font-bold text-foreground">Staff & Salary Management</h1>
           <p className="text-muted-foreground">Attendance, leave management, piece-rate & salary calculation</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <GlobalDateFilter value={dateRange} onChange={setDateRange} />
           <Button variant="outline" size="sm" onClick={() => setShowApiConfig(true)}><Settings2 className="w-4 h-4 mr-2" />Biometric API</Button>
           <Button variant="outline" size="sm"><Download className="w-4 h-4 mr-2" />Export Payroll</Button>
           <Dialog open={showAddEmployee} onOpenChange={setShowAddEmployee}>
