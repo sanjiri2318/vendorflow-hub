@@ -54,6 +54,8 @@ import PayoutComparison from "./pages/PayoutComparison";
 import Integrations from "./pages/Integrations";
 import Broadcast from "./pages/Broadcast";
 import PurchaseManagement from "./pages/PurchaseManagement";
+import ReviewRatingAnalytics from "./pages/ReviewRatingAnalytics";
+import GoogleMapsScraper from "./pages/GoogleMapsScraper";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
@@ -125,6 +127,8 @@ const App = () => (
             <Route path="/payout-comparison" element={<AppLayout><PayoutComparison /></AppLayout>} />
             <Route path="/integrations" element={<AppLayout><Integrations /></AppLayout>} />
             <Route path="/purchase" element={<AppLayout><PurchaseManagement /></AppLayout>} />
+            <Route path="/review-analytics" element={<AppLayout><ReviewRatingAnalytics /></AppLayout>} />
+            <Route path="/data-intelligence" element={<AppLayout><GoogleMapsScraper /></AppLayout>} />
             {/* Demo Routes */}
             <Route path="/demo" element={<DemoLayout><DemoDashboard /></DemoLayout>} />
             <Route path="/demo/sales" element={<DemoLayout><DemoSalesAnalysis /></DemoLayout>} />
