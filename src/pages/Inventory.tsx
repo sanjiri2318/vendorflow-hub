@@ -42,6 +42,7 @@ export default function Inventory() {
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('30days');
   const [importOpen, setImportOpen] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('inventory');
   const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>([
     {
