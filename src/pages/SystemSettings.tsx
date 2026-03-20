@@ -529,7 +529,7 @@ export default function SystemSettings() {
           </Card>
         </TabsContent>
 
-        {/* TAB 5 — ROLE PERMISSIONS */}
+
         <TabsContent value="permissions">
           <Card>
             <CardHeader>
