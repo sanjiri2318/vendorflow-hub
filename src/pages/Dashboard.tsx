@@ -404,6 +404,7 @@ export default function Dashboard() {
           <Plus className="w-3.5 h-3.5" />
           Add Channel
         </Button>
+        <DashboardCustomizer widgets={widgets} onToggle={toggleWidget} onMove={moveWidget} onReset={resetWidgets} />
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
