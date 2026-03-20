@@ -118,7 +118,7 @@ export default function CatalogManager() {
     toast({ title: `Portal ${action === 'enable' ? 'Enabled' : 'Disabled'}`, description: `${portal} ${action}d for ${selectedIds.length} products.` });
   };
 
-  const handleExport = (format: 'excel' | 'pdf') => {
+  const handleExport = (format: 'excel' | 'pdf' | 'txt') => {
     const dataToExport = selectedIds.length > 0
       ? filteredProducts.filter(p => selectedIds.includes(p.id))
       : filteredProducts;
