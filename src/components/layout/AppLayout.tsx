@@ -68,6 +68,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { isAuthenticated, user, logout, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { settings, updateSetting, resetToDefaults, ACCENT_PRESETS } = useThemeSettings();
 
   if (isLoading) {
     return (
