@@ -410,7 +410,7 @@ export default function Dashboard() {
       {/* ═══════════════════════════════════════════════════════════════
            BLOCK 1: DAILY SUMMARY
          ═══════════════════════════════════════════════════════════════ */}
-      <div>
+      {isVisible('daily-summary') && <div>
         <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
           Daily Summary
           <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-0.5">
