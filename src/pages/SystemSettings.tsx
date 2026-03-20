@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Shield, Settings, Cog, Upload, Download, FileSpreadsheet, Eye, ToggleLeft, Blocks, Clock, Zap, Users, Lock, IndianRupee, CheckCircle2, AlertTriangle, SlidersHorizontal, History, LogIn, Edit3, Globe, Mail, Image, Palette } from 'lucide-react';
+import { Shield, Settings, Cog, Upload, Download, FileSpreadsheet, Eye, Pencil, ToggleLeft, Blocks, Clock, Zap, Users, Lock, IndianRupee, CheckCircle2, AlertTriangle, SlidersHorizontal, History, LogIn, Edit3, Globe, Mail, Image, Palette } from 'lucide-react';
 import { getReconciliationSettings, setReconciliationSettings, subscribeReconciliationSettings } from '@/services/reconciliationSettings';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
