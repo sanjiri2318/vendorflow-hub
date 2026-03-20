@@ -195,6 +195,9 @@ export default function CatalogManager() {
           <Button variant="outline" className="gap-2" onClick={() => handleExport('pdf')}>
             <FileText className="w-4 h-4" />Export PDF
           </Button>
+          <Button variant="outline" className="gap-2" onClick={() => handleExport('txt')}>
+            <FileText className="w-4 h-4" />Export TXT
+          </Button>
         </div>
       </div>
 

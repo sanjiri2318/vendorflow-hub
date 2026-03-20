@@ -359,6 +359,9 @@ export default function Returns() {
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('pdf')}>
             <FileDown className="w-4 h-4" />PDF
           </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('txt')}>
+            <FileDown className="w-4 h-4" />TXT
+          </Button>
           <GlobalDateFilter value={globalDateRange} onChange={setGlobalDateRange} />
           <ExportButton selectedCount={rowSelection.count} data={filteredReturns} filename="returns" />
         </div>

@@ -12,7 +12,7 @@ import { ChannelIcon } from '@/components/ChannelIcon';
 import { ordersDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  Download, FileSpreadsheet, FileDown, TrendingUp, TrendingDown, Calendar,
+  Download, FileSpreadsheet, FileDown, FileText, TrendingUp, TrendingDown, Calendar,
   ArrowUpRight, ArrowDownRight, Trophy, AlertTriangle, BarChart3,
   Loader2, Barcode, Printer, Search, QrCode, Copy, Check
 } from 'lucide-react';

@@ -711,6 +711,7 @@ export default function FinanceTaxation() {
                 <Download className="w-4 h-4" />Export GSTR-1 CSV
               </Button>
               <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('GSTR-1', 'excel')}><FileSpreadsheet className="w-3.5 h-3.5" />Excel</Button>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('GSTR-1', 'txt')}><FileText className="w-3.5 h-3.5" />TXT</Button>
             </div>
           </div>
 

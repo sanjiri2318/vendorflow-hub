@@ -105,9 +105,17 @@ export default function PricePayout() {
           <h1 className="text-2xl font-bold text-foreground">Price & Payout Split</h1>
           <p className="text-muted-foreground">Per-product payout breakdown & channel reconciliation engine</p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={handleExport}>
-          <Download className="w-4 h-4" />Export to Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => handleExport('excel')}>
+            <FileSpreadsheet className="w-4 h-4" />Excel
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => handleExport('pdf')}>
+            <FileDown className="w-4 h-4" />PDF
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => handleExport('txt')}>
+            <FileText className="w-4 h-4" />TXT
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

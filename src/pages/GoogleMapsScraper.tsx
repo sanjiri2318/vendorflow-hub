@@ -164,6 +164,9 @@ export default function GoogleMapsScraper() {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('excel')}>
                     <FileSpreadsheet className="w-4 h-4" />Export Excel
                   </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleExport('txt')}>
+                    <Download className="w-4 h-4" />Export TXT
+                  </Button>
                 </div>
               </div>
             </CardContent>
