@@ -60,6 +60,7 @@ import EmailSocialMarketing from "./pages/EmailSocialMarketing";
 import GoogleMeetIntegration from "./pages/GoogleMeetIntegration";
 import StorageDashboard from "./pages/StorageDashboard";
 import AILearningUpgrade from "./pages/AILearningUpgrade";
+import ChannelManagement from "./pages/ChannelManagement";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
