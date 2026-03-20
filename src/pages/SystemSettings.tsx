@@ -247,7 +247,7 @@ export default function SystemSettings() {
                   <Button variant="outline" size="sm" onClick={() => { resetChannels(); toast({ title: 'Channels Reset', description: 'All channels restored to defaults.' }); }}>
                     Reset Defaults
                   </Button>
-                  <Button size="sm" onClick={() => { setChannelForm({ name: '', icon: '🏪', color: 'hsl(33, 100%, 50%)' }); setAddingChannel(true); }}>
+                  <Button size="sm" onClick={() => { setChannelForm({ name: '', icon: '🏪', color: 'hsl(33, 100%, 50%)', logoUrl: '' }); setAddingChannel(true); }}>
                     <Plus className="w-4 h-4 mr-1" />Add Channel
                   </Button>
                 </div>
