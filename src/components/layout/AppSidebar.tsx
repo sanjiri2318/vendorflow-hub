@@ -51,9 +51,8 @@ const navigationSections: NavSection[] = [
     heading: 'Channel Details',
     groups: [
       {
-        label: 'Overview',
+        label: 'Dashboard',
         items: [
-          { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'vendor', 'operations'] },
           { title: 'Insights', url: '/insights', icon: PieChart, roles: ['admin', 'vendor', 'operations'] },
         ],
       },
