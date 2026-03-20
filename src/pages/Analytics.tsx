@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { portalConfigs } from '@/services/mockData';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { ordersDb, inventoryDb, returnsDb, settlementsDb } from '@/services/database';
 import { BarChart3, ShoppingCart, Package, RotateCcw, TrendingUp, TrendingDown, AlertTriangle, IndianRupee, Facebook, Target, Trophy, Star, ArrowUpRight, ArrowDownRight, Users, Shield, FileCheck, Bot, Zap, ClipboardCheck, Lock, Eye, Crown, UserCheck, Settings, Loader2, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart, Area } from 'recharts';
@@ -103,7 +104,7 @@ export default function Analytics() {
       const netSettled = chSettlements.reduce((s, st) => s + (Number(st.net_amount) || 0), 0);
       const commissions = chSettlements.reduce((s, st) => s + (Number(st.commission) || 0) + (Number(st.tax) || 0), 0);
       const margin = revenue > 0 ? Math.round(((revenue - commissions) / revenue) * 100) : 0;
-      return { name: p.name, icon: p.icon, revenue, netSettled, commissions, margin, orders: chOrders.length };
+      return { id: p.id, name: p.name, icon: p.icon, revenue, netSettled, commissions, margin, orders: chOrders.length };
     }).filter(c => c.orders > 0), [orders, settlements]);
 
   // Seller loss detection from returns
@@ -144,7 +145,7 @@ export default function Analytics() {
       const chSettlements = settlements.filter(s => s.portal === ch);
       const net = chSettlements.reduce((s, st) => s + (Number(st.net_amount) || 0), 0);
       const roi = revenue > 0 ? ((net / revenue) * 100).toFixed(1) : '0';
-      return { name: config?.name || ch, icon: config?.icon || '📦', orders: chOrders.length, revenue, returns: chReturns.length, returnAmt, net, roi };
+      return { id: ch, name: config?.name || ch, icon: config?.icon || '📦', orders: chOrders.length, revenue, returns: chReturns.length, returnAmt, net, roi };
     });
   }, [orders, returns, settlements]);
 
@@ -227,7 +228,7 @@ export default function Analytics() {
             <SelectContent>
               <SelectItem value="all">All Channels</SelectItem>
               {portalConfigs.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.icon} {p.name}</SelectItem>
+                <SelectItem key={p.id} value={p.id}><ChannelIcon channelId={p.id} fallbackIcon={p.icon} size={16} /> {p.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -301,7 +302,7 @@ export default function Analytics() {
               <TableBody>
                 {channelPerformance.map(ch => (
                   <TableRow key={ch.name}>
-                    <TableCell className="font-medium">{ch.icon} {ch.name}</TableCell>
+                    <TableCell className="font-medium"><ChannelIcon channelId={ch.id} fallbackIcon={ch.icon} size={16} /> {ch.name}</TableCell>
                     <TableCell className="text-right">{ch.orders}</TableCell>
                     <TableCell className="text-right">₹{(ch.revenue / 1000).toFixed(1)}K</TableCell>
                     <TableCell className="text-right">{ch.returns}</TableCell>
@@ -381,7 +382,7 @@ export default function Analytics() {
               {channelProfitability.map(ch => (
                 <div key={ch.name} className="p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xl">{ch.icon}</span>
+                    <ChannelIcon channelId={ch.id} fallbackIcon={ch.icon} size={24} />
                     <span className="font-semibold">{ch.name}</span>
                   </div>
                   <div className="space-y-2 text-sm">

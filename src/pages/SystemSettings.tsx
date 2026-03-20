@@ -15,6 +15,7 @@ import { getReconciliationSettings, setReconciliationSettings, subscribeReconcil
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { getChannels, subscribeChannels, saveChannels, addChannel, updateChannel, removeChannel, resetChannels, generateChannelId, AVAILABLE_ICONS, AVAILABLE_COLORS } from '@/services/channelManager';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { PortalConfig } from '@/types';
 
 // TAB 1 — Field Configuration
@@ -253,8 +254,8 @@ export default function SystemSettings() {
               <div className="space-y-3">
                 {channels.map((ch) => (
                   <div key={ch.id} className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg text-xl" style={{ backgroundColor: ch.color + '20' }}>
-                      {ch.icon}
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg" style={{ backgroundColor: ch.color + '20' }}>
+                      <ChannelIcon channelId={ch.id} fallbackIcon={ch.icon} size={24} />
                     </div>
                     <div className="flex-1">
                       <div className="font-medium text-foreground">{ch.name}</div>

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { portalConfigs } from '@/services/mockData';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Portal, ReturnReason } from '@/types';
 import { PortalFilter } from '@/components/dashboard/PortalFilter';
 import { Card, CardContent } from '@/components/ui/card';
@@ -270,7 +271,7 @@ export default function Returns() {
                         <p className="text-xs text-muted-foreground font-mono">{r.skuId}</p>
                       </div>
                     </TableCell>
-                    <TableCell><Badge variant="outline" className="gap-1">{portal?.icon} {portal?.name}</Badge></TableCell>
+                    <TableCell><Badge variant="outline" className="gap-1"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</Badge></TableCell>
                     {columns.returnType && (
                       <TableCell>
                         <Badge variant="secondary" className={`gap-1 text-xs ${rtConfig.color}`}>

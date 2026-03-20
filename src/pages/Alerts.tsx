@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { alertsDb } from '@/services/database';
 import { portalConfigs } from '@/services/mockData';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { AlertSeverity, AlertType } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -243,7 +244,7 @@ export default function Alerts() {
                         <span className="text-xs text-muted-foreground">{formatTime(alert.timestamp)}</span>
                         {portal && (
                           <Badge variant="outline" className="text-xs">
-                            {portal.icon} {portal.name}
+                            <ChannelIcon channelId={portal.id} fallbackIcon={portal.icon} size={16} /> {portal.name}
                           </Badge>
                         )}
                       </div>

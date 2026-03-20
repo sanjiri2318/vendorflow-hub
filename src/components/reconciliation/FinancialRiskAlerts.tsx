@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { portalConfigs } from '@/services/mockData';
@@ -75,7 +76,7 @@ export default function FinancialRiskAlerts() {
                       </div>
                       <div className="flex flex-col items-end gap-1.5 shrink-0">
                         <span className="text-xs text-muted-foreground">{new Date(alert.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
-                        <Badge variant="outline" className="text-xs">{portal?.icon} {portal?.name}</Badge>
+                        <Badge variant="outline" className="text-xs"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</Badge>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2">

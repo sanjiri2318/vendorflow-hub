@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -364,7 +365,7 @@ export default function OrderPaymentSettlement() {
                         {col('Order ID') && <TableCell className="font-mono text-xs">{item.orderId}</TableCell>}
                         {col('Portal') && (
                           <TableCell>
-                            <Badge variant="outline" className="gap-1 text-xs">{portal?.icon} {portal?.name}</Badge>
+                            <Badge variant="outline" className="gap-1 text-xs"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</Badge>
                           </TableCell>
                         )}
                         {col('Payment Type') && (

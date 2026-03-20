@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -63,7 +64,7 @@ export default function SKUProfitabilityTrend() {
                     <TableRow key={s.id} className={s.dropAlert ? 'bg-rose-500/5' : ''}>
                       <TableCell className="font-mono text-xs">{s.sku}</TableCell>
                       <TableCell className="text-sm font-medium">{s.productName}</TableCell>
-                      <TableCell><span className="flex items-center gap-1.5 text-sm">{portal?.icon} {portal?.name}</span></TableCell>
+                      <TableCell><span className="flex items-center gap-1.5 text-sm"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</span></TableCell>
                       <TableCell className="text-right font-bold">{s.currentMargin.toFixed(1)}%</TableCell>
                       <TableCell className="text-right text-muted-foreground">{s.lastMonthMargin.toFixed(1)}%</TableCell>
                       <TableCell className="text-center">

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +61,7 @@ export default function FeeVariationMonitor() {
                   const portal = portalConfigs.find(p => p.id === f.portal);
                   return (
                     <TableRow key={f.id} className={f.alert ? 'bg-amber-500/5' : ''}>
-                      <TableCell><span className="flex items-center gap-1.5 text-sm">{portal?.icon} {portal?.name}</span></TableCell>
+                      <TableCell><span className="flex items-center gap-1.5 text-sm"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</span></TableCell>
                       <TableCell className="text-sm">{f.category}</TableCell>
                       <TableCell className="text-right font-medium">{f.historicalCommission.toFixed(1)}%</TableCell>
                       <TableCell className="text-right font-medium">{f.currentCommission.toFixed(1)}%</TableCell>

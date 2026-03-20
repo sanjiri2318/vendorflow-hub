@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { productHealthDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 import { portalConfigs } from '@/services/mockData';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { ProductHealthStatus, Portal } from '@/types';
 import { Activity, CheckCircle2, XCircle, Package, Search, AlertCircle, Loader2, RefreshCw, Clock, Star, MessageSquare, ExternalLink, Link2, Globe } from 'lucide-react';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox } from '@/components/TableEnhancements';
@@ -166,7 +167,7 @@ export default function ProductHealth() {
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Select Portal" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Portals</SelectItem>
-              {portalConfigs.map(p => <SelectItem key={p.id} value={p.id}>{p.icon} {p.name}</SelectItem>)}
+              {portalConfigs.map(p => <SelectItem key={p.id} value={p.id}><ChannelIcon channelId={p.id} fallbackIcon={p.icon} size={16} /> {p.name}</SelectItem>)}
             </SelectContent>
           </Select>
           <ExportButton label={rowSelection.count > 0 ? undefined : 'Export'} selectedCount={rowSelection.count} data={filteredProducts} filename="product-health" />
@@ -209,7 +210,7 @@ export default function ProductHealth() {
                         <TableHead className="text-center font-semibold"><span className="flex items-center justify-center gap-1"><MessageSquare className="w-3.5 h-3.5 text-primary" />Reviews</span></TableHead>
                         {portalConfigs.map(p => (
                           <TableHead key={p.id} className="text-center font-semibold">
-                            <span className="flex items-center justify-center gap-1">{p.icon} {p.name}</span>
+                            <span className="flex items-center justify-center gap-1"><ChannelIcon channelId={p.id} fallbackIcon={p.icon} size={16} /> {p.name}</span>
                           </TableHead>
                         ))}
                         <TableHead className="text-center font-semibold bg-primary/5">Overall</TableHead>

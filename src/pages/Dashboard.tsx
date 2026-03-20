@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAIAccess } from '@/contexts/AIAccessContext';
 import { Portal } from '@/types';
 import { portalConfigs } from '@/services/mockData';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { ordersDb, inventoryDb, returnsDb, settlementsDb, expensesDb } from '@/services/database';
 import { supabase } from '@/integrations/supabase/client';
 import { KPICard } from '@/components/dashboard/KPICard';
@@ -378,7 +379,7 @@ export default function Dashboard() {
             <SelectItem value="all">All Channels</SelectItem>
             {portalConfigs.map(p => (
               <SelectItem key={p.id} value={p.id}>
-                <span className="flex items-center gap-2">{p.icon} {p.name}</span>
+                <span className="flex items-center gap-2"><ChannelIcon channelId={p.id} fallbackIcon={p.icon} size={16} /> {p.name}</span>
               </SelectItem>
             ))}
           </SelectContent>
