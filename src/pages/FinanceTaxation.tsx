@@ -450,6 +450,9 @@ export default function FinanceTaxation() {
           <Button variant="outline" className="gap-2" onClick={() => handleExport('Finance Data', 'pdf')}>
             <FileDown className="w-4 h-4" />PDF
           </Button>
+          <Button variant="outline" className="gap-2" onClick={() => handleExport('Finance Data', 'txt')}>
+            <FileText className="w-4 h-4" />TXT
+          </Button>
         </div>
       </div>
 
