@@ -583,6 +583,7 @@ export default function FinanceTaxation() {
             <Button className="gap-2" onClick={() => setQuotationDialog(true)}><Plus className="w-4 h-4" />New Quotation</Button>
             <div className="ml-auto flex gap-2">
               <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('Quotations', 'excel')}><FileSpreadsheet className="w-3.5 h-3.5" />Excel</Button>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('Quotations', 'txt')}><FileText className="w-3.5 h-3.5" />TXT</Button>
             </div>
           </div>
           <Card>
