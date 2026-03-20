@@ -479,7 +479,10 @@ export default function Insights() {
           <TabsTrigger value="operations" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Activity className="w-3.5 h-3.5" />Operations</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard"><Dashboard /></TabsContent>
-        <TabsContent value="executive"><ExecutiveDashboard /></TabsContent>
+        <TabsContent value="executive">
+          <ExecutiveWidgets orders={[]} formatCurrency={(n: number) => '₹' + n.toLocaleString('en-IN')} />
+          <div className="mt-6"><ExecutiveDashboard /></div>
+        </TabsContent>
         <TabsContent value="sales"><SalesDashboard /></TabsContent>
         <TabsContent value="support"><SupportDashboard /></TabsContent>
         <TabsContent value="financial"><FinancialDashboard /></TabsContent>
