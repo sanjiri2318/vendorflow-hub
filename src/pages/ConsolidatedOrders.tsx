@@ -363,9 +363,13 @@ export default function ConsolidatedOrders() {
           )}
 
           <GlobalDateFilter value={globalDateRange} onChange={setGlobalDateRange} />
-          <Button onClick={handleExport} className="gap-2">
-            <Download className="w-4 h-4" />
+          <Button onClick={() => handleExport('excel')} className="gap-2">
+            <FileSpreadsheet className="w-4 h-4" />
             {exportLabel}
+          </Button>
+          <Button onClick={() => handleExport('pdf')} variant="outline" className="gap-2">
+            <FileDown className="w-4 h-4" />
+            Export to PDF
           </Button>
         </div>
       </div>
