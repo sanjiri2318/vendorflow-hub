@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { InventoryChart, PortalSalesChart, CHART_COLORS } from '@/components/dashboard/Charts';
 import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
-import { ExecutiveWidgets } from '@/components/dashboard/ExecutiveWidgets';
+
 import { GlobalDateFilter, DateRange } from '@/components/GlobalDateFilter';
 import { EmptyState } from '@/components/EmptyState';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
@@ -585,10 +585,6 @@ export default function Dashboard() {
          ═══════════════════════════════════════════════════════════════ */}
       <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />
 
-      {/* ═══════════════════════════════════════════════════════════════
-           BLOCK: EXECUTIVE OVERVIEW
-         ═══════════════════════════════════════════════════════════════ */}
-      <ExecutiveWidgets orders={orders} formatCurrency={formatCurrency} />
 
       {/* ═══════════════════════════════════════════════════════════════
            BLOCK 3: RETURN INSIGHTS
