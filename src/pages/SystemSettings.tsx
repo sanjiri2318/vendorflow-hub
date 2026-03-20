@@ -260,7 +260,6 @@ export default function SystemSettings() {
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg" style={{ backgroundColor: ch.color + '20' }}>
                       <ChannelIcon channelId={ch.id} fallbackIcon={ch.icon} logoUrl={ch.logoUrl} size={24} />
                     </div>
-                    </div>
                     <div className="flex-1">
                       <div className="font-medium text-foreground">{ch.name}</div>
                       <div className="text-xs text-muted-foreground font-mono">{ch.id}</div>
