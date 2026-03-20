@@ -33,21 +33,11 @@ const gstinDatabase: Record<string, { name: string; address: string; state: stri
 
 const SELLER_STATE_CODE = '27'; // Maharashtra
 
-// ── Mock Data ──
+// ── Data (fetched from database) ──
 
-const mockInvoices = [
-  { id: 'INV-2026-001', type: 'Sales Invoice' as const, customer: 'RetailMart India', gstin: '27AAACR5055K1ZY', date: '2026-02-10', taxableValue: 45000, cgst: 4050, sgst: 4050, igst: 0, total: 53100, status: 'Paid' as const, poNumber: 'PO-8801', ewayBill: 'EWB-991234', paymentMethod: 'Bank' as 'Cash' | 'Bank' | 'Credit' },
-  { id: 'INV-2026-002', type: 'Sales Invoice' as const, customer: 'QuickBuy Online', gstin: '29AAGCQ1234F1Z5', date: '2026-02-08', taxableValue: 28000, cgst: 0, sgst: 0, igst: 5040, total: 33040, status: 'Pending' as const, poNumber: '', ewayBill: '', paymentMethod: 'Credit' as 'Cash' | 'Bank' | 'Credit' },
-  { id: 'DN-2026-001', type: 'Debit Note' as const, customer: 'RetailMart India', gstin: '27AAACR5055K1ZY', date: '2026-02-05', taxableValue: 5000, cgst: 450, sgst: 450, igst: 0, total: 5900, status: 'Issued' as const, poNumber: '', ewayBill: '', paymentMethod: 'Bank' as 'Cash' | 'Bank' | 'Credit' },
-  { id: 'CN-2026-001', type: 'Credit Note' as const, customer: 'QuickBuy Online', gstin: '29AAGCQ1234F1Z5', date: '2026-02-03', taxableValue: 3500, cgst: 0, sgst: 0, igst: 630, total: 4130, status: 'Issued' as const, poNumber: '', ewayBill: '', paymentMethod: 'Cash' as 'Cash' | 'Bank' | 'Credit' },
-  { id: 'INV-2026-003', type: 'Sales Invoice' as const, customer: 'MegaStore Ltd', gstin: '07AABCM9876D1ZP', date: '2026-01-28', taxableValue: 72000, cgst: 6480, sgst: 6480, igst: 0, total: 84960, status: 'Paid' as const, poNumber: 'PO-9912', ewayBill: 'EWB-112233', paymentMethod: 'Bank' as 'Cash' | 'Bank' | 'Credit' },
-];
+const mockInvoices: any[] = [];
 
-const mockPurchaseBills = [
-  { id: 'PB-001', supplier: 'RawMaterials Co', gstin: '27AABCR1234M1Z5', billNo: 'SUP-8801', date: '2026-02-09', taxableValue: 32000, cgst: 2880, sgst: 2880, igst: 0, total: 37760, inputGst: 5760 },
-  { id: 'PB-002', supplier: 'PackTech Industries', gstin: '29AADCP5678N1Z3', billNo: 'PT-4420', date: '2026-02-06', taxableValue: 18500, cgst: 0, sgst: 0, igst: 3330, total: 21830, inputGst: 3330 },
-  { id: 'PB-003', supplier: 'LogiFreight Services', gstin: '07AABCL9012P1Z7', billNo: 'LF-1192', date: '2026-02-01', taxableValue: 12000, cgst: 1080, sgst: 1080, igst: 0, total: 14160, inputGst: 2160 },
-];
+const mockPurchaseBills: any[] = [];
 
 const mockGstr1 = mockInvoices.filter(i => i.type === 'Sales Invoice').map(i => ({
   gstin: i.gstin,
