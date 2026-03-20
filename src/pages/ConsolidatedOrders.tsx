@@ -371,6 +371,10 @@ export default function ConsolidatedOrders() {
             <FileDown className="w-4 h-4" />
             Export to PDF
           </Button>
+          <Button onClick={() => handleExport('txt')} variant="outline" className="gap-2">
+            <FileText className="w-4 h-4" />
+            Export to TXT
+          </Button>
         </div>
       </div>
 
