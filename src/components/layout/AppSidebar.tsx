@@ -54,6 +54,7 @@ const navigationSections: NavSection[] = [
         label: 'Dashboard',
         items: [
           { title: 'Insights', url: '/insights', icon: PieChart, roles: ['admin', 'vendor', 'operations'] },
+          { title: 'Channels', url: '/channels', icon: Store, roles: ['admin'] },
         ],
       },
       {
