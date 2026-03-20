@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, AlertTriangle, Package, Upload, History, Minus, Plus, RotateCcw, Zap } from 'lucide-react';
+import { Search, AlertTriangle, Package, Upload, History, Minus, Plus, RotateCcw, Zap, Filter, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateFilter, ExportButton, useRowSelection, SelectAllCheckbox, RowCheckbox, ImportModal } from '@/components/TableEnhancements';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +42,7 @@ export default function Inventory() {
   const [brandFilter, setBrandFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState('30days');
   const [importOpen, setImportOpen] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('inventory');
   const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>([
     {
@@ -133,9 +135,20 @@ export default function Inventory() {
         (stockFilter === 'out' && item.availableQuantity === 0) ||
         (stockFilter === 'healthy' && item.availableQuantity > item.lowStockThreshold);
       const matchesBrand = brandFilter === 'all' || item.brand === brandFilter;
-      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock && matchesBrand;
+
+      // Column-level filters
+      const cf = columnFilters;
+      const matchesCF =
+        (!cf.skuId || item.skuId.toLowerCase().includes(cf.skuId.toLowerCase())) &&
+        (!cf.product || item.productName.toLowerCase().includes(cf.product.toLowerCase())) &&
+        (!cf.brand || item.brand?.toLowerCase().includes(cf.brand.toLowerCase())) &&
+        (!cf.portal || item.portal?.toLowerCase().includes(cf.portal.toLowerCase())) &&
+        (!cf.warehouse || item.warehouse?.toLowerCase().includes(cf.warehouse.toLowerCase())) &&
+        (!cf.status || getStockStatus(item.availableQuantity, item.lowStockThreshold).label.toLowerCase().includes(cf.status.toLowerCase()));
+
+      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock && matchesBrand && matchesCF;
     });
-  }, [inventoryState, selectedPortal, searchQuery, warehouseFilter, stockFilter, brandFilter]);
+  }, [inventoryState, selectedPortal, searchQuery, warehouseFilter, stockFilter, brandFilter, columnFilters]);
 
   const rowSelection = useRowSelection(filteredInventory.map(i => i.skuId));
 
@@ -264,6 +277,47 @@ export default function Inventory() {
                       <TableHead className="font-semibold">Warehouse</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
                       <TableHead className="font-semibold text-center">Actions</TableHead>
+                    </TableRow>
+                    {/* Column filter row */}
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="p-1">
+                        {Object.values(columnFilters).some(v => v) && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setColumnFilters({})}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.skuId || ''} onChange={e => setColumnFilters(prev => ({ ...prev, skuId: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.product || ''} onChange={e => setColumnFilters(prev => ({ ...prev, product: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.brand || ''} onChange={e => setColumnFilters(prev => ({ ...prev, brand: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.portal || ''} onChange={e => setColumnFilters(prev => ({ ...prev, portal: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.warehouse || ''} onChange={e => setColumnFilters(prev => ({ ...prev, warehouse: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Select value={columnFilters.status || 'all'} onValueChange={v => setColumnFilters(prev => ({ ...prev, status: v === 'all' ? '' : v }))}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="Available">Available</SelectItem>
+                            <SelectItem value="Low Stock">Low Stock</SelectItem>
+                            <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableHead>
+                      <TableHead className="p-1" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
