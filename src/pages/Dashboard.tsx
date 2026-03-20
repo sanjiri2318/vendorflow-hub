@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { InventoryChart, PortalSalesChart, CHART_COLORS } from '@/components/dashboard/Charts';
 import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
+import { DashboardCustomizer } from '@/components/DashboardCustomizer';
+import { useDashboardWidgets } from '@/hooks/useDashboardWidgets';
 
 import { GlobalDateFilter, DateRange } from '@/components/GlobalDateFilter';
 import { EmptyState } from '@/components/EmptyState';
@@ -40,6 +42,7 @@ export default function Dashboard() {
   const [salesViewMode, setSalesViewMode] = useState<'revenue' | 'units'>('revenue');
   const [sortMode, setSortMode] = useState<'revenue' | 'units' | 'returns'>('revenue');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const { widgets, toggleWidget, moveWidget, isVisible, resetWidgets } = useDashboardWidgets();
 
   const [orders, setOrders] = useState<any[]>([]);
   const [returns, setReturns] = useState<any[]>([]);
@@ -401,12 +404,13 @@ export default function Dashboard() {
           <Plus className="w-3.5 h-3.5" />
           Add Channel
         </Button>
+        <DashboardCustomizer widgets={widgets} onToggle={toggleWidget} onMove={moveWidget} onReset={resetWidgets} />
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
            BLOCK 1: DAILY SUMMARY
          ═══════════════════════════════════════════════════════════════ */}
-      <div>
+      {isVisible('daily-summary') && <div>
         <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
           Daily Summary
           <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-0.5">
@@ -459,20 +463,18 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div>}
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {isVisible('kpi-row') && <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard title="Total Sales" value={formatCurrency(kpiData.totalSales)} icon={DollarSign} change={kpiData.salesGrowth} variant="success" />
         <KPICard title="Orders Today" value={kpiData.ordersToday} icon={ShoppingCart} change={kpiData.ordersGrowth} />
         <KPICard title="Inventory Value" value={formatCurrency(kpiData.inventoryValue)} icon={Package} />
         <KPICard title="Low Stock" value={kpiData.lowStockItems} icon={AlertTriangle} variant={kpiData.lowStockItems > 10 ? 'warning' : 'default'} />
         <KPICard title="Pending Returns" value={kpiData.pendingReturns} icon={RotateCcw} variant={kpiData.pendingReturns > 20 ? 'warning' : 'default'} />
         <KPICard title="Pending Settlements" value={kpiData.pendingSettlements} icon={CreditCard} variant={kpiData.pendingSettlements > 5 ? 'danger' : 'default'} />
-      </div>
+      </div>}
 
-      {/* Sales Trend Chart */}
-      <Card>
+      {isVisible('sales-trend') && <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold">Sales Trend</CardTitle>
@@ -500,12 +502,9 @@ export default function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
-      </Card>
+      </Card>}
 
-      {/* ═══════════════════════════════════════════════════════════════
-           BLOCK 2: PERFORMANCE INSIGHTS
-         ═══════════════════════════════════════════════════════════════ */}
-      <div>
+      {isVisible('top-products') && <div>
         <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
           Performance Insights
           <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-0.5">
@@ -575,18 +574,14 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div>}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {isVisible('inventory-chart') && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <InventoryChart data={inventoryStatusData} />
         <PortalSalesChart data={portalRevenueData} />
-      </div>
+      </div>}
 
-      {/* ═══════════════════════════════════════════════════════════════
-           BLOCK: FINANCIAL OVERVIEW
-         ═══════════════════════════════════════════════════════════════ */}
-      <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />
+      {isVisible('financial-overview') && <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />}
 
 
       {/* ═══════════════════════════════════════════════════════════════

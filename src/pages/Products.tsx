@@ -46,25 +46,35 @@ export default function Products() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({ name: '', masterSku: '', brand: '', category: '', hsn: '', mrp: '', basePrice: '', gst: '' });
 
-  const { options: brandOptions, loading: brandsLoading } = useDropdownOptions('brand');
+  const { options: brandOptions } = useDropdownOptions('brand');
+  const { options: categoryOptions } = useDropdownOptions('category');
+  const { options: sizeOptions } = useDropdownOptions('size');
   const [newBrandName, setNewBrandName] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newSizeName, setNewSizeName] = useState('');
   const [addingBrand, setAddingBrand] = useState(false);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [addingSize, setAddingSize] = useState(false);
   const [localBrands, setLocalBrands] = useState<{ label: string; value: string }[]>([]);
+  const [localCategories, setLocalCategories] = useState<{ label: string; value: string }[]>([]);
+  const [localSizes, setLocalSizes] = useState<{ label: string; value: string }[]>([]);
 
   useEffect(() => { setLocalBrands(brandOptions); }, [brandOptions]);
+  useEffect(() => { setLocalCategories(categoryOptions); }, [categoryOptions]);
+  useEffect(() => { setLocalSizes(sizeOptions); }, [sizeOptions]);
 
-  const handleAddBrand = async () => {
-    const name = newBrandName.trim();
-    if (!name) return;
-    setAddingBrand(true);
+  const handleAddDropdownItem = async (fieldType: string, name: string, setLocal: React.Dispatch<React.SetStateAction<{label:string;value:string}[]>>, setNew: React.Dispatch<React.SetStateAction<string>>, setAdding: React.Dispatch<React.SetStateAction<boolean>>, formKey?: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setAdding(true);
     try {
-      await dropdownOptionsDb.create({ field_type: 'brand', label: name, value: name });
-      setLocalBrands(prev => [...prev, { label: name, value: name }]);
-      setFormData(f => ({ ...f, brand: name }));
-      setNewBrandName('');
-      toast({ title: 'Brand Added', description: `"${name}" has been added to brands.` });
-    } catch { toast({ title: 'Error', description: 'Failed to add brand', variant: 'destructive' }); }
-    setAddingBrand(false);
+      await dropdownOptionsDb.create({ field_type: fieldType, label: trimmed, value: trimmed });
+      setLocal(prev => [...prev, { label: trimmed, value: trimmed }]);
+      if (formKey) setFormData(f => ({ ...f, [formKey]: trimmed }));
+      setNew('');
+      toast({ title: `${fieldType.charAt(0).toUpperCase() + fieldType.slice(1)} Added`, description: `"${trimmed}" has been added.` });
+    } catch { toast({ title: 'Error', description: `Failed to add ${fieldType}`, variant: 'destructive' }); }
+    setAdding(false);
   };
 
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -266,9 +276,9 @@ export default function Products() {
                                     value={newBrandName}
                                     onChange={e => setNewBrandName(e.target.value)}
                                     className="h-8 text-sm"
-                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleAddBrand(); } }}
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleAddDropdownItem('brand', newBrandName, setLocalBrands, setNewBrandName, setAddingBrand, 'brand'); } }}
                                   />
-                                  <Button size="sm" className="h-8 text-xs gap-1 shrink-0" onClick={handleAddBrand} disabled={addingBrand || !newBrandName.trim()}>
+                                  <Button size="sm" className="h-8 text-xs gap-1 shrink-0" onClick={() => handleAddDropdownItem('brand', newBrandName, setLocalBrands, setNewBrandName, setAddingBrand, 'brand')} disabled={addingBrand || !newBrandName.trim()}>
                                     <Plus className="w-3 h-3" /> Add
                                   </Button>
                                 </div>
@@ -282,9 +292,19 @@ export default function Products() {
                           <Select value={formData.category} onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
                             <SelectTrigger className={formErrors.category ? 'border-destructive' : ''}><SelectValue placeholder="Select category" /></SelectTrigger>
                             <SelectContent>
-                              {categories.map((cat: string) => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              {localCategories.map(cat => (
+                                <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                               ))}
+                              <div className="border-t border-border mt-1 pt-1 px-2 pb-1">
+                                <div className="flex items-center gap-2">
+                                  <Input placeholder="New category" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="h-8 text-sm"
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleAddDropdownItem('category', newCategoryName, setLocalCategories, setNewCategoryName, setAddingCategory, 'category'); } }}
+                                  />
+                                  <Button size="sm" className="h-8 text-xs gap-1 shrink-0" onClick={() => handleAddDropdownItem('category', newCategoryName, setLocalCategories, setNewCategoryName, setAddingCategory, 'category')} disabled={addingCategory || !newCategoryName.trim()}>
+                                    <Plus className="w-3 h-3" /> Add
+                                  </Button>
+                                </div>
+                              </div>
                             </SelectContent>
                           </Select>
                           {formErrors.category && <p className="text-xs text-destructive">{formErrors.category}</p>}
@@ -325,12 +345,22 @@ export default function Products() {
                         </div>
                         <div className="space-y-2">
                           <Label>Size</Label>
-                          <Select defaultValue="free">
+                          <Select defaultValue="free_size">
                             <SelectTrigger><SelectValue placeholder="Select Size" /></SelectTrigger>
                             <SelectContent>
-                              {['M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL', 'Free Size'].map(s => (
-                                <SelectItem key={s} value={s.toLowerCase().replace(' ', '_')}>{s}</SelectItem>
+                              {localSizes.map(s => (
+                                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                               ))}
+                              <div className="border-t border-border mt-1 pt-1 px-2 pb-1">
+                                <div className="flex items-center gap-2">
+                                  <Input placeholder="New size" value={newSizeName} onChange={e => setNewSizeName(e.target.value)} className="h-8 text-sm"
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleAddDropdownItem('size', newSizeName, setLocalSizes, setNewSizeName, setAddingSize); } }}
+                                  />
+                                  <Button size="sm" className="h-8 text-xs gap-1 shrink-0" onClick={() => handleAddDropdownItem('size', newSizeName, setLocalSizes, setNewSizeName, setAddingSize)} disabled={addingSize || !newSizeName.trim()}>
+                                    <Plus className="w-3 h-3" /> Add
+                                  </Button>
+                                </div>
+                              </div>
                             </SelectContent>
                           </Select>
                         </div>

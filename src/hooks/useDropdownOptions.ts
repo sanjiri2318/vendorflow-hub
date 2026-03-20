@@ -30,6 +30,30 @@ const DEFAULTS: Record<string, { label: string; value: string }[]> = {
     { label: 'Sony', value: 'Sony' },
     { label: 'Apple', value: 'Apple' },
   ],
+  category: [
+    { label: 'Electronics', value: 'Electronics' },
+    { label: 'Fashion', value: 'Fashion' },
+    { label: 'Beauty', value: 'Beauty' },
+    { label: 'Home & Kitchen', value: 'Home & Kitchen' },
+    { label: 'Health & Wellness', value: 'Health & Wellness' },
+    { label: 'Sports', value: 'Sports' },
+    { label: 'Accessories', value: 'Accessories' },
+  ],
+  size: [
+    { label: 'M', value: 'M' },
+    { label: 'L', value: 'L' },
+    { label: 'XL', value: 'XL' },
+    { label: 'XXL', value: 'XXL' },
+    { label: 'XXXL', value: 'XXXL' },
+    { label: '4XL', value: '4XL' },
+    { label: '5XL', value: '5XL' },
+    { label: 'Free Size', value: 'Free Size' },
+  ],
+  warehouse: [
+    { label: 'Main Warehouse', value: 'Main Warehouse' },
+    { label: 'Secondary', value: 'Secondary' },
+    { label: 'Fulfillment Center', value: 'Fulfillment Center' },
+  ],
 };
 
 export function useDropdownOptions(fieldType: string) {
