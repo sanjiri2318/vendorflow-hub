@@ -28,8 +28,6 @@ interface BroadcastMessage {
 }
 
 const mockBroadcasts: BroadcastMessage[] = [];
-  { id: '6', channel: 'community', title: 'Vendor Meet-up: March 2026', content: 'Join us for our monthly community meetup...', status: 'scheduled', scheduledAt: '2026-03-15T18:00:00', reach: 0 },
-];
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
