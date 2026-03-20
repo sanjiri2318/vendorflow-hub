@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [salesViewMode, setSalesViewMode] = useState<'revenue' | 'units'>('revenue');
   const [sortMode, setSortMode] = useState<'revenue' | 'units' | 'returns'>('revenue');
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const { widgets, toggleWidget, moveWidget, isVisible, resetWidgets } = useDashboardWidgets();
 
   const [orders, setOrders] = useState<any[]>([]);
   const [returns, setReturns] = useState<any[]>([]);
