@@ -167,7 +167,7 @@ export default function Subscription() {
     }));
   };
 
-  const handleExport = (fmt: 'excel' | 'pdf') => {
+  const handleExport = (fmt: 'excel' | 'pdf' | 'txt') => {
     toast({ title: `Export ${fmt.toUpperCase()}`, description: `Preparing subscription data export...` });
   };
 
