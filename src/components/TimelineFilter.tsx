@@ -7,7 +7,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-export type TimelinePreset = 'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'last_month' | 'this_year' | 'custom';
+export type TimelinePreset = 'today' | '7days' | '30days' | 'this_month' | 'this_year' | 'custom';
 
 const presetLabels: Record<TimelinePreset, string> = {
   today: 'Today',
