@@ -530,9 +530,6 @@ export default function SystemSettings() {
         </TabsContent>
 
 
-        <TabsContent value="permissions">
-          <Card>
-            <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5" />Role Permissions Matrix</CardTitle>
