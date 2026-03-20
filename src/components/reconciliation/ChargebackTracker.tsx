@@ -20,15 +20,7 @@ interface Chargeback {
   responsibleUser: string;
 }
 
-const mockChargebacks: Chargeback[] = [
-  { id: 'CB-001', orderId: 'ORD-2024-102', portal: 'amazon', amount: 2999, reason: 'Product not received', status: 'under_review', filedDate: '2026-02-05', responsibleUser: 'Priya Sharma' },
-  { id: 'CB-002', orderId: 'ORD-2024-118', portal: 'flipkart', amount: 4197, reason: 'Defective product', status: 'lost', filedDate: '2026-01-28', responsibleUser: 'Rahul Verma' },
-  { id: 'CB-003', orderId: 'ORD-2024-134', portal: 'meesho', amount: 1299, reason: 'Wrong item shipped', status: 'won', filedDate: '2026-01-20', responsibleUser: 'Anita Desai' },
-  { id: 'CB-004', orderId: 'ORD-2024-156', portal: 'amazon', amount: 5498, reason: 'Unauthorized transaction', status: 'initiated', filedDate: '2026-02-10', responsibleUser: 'Vikram Singh' },
-  { id: 'CB-005', orderId: 'ORD-2024-171', portal: 'blinkit', amount: 899, reason: 'Item not as described', status: 'under_review', filedDate: '2026-02-08', responsibleUser: 'Priya Sharma' },
-  { id: 'CB-006', orderId: 'ORD-2024-189', portal: 'flipkart', amount: 3450, reason: 'Double charged', status: 'lost', filedDate: '2026-01-15', responsibleUser: 'Rahul Verma' },
-  { id: 'CB-007', orderId: 'ORD-2024-203', portal: 'firstcry', amount: 1899, reason: 'Delivery delay refund', status: 'won', filedDate: '2026-01-22', responsibleUser: 'Anita Desai' },
-];
+const mockChargebacks: Chargeback[] = [];
 
 const statusConfig: Record<ChargebackStatus, { label: string; className: string; icon: React.ElementType }> = {
   initiated: { label: 'Initiated', className: 'bg-blue-500/15 text-blue-600 border-blue-500/30', icon: Clock },

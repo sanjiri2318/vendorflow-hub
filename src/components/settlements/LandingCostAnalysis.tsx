@@ -20,18 +20,7 @@ interface LandingCostItem {
   promotions: number;
 }
 
-const mockLandingCostData: LandingCostItem[] = [
-  { productName: 'Boat Earbuds Pro', skuId: 'BT-EP-101', portal: 'Amazon', imageUrl: '', mrp: 2999, sellingPrice: 2499, commission: 375, shippingFee: 80, taxes: 225, paymentGatewayFee: 50, promotions: 100 },
-  { productName: 'Nike Running Shoes', skuId: 'NK-RS-220', portal: 'Flipkart', imageUrl: '', mrp: 7999, sellingPrice: 6499, commission: 975, shippingFee: 120, taxes: 585, paymentGatewayFee: 130, promotions: 300 },
-  { productName: 'Samsung Charger 25W', skuId: 'SM-CH-305', portal: 'Amazon', imageUrl: '', mrp: 1499, sellingPrice: 1199, commission: 180, shippingFee: 50, taxes: 108, paymentGatewayFee: 24, promotions: 0 },
-  { productName: 'Levi\'s Slim Jeans', skuId: 'LV-SJ-410', portal: 'Meesho', imageUrl: '', mrp: 3499, sellingPrice: 2799, commission: 420, shippingFee: 90, taxes: 252, paymentGatewayFee: 56, promotions: 200 },
-  { productName: 'Fisher-Price Rattle', skuId: 'FP-RT-510', portal: 'FirstCry', imageUrl: '', mrp: 899, sellingPrice: 749, commission: 112, shippingFee: 40, taxes: 67, paymentGatewayFee: 15, promotions: 50 },
-  { productName: 'Himalaya Baby Cream', skuId: 'HM-BC-601', portal: 'Blinkit', imageUrl: '', mrp: 299, sellingPrice: 249, commission: 37, shippingFee: 25, taxes: 22, paymentGatewayFee: 5, promotions: 0 },
-  { productName: 'Adidas Sports Tee', skuId: 'AD-ST-720', portal: 'Flipkart', imageUrl: '', mrp: 1999, sellingPrice: 1599, commission: 240, shippingFee: 60, taxes: 144, paymentGatewayFee: 32, promotions: 100 },
-  { productName: 'JBL Bluetooth Speaker', skuId: 'JB-BS-830', portal: 'Amazon', imageUrl: '', mrp: 4999, sellingPrice: 3999, commission: 600, shippingFee: 100, taxes: 360, paymentGatewayFee: 80, promotions: 250 },
-  { productName: 'Puma Backpack', skuId: 'PM-BP-940', portal: 'Meesho', imageUrl: '', mrp: 2499, sellingPrice: 1899, commission: 285, shippingFee: 70, taxes: 171, paymentGatewayFee: 38, promotions: 150 },
-  { productName: 'OnePlus Buds Z2', skuId: 'OP-BZ-105', portal: 'Amazon', imageUrl: '', mrp: 3299, sellingPrice: 2799, commission: 420, shippingFee: 80, taxes: 252, paymentGatewayFee: 56, promotions: 0 },
-];
+const mockLandingCostData: LandingCostItem[] = [];
 
 const getDeductions = (item: LandingCostItem) => item.commission + item.shippingFee + item.taxes + item.paymentGatewayFee + item.promotions;
 const getLandingCost = (item: LandingCostItem) => item.sellingPrice - getDeductions(item);

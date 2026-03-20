@@ -25,16 +25,7 @@ interface SettlementCycle {
 const daysAgo = (d: number) => { const dt = new Date(); dt.setDate(dt.getDate() - d); return dt.toISOString(); };
 const daysFromNow = (d: number) => { const dt = new Date(); dt.setDate(dt.getDate() + d); return dt.toISOString(); };
 
-const mockCycles: SettlementCycle[] = [
-  { id: 'SC-001', batchId: 'BATCH-AMZ-01', portal: 'amazon', cycleType: 'T+7', expectedDate: daysAgo(2), actualDate: daysAgo(1), amount: 125400, delayDays: 1, status: 'delayed' },
-  { id: 'SC-002', batchId: 'BATCH-FLK-01', portal: 'flipkart', cycleType: 'T+15', expectedDate: daysAgo(5), actualDate: null, amount: 89200, delayDays: 5, status: 'critical_delay' },
-  { id: 'SC-003', batchId: 'BATCH-MSH-01', portal: 'meesho', cycleType: 'T+7', expectedDate: daysAgo(0), actualDate: daysAgo(0), amount: 45600, delayDays: 0, status: 'on_time' },
-  { id: 'SC-004', batchId: 'BATCH-AMZ-02', portal: 'amazon', cycleType: 'T+15', expectedDate: daysAgo(1), actualDate: daysAgo(0), amount: 198300, delayDays: 1, status: 'delayed' },
-  { id: 'SC-005', batchId: 'BATCH-BLK-01', portal: 'blinkit', cycleType: 'T+7', expectedDate: daysFromNow(2), actualDate: null, amount: 32100, delayDays: 0, status: 'on_time' },
-  { id: 'SC-006', batchId: 'BATCH-FCY-01', portal: 'firstcry', cycleType: 'T+30', expectedDate: daysAgo(8), actualDate: null, amount: 67800, delayDays: 8, status: 'critical_delay' },
-  { id: 'SC-007', batchId: 'BATCH-FLK-02', portal: 'flipkart', cycleType: 'T+7', expectedDate: daysAgo(0), actualDate: daysAgo(0), amount: 112500, delayDays: 0, status: 'on_time' },
-  { id: 'SC-008', batchId: 'BATCH-MSH-02', portal: 'meesho', cycleType: 'T+15', expectedDate: daysAgo(3), actualDate: daysAgo(1), amount: 54200, delayDays: 2, status: 'delayed' },
-];
+const mockCycles: SettlementCycle[] = [];
 
 const statusConfig: Record<DelayStatus, { label: string; className: string; icon: React.ElementType }> = {
   on_time: { label: 'On Time', className: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30', icon: CheckCircle2 },
