@@ -213,7 +213,7 @@ export default function Returns() {
     toast({ title: 'Stage Advanced', description: `Return ${returnId} moved to next stage` });
   };
 
-  const handleExport = (type: 'excel' | 'pdf') => {
+  const handleExport = (type: 'excel' | 'pdf' | 'txt') => {
     toast({ title: `${type.toUpperCase()} Export`, description: `${currentFiltered.length} items exported` });
   };
 
