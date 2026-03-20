@@ -574,18 +574,14 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div>}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {isVisible('inventory-chart') && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <InventoryChart data={inventoryStatusData} />
         <PortalSalesChart data={portalRevenueData} />
-      </div>
+      </div>}
 
-      {/* ═══════════════════════════════════════════════════════════════
-           BLOCK: FINANCIAL OVERVIEW
-         ═══════════════════════════════════════════════════════════════ */}
-      <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />
+      {isVisible('financial-overview') && <FinancialOverview orders={orders} settlements={settlements} expenses={expenses} invoices={invoices} />}
 
 
       {/* ═══════════════════════════════════════════════════════════════
