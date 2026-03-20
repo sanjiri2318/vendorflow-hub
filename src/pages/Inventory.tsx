@@ -135,9 +135,20 @@ export default function Inventory() {
         (stockFilter === 'out' && item.availableQuantity === 0) ||
         (stockFilter === 'healthy' && item.availableQuantity > item.lowStockThreshold);
       const matchesBrand = brandFilter === 'all' || item.brand === brandFilter;
-      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock && matchesBrand;
+
+      // Column-level filters
+      const cf = columnFilters;
+      const matchesCF =
+        (!cf.skuId || item.skuId.toLowerCase().includes(cf.skuId.toLowerCase())) &&
+        (!cf.product || item.productName.toLowerCase().includes(cf.product.toLowerCase())) &&
+        (!cf.brand || item.brand?.toLowerCase().includes(cf.brand.toLowerCase())) &&
+        (!cf.portal || item.portal?.toLowerCase().includes(cf.portal.toLowerCase())) &&
+        (!cf.warehouse || item.warehouse?.toLowerCase().includes(cf.warehouse.toLowerCase())) &&
+        (!cf.status || getStockStatus(item.availableQuantity, item.lowStockThreshold).label.toLowerCase().includes(cf.status.toLowerCase()));
+
+      return matchesPortal && matchesSearch && matchesWarehouse && matchesStock && matchesBrand && matchesCF;
     });
-  }, [inventoryState, selectedPortal, searchQuery, warehouseFilter, stockFilter, brandFilter]);
+  }, [inventoryState, selectedPortal, searchQuery, warehouseFilter, stockFilter, brandFilter, columnFilters]);
 
   const rowSelection = useRowSelection(filteredInventory.map(i => i.skuId));
 
