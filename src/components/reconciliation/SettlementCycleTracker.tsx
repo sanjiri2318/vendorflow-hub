@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -113,7 +114,7 @@ export default function SettlementCycleTracker() {
                   return (
                     <TableRow key={c.id} className={c.status === 'critical_delay' ? 'bg-rose-500/5' : c.status === 'delayed' ? 'bg-amber-500/5' : ''}>
                       <TableCell className="font-mono text-sm">{c.batchId}</TableCell>
-                      <TableCell><span className="flex items-center gap-1.5 text-sm">{portal?.icon} {portal?.name}</span></TableCell>
+                      <TableCell><span className="flex items-center gap-1.5 text-sm"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</span></TableCell>
                       <TableCell><Badge variant="outline">{c.cycleType}</Badge></TableCell>
                       <TableCell>{format(new Date(c.expectedDate), 'dd MMM yyyy')}</TableCell>
                       <TableCell>{c.actualDate ? format(new Date(c.actualDate), 'dd MMM yyyy') : <span className="text-muted-foreground italic">Pending</span>}</TableCell>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ChannelIcon } from '@/components/ChannelIcon';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -91,7 +92,7 @@ export default function ChargebackTracker() {
                   return (
                     <TableRow key={c.id} className={c.status === 'lost' ? 'bg-rose-500/5' : ''}>
                       <TableCell className="font-medium">{c.orderId}</TableCell>
-                      <TableCell><span className="flex items-center gap-1.5 text-sm">{portal?.icon} {portal?.name}</span></TableCell>
+                      <TableCell><span className="flex items-center gap-1.5 text-sm"><ChannelIcon channelId={portal?.id || ""} fallbackIcon={portal?.icon} size={16} /> {portal?.name}</span></TableCell>
                       <TableCell className="text-right font-bold text-rose-600">₹{c.amount.toLocaleString()}</TableCell>
                       <TableCell className="text-sm max-w-[200px] truncate">{c.reason}</TableCell>
                       <TableCell className="text-sm">{new Date(c.filedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell>
