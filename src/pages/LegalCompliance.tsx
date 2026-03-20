@@ -61,8 +61,8 @@ export default function LegalCompliance() {
     toast({ title: 'Upload NDA', description: 'NDA upload dialog opened. Select your file to proceed.' });
   };
 
-  const handleExport = () => {
-    toast({ title: 'Report Exported', description: 'Compliance report exported successfully.' });
+  const handleExport = (format: 'excel' | 'pdf' | 'txt' = 'excel') => {
+    toast({ title: `${format.toUpperCase()} Report Exported`, description: 'Compliance report exported successfully.' });
   };
 
   const statusBadge = (status: NDAFile['status']) => {
