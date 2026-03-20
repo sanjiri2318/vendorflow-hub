@@ -292,9 +292,19 @@ export default function Products() {
                           <Select value={formData.category} onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
                             <SelectTrigger className={formErrors.category ? 'border-destructive' : ''}><SelectValue placeholder="Select category" /></SelectTrigger>
                             <SelectContent>
-                              {categories.map((cat: string) => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              {localCategories.map(cat => (
+                                <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                               ))}
+                              <div className="border-t border-border mt-1 pt-1 px-2 pb-1">
+                                <div className="flex items-center gap-2">
+                                  <Input placeholder="New category" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="h-8 text-sm"
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleAddDropdownItem('category', newCategoryName, setLocalCategories, setNewCategoryName, setAddingCategory, 'category'); } }}
+                                  />
+                                  <Button size="sm" className="h-8 text-xs gap-1 shrink-0" onClick={() => handleAddDropdownItem('category', newCategoryName, setLocalCategories, setNewCategoryName, setAddingCategory, 'category')} disabled={addingCategory || !newCategoryName.trim()}>
+                                    <Plus className="w-3 h-3" /> Add
+                                  </Button>
+                                </div>
+                              </div>
                             </SelectContent>
                           </Select>
                           {formErrors.category && <p className="text-xs text-destructive">{formErrors.category}</p>}
