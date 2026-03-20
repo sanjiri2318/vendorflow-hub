@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   TrendingUp, TrendingDown, IndianRupee, Users, ShoppingCart, Package,
   BarChart3, HeadphonesIcon, Clock, AlertTriangle, Activity, Zap,
-  ArrowUpRight, ArrowDownRight, ShieldAlert, CheckCircle2, Filter,
+  ArrowUpRight, ArrowDownRight, ShieldAlert, CheckCircle2, Filter, LayoutDashboard,
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList,
 } from 'recharts';
+import Dashboard from '@/pages/Dashboard';
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 
@@ -467,14 +468,16 @@ export default function Insights() {
         </div>
         <Badge variant="outline" className="text-xs font-mono">v1.2</Badge>
       </div>
-      <Tabs defaultValue="executive" className="space-y-6">
+      <Tabs defaultValue="dashboard" className="space-y-6">
         <TabsList className="flex-wrap h-auto gap-1 bg-muted/60 p-1">
+          <TabsTrigger value="dashboard" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><LayoutDashboard className="w-3.5 h-3.5" />Dashboard</TabsTrigger>
           <TabsTrigger value="executive" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><BarChart3 className="w-3.5 h-3.5" />Executive</TabsTrigger>
           <TabsTrigger value="sales" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ShoppingCart className="w-3.5 h-3.5" />Sales</TabsTrigger>
           <TabsTrigger value="support" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><HeadphonesIcon className="w-3.5 h-3.5" />Support</TabsTrigger>
           <TabsTrigger value="financial" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><IndianRupee className="w-3.5 h-3.5" />Financial</TabsTrigger>
           <TabsTrigger value="operations" className="gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><Activity className="w-3.5 h-3.5" />Operations</TabsTrigger>
         </TabsList>
+        <TabsContent value="dashboard"><Dashboard /></TabsContent>
         <TabsContent value="executive"><ExecutiveDashboard /></TabsContent>
         <TabsContent value="sales"><SalesDashboard /></TabsContent>
         <TabsContent value="support"><SupportDashboard /></TabsContent>

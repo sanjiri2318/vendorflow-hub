@@ -83,8 +83,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+            <Route path="/" element={<Navigate to="/insights" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/insights" replace />} />
             <Route path="/products" element={<AppLayout><Products /></AppLayout>} />
             <Route path="/catalog-manager" element={<AppLayout><CatalogManager /></AppLayout>} />
             <Route path="/product-health" element={<AppLayout><ProductHealth /></AppLayout>} />
