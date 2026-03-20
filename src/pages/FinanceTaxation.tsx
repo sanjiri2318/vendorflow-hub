@@ -495,6 +495,7 @@ export default function FinanceTaxation() {
             <div className="ml-auto flex gap-2">
               <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('Invoices', 'excel')}><FileSpreadsheet className="w-3.5 h-3.5" />Excel</Button>
               <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('Invoices', 'pdf')}><FileDown className="w-3.5 h-3.5" />PDF</Button>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleExport('Invoices', 'txt')}><FileText className="w-3.5 h-3.5" />TXT</Button>
             </div>
           </div>
 
