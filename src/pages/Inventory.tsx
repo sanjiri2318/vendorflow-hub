@@ -278,6 +278,47 @@ export default function Inventory() {
                       <TableHead className="font-semibold">Status</TableHead>
                       <TableHead className="font-semibold text-center">Actions</TableHead>
                     </TableRow>
+                    {/* Column filter row */}
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="p-1">
+                        {Object.values(columnFilters).some(v => v) && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setColumnFilters({})}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.skuId || ''} onChange={e => setColumnFilters(prev => ({ ...prev, skuId: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.product || ''} onChange={e => setColumnFilters(prev => ({ ...prev, product: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.brand || ''} onChange={e => setColumnFilters(prev => ({ ...prev, brand: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.portal || ''} onChange={e => setColumnFilters(prev => ({ ...prev, portal: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1" />
+                      <TableHead className="p-1">
+                        <Input placeholder="Filter..." value={columnFilters.warehouse || ''} onChange={e => setColumnFilters(prev => ({ ...prev, warehouse: e.target.value }))} className="h-7 text-xs" />
+                      </TableHead>
+                      <TableHead className="p-1">
+                        <Select value={columnFilters.status || 'all'} onValueChange={v => setColumnFilters(prev => ({ ...prev, status: v === 'all' ? '' : v }))}>
+                          <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="All" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="Available">Available</SelectItem>
+                            <SelectItem value="Low Stock">Low Stock</SelectItem>
+                            <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableHead>
+                      <TableHead className="p-1" />
+                    </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredInventory.map(item => {
