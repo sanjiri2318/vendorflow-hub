@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
@@ -17,6 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AIAccessBanner, AIAccessControl } from '@/components/AIAccessControl';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ThemeCustomizer } from '@/components/ThemeCustomizer';
+import { useThemeSettings } from '@/hooks/useThemeSettings';
 
 interface AppLayoutProps {
   children: ReactNode;
