@@ -472,10 +472,9 @@ export default function Dashboard() {
         <KPICard title="Low Stock" value={kpiData.lowStockItems} icon={AlertTriangle} variant={kpiData.lowStockItems > 10 ? 'warning' : 'default'} />
         <KPICard title="Pending Returns" value={kpiData.pendingReturns} icon={RotateCcw} variant={kpiData.pendingReturns > 20 ? 'warning' : 'default'} />
         <KPICard title="Pending Settlements" value={kpiData.pendingSettlements} icon={CreditCard} variant={kpiData.pendingSettlements > 5 ? 'danger' : 'default'} />
-      </div>
+      </div>}
 
-      {/* Sales Trend Chart */}
-      <Card>
+      {isVisible('sales-trend') && <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold">Sales Trend</CardTitle>
