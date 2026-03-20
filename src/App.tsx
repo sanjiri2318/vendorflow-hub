@@ -111,9 +111,9 @@ const App = () => (
             <Route path="/permissions" element={<AppLayout><Permissions /></AppLayout>} />
             <Route path="/reports" element={<AppLayout><Reports /></AppLayout>} />
             <Route path="/price-payout" element={<AppLayout><PricePayout /></AppLayout>} />
-            <Route path="/settings" element={<AppLayout><Permissions /></AppLayout>} />
-            <Route path="/data-configuration" element={<AppLayout><DataConfiguration /></AppLayout>} />
-            <Route path="/system-architecture" element={<AppLayout><SystemArchitecture /></AppLayout>} />
+            <Route path="/settings" element={<Navigate to="/permissions" replace />} />
+            <Route path="/data-configuration" element={<Navigate to="/system-settings" replace />} />
+            <Route path="/system-architecture" element={<Navigate to="/system-settings" replace />} />
             <Route path="/system-settings" element={<AppLayout><SystemSettings /></AppLayout>} />
             <Route path="/finance" element={<AppLayout><FinanceTaxation /></AppLayout>} />
             <Route path="/api-settings" element={<AppLayout><APISettings /></AppLayout>} />
@@ -129,8 +129,9 @@ const App = () => (
             <Route path="/staff" element={<AppLayout><StaffManagement /></AppLayout>} />
             <Route path="/technical-docs" element={<AppLayout><TechnicalDocs /></AppLayout>} />
             <Route path="/broadcast" element={<AppLayout><Broadcast /></AppLayout>} />
-            <Route path="/profit-calculator" element={<AppLayout><ProfitCalculator /></AppLayout>} />
-            <Route path="/payout-comparison" element={<AppLayout><PayoutComparison /></AppLayout>} />
+            <Route path="/profit-calculator" element={<Navigate to="/price-payout" replace />} />
+            <Route path="/payout-comparison" element={<Navigate to="/price-payout" replace />} />
+            <Route path="/ai-learning" element={<Navigate to="/chatbot" replace />} />
             <Route path="/integrations" element={<AppLayout><Integrations /></AppLayout>} />
             <Route path="/purchase" element={<AppLayout><PurchaseManagement /></AppLayout>} />
             <Route path="/review-analytics" element={<AppLayout><ReviewRatingAnalytics /></AppLayout>} />
