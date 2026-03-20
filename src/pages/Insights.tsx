@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList,
 } from 'recharts';
 import Dashboard from '@/pages/Dashboard';
+import { ExecutiveWidgets } from '@/components/dashboard/ExecutiveWidgets';
 
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
 
