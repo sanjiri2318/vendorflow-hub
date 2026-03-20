@@ -253,12 +253,26 @@ export default function Products() {
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="brand">Brand *</Label>
-                          <Select value={formData.brand} onValueChange={v => setFormData(f => ({ ...f, brand: v }))}>
+                          <Select value={formData.brand} onValueChange={v => { if (v !== '__add_new__') setFormData(f => ({ ...f, brand: v })); }}>
                             <SelectTrigger className={formErrors.brand ? 'border-destructive' : ''}><SelectValue placeholder="Select brand" /></SelectTrigger>
                             <SelectContent>
-                              {['Boat', 'Samsung', 'Nike', 'Puma', 'Mamaearth', 'Sony', 'Apple'].map(b => (
-                                <SelectItem key={b} value={b}>{b}</SelectItem>
+                              {localBrands.map(b => (
+                                <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
                               ))}
+                              <div className="border-t border-border mt-1 pt-1 px-2 pb-1">
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    placeholder="New brand name"
+                                    value={newBrandName}
+                                    onChange={e => setNewBrandName(e.target.value)}
+                                    className="h-8 text-sm"
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); handleAddBrand(); } }}
+                                  />
+                                  <Button size="sm" className="h-8 text-xs gap-1 shrink-0" onClick={handleAddBrand} disabled={addingBrand || !newBrandName.trim()}>
+                                    <Plus className="w-3 h-3" /> Add
+                                  </Button>
+                                </div>
+                              </div>
                             </SelectContent>
                           </Select>
                           {formErrors.brand && <p className="text-xs text-destructive">{formErrors.brand}</p>}
