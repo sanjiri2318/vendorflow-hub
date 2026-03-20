@@ -323,7 +323,7 @@ export function AppSidebar() {
               <div className={`px-3 py-2.5 ${sectionIndex > 0 ? 'mt-3 pt-4' : ''}`}
                 style={sectionIndex > 0 ? { borderTop: '1px solid rgba(197, 157, 217, 0.08)' } : {}}
               >
-                <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(197, 157, 217, 0.5)' }}>
+                <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(220, 190, 240, 0.85)' }}>
                   {section.heading}
                 </span>
               </div>
