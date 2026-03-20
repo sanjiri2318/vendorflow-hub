@@ -88,7 +88,7 @@ const App = () => (
             <Route path="/dashboard" element={<Navigate to="/insights" replace />} />
             <Route path="/channels" element={<AppLayout><ChannelManagement /></AppLayout>} />
             <Route path="/products" element={<AppLayout><Products /></AppLayout>} />
-            <Route path="/catalog-manager" element={<AppLayout><CatalogManager /></AppLayout>} />
+            <Route path="/catalog-manager" element={<Navigate to="/products" replace />} />
             <Route path="/product-health" element={<AppLayout><ProductHealth /></AppLayout>} />
             <Route path="/inventory" element={<AppLayout><Inventory /></AppLayout>} />
             <Route path="/orders" element={<AppLayout><Orders /></AppLayout>} />
