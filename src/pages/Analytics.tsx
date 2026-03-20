@@ -104,7 +104,7 @@ export default function Analytics() {
       const netSettled = chSettlements.reduce((s, st) => s + (Number(st.net_amount) || 0), 0);
       const commissions = chSettlements.reduce((s, st) => s + (Number(st.commission) || 0) + (Number(st.tax) || 0), 0);
       const margin = revenue > 0 ? Math.round(((revenue - commissions) / revenue) * 100) : 0;
-      return { name: p.name, icon: p.icon, revenue, netSettled, commissions, margin, orders: chOrders.length };
+      return { id: p.id, name: p.name, icon: p.icon, revenue, netSettled, commissions, margin, orders: chOrders.length };
     }).filter(c => c.orders > 0), [orders, settlements]);
 
   // Seller loss detection from returns
