@@ -16,16 +16,7 @@ interface FeeRecord {
   alert: boolean;
 }
 
-const mockFeeData: FeeRecord[] = [
-  { id: 'FV-01', portal: 'amazon', category: 'Electronics', historicalCommission: 8.5, currentCommission: 10.2, changePct: 1.7, alert: true },
-  { id: 'FV-02', portal: 'amazon', category: 'Fashion', historicalCommission: 15.0, currentCommission: 15.5, changePct: 0.5, alert: false },
-  { id: 'FV-03', portal: 'flipkart', category: 'Electronics', historicalCommission: 7.0, currentCommission: 9.5, changePct: 2.5, alert: true },
-  { id: 'FV-04', portal: 'flipkart', category: 'Home & Kitchen', historicalCommission: 12.0, currentCommission: 12.0, changePct: 0, alert: false },
-  { id: 'FV-05', portal: 'meesho', category: 'Fashion', historicalCommission: 10.0, currentCommission: 13.0, changePct: 3.0, alert: true },
-  { id: 'FV-06', portal: 'meesho', category: 'Beauty', historicalCommission: 8.0, currentCommission: 8.5, changePct: 0.5, alert: false },
-  { id: 'FV-07', portal: 'blinkit', category: 'Grocery', historicalCommission: 5.0, currentCommission: 5.0, changePct: 0, alert: false },
-  { id: 'FV-08', portal: 'firstcry', category: 'Baby Products', historicalCommission: 12.0, currentCommission: 14.5, changePct: 2.5, alert: true },
-];
+const mockFeeData: FeeRecord[] = [];
 
 export default function FeeVariationMonitor() {
   const alertCount = useMemo(() => mockFeeData.filter(f => f.alert).length, []);

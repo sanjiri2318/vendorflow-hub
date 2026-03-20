@@ -17,16 +17,7 @@ interface SKUTrend {
   dropAlert: boolean;
 }
 
-const mockSKUTrends: SKUTrend[] = [
-  { id: 'ST-01', sku: 'SKU-AMZ-001', productName: 'Wireless Earbuds Pro', portal: 'amazon', currentMargin: 32.5, lastMonthMargin: 28.0, trend: 'up', dropAlert: false },
-  { id: 'ST-02', sku: 'SKU-FLK-003', productName: 'Cotton T-Shirt', portal: 'flipkart', currentMargin: 18.2, lastMonthMargin: 25.8, trend: 'down', dropAlert: true },
-  { id: 'ST-03', sku: 'SKU-MSH-002', productName: 'Smart Fitness Watch', portal: 'meesho', currentMargin: 24.0, lastMonthMargin: 26.5, trend: 'down', dropAlert: false },
-  { id: 'ST-04', sku: 'SKU-AMZ-006', productName: 'BT Speaker', portal: 'amazon', currentMargin: 12.5, lastMonthMargin: 22.0, trend: 'down', dropAlert: true },
-  { id: 'ST-05', sku: 'SKU-FCY-005', productName: 'Baby Care Set', portal: 'firstcry', currentMargin: 35.0, lastMonthMargin: 33.0, trend: 'up', dropAlert: false },
-  { id: 'ST-06', sku: 'SKU-BLK-004', productName: 'Water Bottle', portal: 'blinkit', currentMargin: 8.5, lastMonthMargin: 15.0, trend: 'down', dropAlert: true },
-  { id: 'ST-07', sku: 'SKU-FLK-001', productName: 'Earbuds Pro Max', portal: 'flipkart', currentMargin: 28.0, lastMonthMargin: 27.5, trend: 'stable', dropAlert: false },
-  { id: 'ST-08', sku: 'SKU-MSH-007', productName: 'Yoga Mat Premium', portal: 'meesho', currentMargin: 15.0, lastMonthMargin: 24.0, trend: 'down', dropAlert: true },
-];
+const mockSKUTrends: SKUTrend[] = [];
 
 export default function SKUProfitabilityTrend() {
   const stats = useMemo(() => {
