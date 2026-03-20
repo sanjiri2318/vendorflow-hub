@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { getChannels, subscribeChannels, saveChannels, addChannel, updateChannel, removeChannel, resetChannels, generateChannelId, AVAILABLE_ICONS, AVAILABLE_COLORS } from '@/services/channelManager';
 import { ChannelIcon } from '@/components/ChannelIcon';
 import { PortalConfig } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 // TAB 1 — Field Configuration
 interface FieldConfig {
