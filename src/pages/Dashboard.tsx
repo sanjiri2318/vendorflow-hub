@@ -463,10 +463,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div>}
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {isVisible('kpi-row') && <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard title="Total Sales" value={formatCurrency(kpiData.totalSales)} icon={DollarSign} change={kpiData.salesGrowth} variant="success" />
         <KPICard title="Orders Today" value={kpiData.ordersToday} icon={ShoppingCart} change={kpiData.ordersGrowth} />
         <KPICard title="Inventory Value" value={formatCurrency(kpiData.inventoryValue)} icon={Package} />
