@@ -184,7 +184,7 @@
     font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, sans-serif;
     font-size: 14px;
     line-height: 1.6;
-    color: hsl(270 30% 12%);
+    color: hsl(var(--foreground));
     background: linear-gradient(160deg, #F2EAF7 0%, #e8d8f0 30%, #f0e6f5 60%, #F2EAF7 100%);
     background-attachment: fixed;
   }
