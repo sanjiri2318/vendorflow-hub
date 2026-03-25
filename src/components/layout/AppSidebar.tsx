@@ -26,7 +26,7 @@ import {
   Crown, LifeBuoy, Shield, FileText, IndianRupee, Receipt, Code, Camera, Gavel,
   UserPlus, MessageCircle, Building2, Contact, PieChart, Megaphone, Wallet,
   Scissors, Calculator, ArrowUpDown, MapPin, StarIcon, Mail, Video, HardDrive,
-  GraduationCap, Store, Tag,
+  GraduationCap, Store, Tag, Handshake, ClipboardCheck, Banknote,
 } from 'lucide-react';
 
 interface NavItem {
@@ -60,7 +60,7 @@ const navigationSections: NavSection[] = [
       {
         label: 'Catalog',
         items: [
-          { title: 'Products', url: '/products', icon: Package, roles: ['admin', 'vendor'] },
+          { title: 'Products & Catalog', url: '/products-catalog', icon: Package, roles: ['admin', 'vendor'] },
           { title: 'Brands', url: '/brands', icon: Tag, roles: ['admin', 'vendor'] },
           { title: 'Product Health', url: '/product-health', icon: Activity, roles: ['admin', 'vendor', 'operations'] },
           { title: 'SKU Mapping', url: '/sku-mapping', icon: Link2, roles: ['admin', 'vendor'] },
@@ -73,14 +73,20 @@ const navigationSections: NavSection[] = [
           { title: 'Orders', url: '/orders', icon: ShoppingCart, roles: ['admin', 'vendor', 'operations'] },
           { title: 'Consolidated Orders', url: '/consolidated-orders', icon: FileSpreadsheet, roles: ['admin', 'operations'] },
           { title: 'Returns & Claims', url: '/returns', icon: RotateCcw, roles: ['admin', 'operations'] },
+          { title: 'Settlements', url: '/settlements', icon: CreditCard, roles: ['admin', 'vendor'] },
           { title: 'Purchase & Inward', url: '/purchase', icon: Receipt, roles: ['admin', 'vendor', 'operations'] },
+        ],
+      },
+      {
+        label: 'Reconciliation',
+        items: [
+          { title: 'Payment Reconciliation', url: '/reconciliation', icon: Banknote, roles: ['admin', 'operations'] },
+          { title: 'Stock Reconciliation', url: '/stock-reconciliation', icon: ClipboardCheck, roles: ['admin', 'operations'] },
         ],
       },
       {
         label: 'Finance',
         items: [
-          { title: 'Settlements', url: '/settlements', icon: CreditCard, roles: ['admin', 'vendor'] },
-          { title: 'Reconciliation', url: '/reconciliation', icon: Scale, roles: ['admin', 'operations'] },
           { title: 'Price & Payout', url: '/price-payout', icon: IndianRupee, roles: ['admin', 'vendor'] },
           { title: 'Finance & Tax', url: '/finance', icon: Receipt, roles: ['admin', 'vendor'] },
           { title: 'Expense Tracking', url: '/expenses', icon: Wallet, roles: ['admin', 'operations'] },
@@ -111,6 +117,12 @@ const navigationSections: NavSection[] = [
           { title: 'Analytics', url: '/analytics', icon: BarChart3, roles: ['admin', 'vendor'] },
           { title: 'Review Analytics', url: '/review-analytics', icon: StarIcon, roles: ['admin', 'vendor'] },
           { title: 'Data Intelligence', url: '/data-intelligence', icon: MapPin, roles: ['admin'] },
+        ],
+      },
+      {
+        label: 'Affiliated',
+        items: [
+          { title: 'Affiliated', url: '/affiliated', icon: Handshake, roles: ['admin', 'vendor'] },
         ],
       },
     ],
