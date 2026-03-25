@@ -61,6 +61,7 @@ const navigationSections: NavSection[] = [
         label: 'Catalog',
         items: [
           { title: 'Products', url: '/products', icon: Package, roles: ['admin', 'vendor'] },
+          { title: 'Brands', url: '/brands', icon: Tag, roles: ['admin', 'vendor'] },
           { title: 'Product Health', url: '/product-health', icon: Activity, roles: ['admin', 'vendor', 'operations'] },
           { title: 'SKU Mapping', url: '/sku-mapping', icon: Link2, roles: ['admin', 'vendor'] },
         ],
