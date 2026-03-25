@@ -166,6 +166,39 @@ export type Database = {
         }
         Relationships: []
       }
+      brands: {
+        Row: {
+          about: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          status: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          about?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          about?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string

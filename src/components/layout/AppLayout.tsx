@@ -28,6 +28,7 @@ const routePermissions: Record<string, UserRole[]> = {
   '/dashboard': ['admin', 'vendor', 'operations'],
   '/insights': ['admin', 'vendor', 'operations'],
   '/products': ['admin', 'vendor'],
+  '/brands': ['admin', 'vendor'],
   '/catalog-manager': ['admin'],
   '/product-health': ['admin', 'vendor', 'operations'],
   '/sku-mapping': ['admin', 'vendor'],

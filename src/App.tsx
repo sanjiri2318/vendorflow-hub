@@ -61,6 +61,7 @@ import GoogleMeetIntegration from "./pages/GoogleMeetIntegration";
 import StorageDashboard from "./pages/StorageDashboard";
 import AILearningUpgrade from "./pages/AILearningUpgrade";
 import ChannelManagement from "./pages/ChannelManagement";
+import Brands from "./pages/Brands";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/" element={<Navigate to="/insights" replace />} />
             <Route path="/dashboard" element={<Navigate to="/insights" replace />} />
             <Route path="/channels" element={<AppLayout><ChannelManagement /></AppLayout>} />
+            <Route path="/brands" element={<AppLayout><Brands /></AppLayout>} />
             <Route path="/products" element={<AppLayout><Products /></AppLayout>} />
             <Route path="/catalog-manager" element={<Navigate to="/products" replace />} />
             <Route path="/product-health" element={<AppLayout><ProductHealth /></AppLayout>} />

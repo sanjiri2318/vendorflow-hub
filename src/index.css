@@ -27,7 +27,7 @@
     --secondary-foreground: 270 30% 15%;
 
     --muted: 280 30% 90%;
-    --muted-foreground: 270 15% 38%;
+    --muted-foreground: 270 20% 30%;
 
     /* #7A3F91 */
     --accent: 284 40% 41%;
@@ -123,7 +123,7 @@
     --secondary-foreground: 280 20% 90%;
 
     --muted: 280 30% 12%;
-    --muted-foreground: 275 15% 55%;
+    --muted-foreground: 275 15% 65%;
 
     --accent: 284 35% 48%;
     --accent-foreground: 0 0% 100%;
@@ -184,7 +184,7 @@
     font-family: 'Plus Jakarta Sans', 'DM Sans', system-ui, sans-serif;
     font-size: 14px;
     line-height: 1.6;
-    color: hsl(270 30% 12%);
+    color: hsl(var(--foreground));
     background: linear-gradient(160deg, #F2EAF7 0%, #e8d8f0 30%, #f0e6f5 60%, #F2EAF7 100%);
     background-attachment: fixed;
   }
@@ -302,22 +302,24 @@
   /* Data Table – Glass */
   .data-table { @apply w-full text-sm; }
   .data-table th {
-    @apply px-4 py-3 text-left font-semibold text-muted-foreground uppercase tracking-wider text-xs;
+    @apply px-4 py-3 text-left font-semibold uppercase tracking-wider text-xs;
+    color: hsl(var(--foreground));
     background: var(--glass-bg-medium);
     backdrop-filter: blur(16px);
   }
   .data-table td {
     @apply px-4 py-3;
+    color: hsl(var(--foreground));
     border-bottom: 1px solid var(--glass-border);
   }
   .data-table tr:hover td {
-    background: rgba(122, 63, 145, 0.04);
+    background: rgba(122, 63, 145, 0.06);
   }
 
   /* Nav items */
   .nav-item {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200;
-    color: hsl(var(--sidebar-foreground) / 0.7);
+    color: hsl(var(--sidebar-foreground) / 0.9);
   }
   .nav-item:hover {
     background: var(--glass-bg-medium);

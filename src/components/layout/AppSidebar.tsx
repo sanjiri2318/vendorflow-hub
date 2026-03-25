@@ -26,7 +26,7 @@ import {
   Crown, LifeBuoy, Shield, FileText, IndianRupee, Receipt, Code, Camera, Gavel,
   UserPlus, MessageCircle, Building2, Contact, PieChart, Megaphone, Wallet,
   Scissors, Calculator, ArrowUpDown, MapPin, StarIcon, Mail, Video, HardDrive,
-  GraduationCap, Store,
+  GraduationCap, Store, Tag,
 } from 'lucide-react';
 
 interface NavItem {
@@ -61,6 +61,7 @@ const navigationSections: NavSection[] = [
         label: 'Catalog',
         items: [
           { title: 'Products', url: '/products', icon: Package, roles: ['admin', 'vendor'] },
+          { title: 'Brands', url: '/brands', icon: Tag, roles: ['admin', 'vendor'] },
           { title: 'Product Health', url: '/product-health', icon: Activity, roles: ['admin', 'vendor', 'operations'] },
           { title: 'SKU Mapping', url: '/sku-mapping', icon: Link2, roles: ['admin', 'vendor'] },
         ],
@@ -367,7 +368,7 @@ export function AppSidebar() {
                                     fontWeight: 500,
                                     boxShadow: '0 0 20px rgba(197, 157, 217, 0.3), 0 4px 12px rgba(122, 63, 145, 0.2)',
                                   } : {
-                                    color: 'rgba(255, 255, 255, 0.85)',
+                                    color: 'rgba(255, 255, 255, 0.9)',
                                   }}
                                 >
                                   <item.icon className="w-4 h-4 shrink-0" />
