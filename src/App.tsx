@@ -61,6 +61,7 @@ import GoogleMeetIntegration from "./pages/GoogleMeetIntegration";
 import StorageDashboard from "./pages/StorageDashboard";
 import AILearningUpgrade from "./pages/AILearningUpgrade";
 import ChannelManagement from "./pages/ChannelManagement";
+import Brands from "./pages/Brands";
 import DemoLayout from "./pages/demo/DemoLayout";
 import DemoDashboard from "./pages/demo/DemoDashboard";
 import DemoSalesAnalysis from "./pages/demo/DemoSalesAnalysis";
