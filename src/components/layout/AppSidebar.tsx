@@ -368,7 +368,7 @@ export function AppSidebar() {
                                     fontWeight: 500,
                                     boxShadow: '0 0 20px rgba(197, 157, 217, 0.3), 0 4px 12px rgba(122, 63, 145, 0.2)',
                                   } : {
-                                    color: 'rgba(255, 255, 255, 0.85)',
+                                    color: 'rgba(255, 255, 255, 0.9)',
                                   }}
                                 >
                                   <item.icon className="w-4 h-4 shrink-0" />
