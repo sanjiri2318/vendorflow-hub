@@ -92,8 +92,9 @@ const App = () => (
             <Route path="/dashboard" element={<Navigate to="/insights" replace />} />
             <Route path="/channels" element={<AppLayout><ChannelManagement /></AppLayout>} />
             <Route path="/brands" element={<AppLayout><Brands /></AppLayout>} />
-            <Route path="/products" element={<AppLayout><Products /></AppLayout>} />
-            <Route path="/catalog-manager" element={<Navigate to="/products" replace />} />
+            <Route path="/products-catalog" element={<AppLayout><ProductsCatalog /></AppLayout>} />
+            <Route path="/products" element={<Navigate to="/products-catalog" replace />} />
+            <Route path="/catalog-manager" element={<Navigate to="/products-catalog" replace />} />
             <Route path="/product-health" element={<AppLayout><ProductHealth /></AppLayout>} />
             <Route path="/inventory" element={<AppLayout><Inventory /></AppLayout>} />
             <Route path="/orders" element={<AppLayout><Orders /></AppLayout>} />
@@ -101,7 +102,9 @@ const App = () => (
             <Route path="/returns" element={<AppLayout><Returns /></AppLayout>} />
             <Route path="/settlements" element={<AppLayout><Settlements /></AppLayout>} />
             <Route path="/sku-mapping" element={<AppLayout><SKUMapping /></AppLayout>} />
-            <Route path="/reconciliation" element={<AppLayout><Reconciliation /></AppLayout>} />
+            <Route path="/reconciliation" element={<AppLayout><ReconciliationHub /></AppLayout>} />
+            <Route path="/stock-reconciliation" element={<Navigate to="/reconciliation" replace />} />
+            <Route path="/affiliated" element={<AppLayout><Affiliated /></AppLayout>} />
             <Route path="/data-import" element={<AppLayout><DataImport /></AppLayout>} />
             <Route path="/social-insights" element={<AppLayout><SocialInsights /></AppLayout>} />
             <Route path="/subscription" element={<AppLayout><Subscription /></AppLayout>} />
