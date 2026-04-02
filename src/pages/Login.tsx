@@ -74,13 +74,68 @@ export default function Login() {
     setIsLoading(true);
     try {
       await signup(email, password, name);
-      setSuccess('Account created! Please check your email to verify your account.');
+      setShowVerifyScreen(true);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Show email verification screen
+  if (showVerifyScreen || emailNotVerified) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center relative overflow-hidden p-4"
+        style={{
+          background: 'linear-gradient(160deg, #F2EAF7 0%, #e0ccea 30%, #d4b8e0 60%, #F2EAF7 100%)',
+        }}
+      >
+        <div className="w-full max-w-md relative z-10">
+          <div
+            className="rounded-2xl overflow-hidden p-8 text-center"
+            style={{
+              background: 'var(--glass-bg-card)',
+              backdropFilter: 'blur(40px)',
+              border: '1px solid var(--glass-border-strong)',
+              boxShadow: 'var(--shadow-xl), var(--shadow-glow)',
+            }}
+          >
+            <div
+              className="inline-flex items-center justify-center rounded-2xl mb-6"
+              style={{
+                width: '72px',
+                height: '72px',
+                background: 'linear-gradient(135deg, #C59DD9 0%, #7A3F91 100%)',
+                boxShadow: '0 0 30px rgba(197, 157, 217, 0.5)',
+              }}
+            >
+              <Package className="w-9 h-9 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Check Your Email</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              We've sent a verification link to <strong className="text-foreground">{email}</strong>. Please click the link to verify your account before signing in.
+            </p>
+            <div className="p-4 rounded-xl mb-6" style={{ background: 'rgba(60, 160, 100, 0.1)' }}>
+              <p className="text-sm font-medium" style={{ color: 'hsl(var(--success))' }}>
+                ✉️ Verification email sent successfully
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setShowVerifyScreen(false);
+                if (emailNotVerified) logout();
+              }}
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
