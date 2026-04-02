@@ -1,4 +1,4 @@
-import { Palette, Sun, Moon, Type, RotateCcw, Minimize2 } from 'lucide-react';
+import { Palette, Sun, Moon, Type, RotateCcw, Minimize2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
