@@ -68,15 +68,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+
   useEffect(() => {
     // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Use setTimeout to avoid deadlocks with Supabase client
         setTimeout(async () => {
           try {
             const appUser = await buildAppUser(session);
-            setUser(appUser);
+            if (appUser) {
+              setUser(appUser);
+              setEmailNotVerified(false);
+            } else {
+              setUser(null);
+              setEmailNotVerified(true);
+            }
           } catch {
             setUser(null);
           }
@@ -84,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setUser(null);
+        setEmailNotVerified(false);
         setIsLoading(false);
       }
     });
@@ -93,7 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) {
         try {
           const appUser = await buildAppUser(session);
-          setUser(appUser);
+          if (appUser) {
+            setUser(appUser);
+            setEmailNotVerified(false);
+          } else {
+            setUser(null);
+            setEmailNotVerified(true);
+          }
         } catch {
           setUser(null);
         }
