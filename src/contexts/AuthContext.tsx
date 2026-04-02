@@ -43,8 +43,14 @@ async function fetchProfile(userId: string): Promise<{ name: string; avatar_url:
   return data;
 }
 
-async function buildAppUser(session: Session): Promise<AppUser> {
+async function buildAppUser(session: Session): Promise<AppUser | null> {
   const supaUser = session.user;
+  
+  // Block unverified email users
+  if (!supaUser.email_confirmed_at) {
+    return null;
+  }
+  
   const [role, profile] = await Promise.all([
     fetchUserRole(supaUser.id),
     fetchProfile(supaUser.id),
