@@ -150,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
+    emailNotVerified,
     login,
     signup,
     logout,
