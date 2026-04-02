@@ -16,6 +16,7 @@ interface AuthContextType {
   user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  emailNotVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
