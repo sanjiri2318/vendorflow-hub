@@ -37,6 +37,7 @@ import {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { criticalDecisionToggle } = useAIAccess();
   const [selectedPortal, setSelectedPortal] = useState<Portal | 'all'>('all');
   const [isLoading, setIsLoading] = useState(true);
