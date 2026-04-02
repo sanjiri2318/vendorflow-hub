@@ -31,9 +31,11 @@ export function ThemeCustomizer({ settings, onUpdate, onReset, accentPresets }: 
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
             <span>Appearance</span>
-            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onReset}>
-              <RotateCcw className="w-3 h-3" /> Reset
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onReset}>
+                <RotateCcw className="w-3 h-3" /> Reset
+              </Button>
+            </div>
           </SheetTitle>
         </SheetHeader>
         <div className="mt-6 space-y-6">
